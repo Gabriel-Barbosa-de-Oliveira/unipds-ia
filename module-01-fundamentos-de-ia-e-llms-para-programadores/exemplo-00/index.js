@@ -68,11 +68,11 @@ async function trainModel(inputXs, outputYs) {
 			verbose: 0, //Não ficar colocando logs de cada passo
 			epochs: 100, //Número de vezes que o modelo vai passar por todo o dataset de treino
 			shuffle: true, //Embaralha os dados a cada época para evitar que o modelo aprenda padrões de ordem
-			callbacks: {
-				onEpochEnd: (epoch, log) => console.log(
-					`Epoch: ${epoch}: loss = ${log.loss}`
-				)
-			}
+			// callbacks: {
+			// 	onEpochEnd: (epoch, log) => console.log(
+			// 		`Epoch: ${epoch}: loss = ${log.loss}`
+			// 	)
+			// }
 		}
 	);
 
@@ -91,6 +91,17 @@ async function trainModel(inputXs, outputYs) {
 	// Epoch: 9: loss = 0.9326667785644531
 	// Epoch: 10: loss = 0.9183310270309448
 	return model;
+}
+
+async function predict(model, pessoa) {
+	// Transformar o array js para o tensor (tfjs)
+	const tfInput = tf.tensor2d(pessoa);
+	// Faz a predição (output sera um vetor de 3 probabilidades)
+
+	const pred = model.predict(tfInput);
+
+	const predArray = await pred.array();
+	return predArray[0].map((prob, index) => ({ prob, index }));
 }
 
 // Exemplo de pessoas para treino (cada pessoa com idade, cor e localização)
@@ -136,4 +147,30 @@ const outputYs = tf.tensor2d(tensorLabels)
 // Quanto mais dado melhor !
 // Assim o algoritmo consegue entender melhor os padrões complexos 
 // dos dados
-const model = trainModel(inputXs, outputYs);
+const model = await trainModel(inputXs, outputYs);
+
+const pessoa = { nome: "zé", idade: 28, cor: "verde", localizacao: "Curitiba" }
+// Normalizando a idade da nova pessoa usando o mesmo padrão do treino 
+// Exemplo: idade_min = 25, idade_max = 40, então (28-25) / (40-25) = 0.2
+
+const pessoaTensorNormalizado = [
+	[
+		0.2, // idade normalizada
+		0,   // azul
+		0,   // vermelho
+		1,   // verde
+		0,   // São Paulo
+		1,   // Rio
+		0    // Curitiba
+	] 
+]
+
+const predictions = await predict(model, pessoaTensorNormalizado);
+const results = 
+	predictions
+	.sort((a, b) => b.prob - a.prob)
+	.map(p => `${labelsNomes[p.index]}: ${(p.prob * 100).toFixed(2)}%`)
+	.join('\n');
+
+console.log(results)
+  
