@@ -18,9 +18,9 @@ const WEIGHTS = {
 
 const normalize = (value, min, max) => (value - min) / ((max - min) || 1);
 
-function makeContext(catalog, users) {
+function makeContext(products, users) {
     const ages = users.map(u => u.age);
-    const price = catalog.map(p => p.price);
+    const price = products.map(p => p.price);
 
     const minAge = Math.min(...ages);
     const maxAge = Math.max(...ages);
@@ -28,8 +28,8 @@ function makeContext(catalog, users) {
     const minPrice = Math.min(...price);
     const maxPrice = Math.max(...price);
 
-    const colors = [...new Set(catalog.map(p => p.color))]; //new Set para remover duplicados
-    const categories = [...new Set(catalog.map(p => p.category))];
+    const colors = [...new Set(products.map(p => p.color))]; //new Set para remover duplicados
+    const categories = [...new Set(products.map(p => p.category))];
 
 
     const colorsIndex = Object.fromEntries(
@@ -59,7 +59,7 @@ function makeContext(catalog, users) {
     })
 
     const productAvgAgeNorm = Object.fromEntries(
-        catalog.map(product => {
+        products.map(product => {
             const avg =
                 ageCounts[product.name] ? ageSums[product.name] / ageCounts[product.name]
                     : midAge; // Se o produto não foi comprado, usa a média geral
@@ -68,6 +68,7 @@ function makeContext(catalog, users) {
     )
 
     return {
+        products,
         users,
         colorsIndex,
         categoriesIndex,
@@ -117,30 +118,72 @@ function encodeProduct(product, context) {
         WEIGHTS.color
     )
 
-    debugger
 
     return tf.concat1d(
         [price, age, category, color]
     )
 }
 
+function encodeUser(user, context) {
+    if (user.purchases.length) {
+        return tf.stack(
+            user.purchases.map(
+                product => encodeProduct(product, context)
+            )
+        )
+            .mean(0) // Média dos vetores dos produtos comprados
+            .reshape([1, context.dimentions]); // Reshape para manter a dimensão correta
+    }
+}
+
+function createTrainingData(context) {
+    const inputs = []
+    const labels = []
+    context.users
+        .filter(u => u.purchases.length)
+        .forEach(user => {
+            const userVector = encodeUser(user, context).dataSync()
+            context.products.forEach(product => {
+                const productVector = encodeProduct(product, context).dataSync()
+
+                const label = user.purchases.some(
+                    purchase => purchase.name === product.name ?
+                        1 :
+                        0
+                )
+                // combinar user + product
+                inputs.push([...userVector, ...productVector])
+                labels.push(label)
+
+            })
+        })
+
+    return {
+        xs: tf.tensor2d(inputs),
+        ys: tf.tensor2d(labels, [labels.length, 1]),
+        inputDimention: context.dimentions * 2
+        // tamanho = userVector + productVector
+    }
+}
+
 async function trainModel({ users }) {
     console.log('Training model with users:', users)
 
     postMessage({ type: workerEvents.progressUpdate, progress: { progress: 50 } });
-    const catalog = await (await fetch('/data/products.json')).json();
-    const context = makeContext(catalog, users);
-    context.productVectors = catalog.map(product => {
+    const products = await (await fetch('/data/products.json')).json();
+    const context = makeContext(products, users);
+    context.productVectors = products.map(product => {
         return {
             name: product.name,
             meta: { ...product },
             vector: encodeProduct(product, context).dataSync() // Convert tensor to regular array for easier storage
         }
-    }); 
-
-    console.log(context.productVectors)
+    });
 
     _globalCtx = context;
+
+    const trainData = createTrainingData(context);
+    debugger
 
     postMessage({
         type: workerEvents.trainingLog,
