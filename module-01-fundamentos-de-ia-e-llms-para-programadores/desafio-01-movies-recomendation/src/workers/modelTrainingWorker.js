@@ -206,6 +206,7 @@ const oneHotWeighted = (index, length, weight) =>
     tf.oneHot(index, length).cast('float32').mul(weight);
 
 function encodeMovie(movie, context) {
+    
     const rating = tf.tensor1d([
         normalize(movie.rating, context.minRating, context.maxRating) * WEIGHTS.rating
     ]);
@@ -369,6 +370,17 @@ function encodeUser(user, context) {
 }
 
 function createTrainingData(context) {
+    debugger
+    if (!context || !context.users || context.users.length === 0) {
+        console.error('❌ No users in context');
+        throw new Error('No users provided to training');
+    }
+
+    if (!context.movies || context.movies.length === 0) {
+        console.error('❌ No movies in context');
+        throw new Error('No movies provided to training');
+    }
+
     const inputs = []
     const labels = []
     context.users
@@ -393,7 +405,7 @@ function createTrainingData(context) {
     return {
         xs: tf.tensor2d(inputs),
         ys: tf.tensor2d(labels, [labels.length, 1]),
-        inputDimention: context.dimentions * 2
+        inputDimention: context.dimensions * 2
         // tamanho = userVector + productVector
     }
 }
@@ -514,14 +526,21 @@ async function trainModel({ users }) {
     postMessage({ type: workerEvents.progressUpdate, progress: { progress: 50 } });
     const movies = await (await fetch('/data/movies.json')).json();
     const context = makeContext(movies, users);
-    context.productVectors = movies.map(product => {
+    const teste =  movies.map(movie => {
         return {
-            name: product.name,
-            meta: { ...product },
-            vector: encodeMovie(product, context).dataSync() // Convert tensor to regular array for easier storage
+            name: movie.name,
+            meta: { ...movie },
+            vector: encodeMovie(movie, context).dataSync() // Convert tensor to regular array for easier storage
         }
     });
-
+    context.movieVectors = movies.map(movie => {
+        return {
+            name: movie.name,
+            meta: { ...movie },
+            vector: encodeMovie(movie, context).dataSync() // Convert tensor to regular array for easier storage
+        }
+    });
+    debugger
     _globalCtx = context;
 
     const trainData = createTrainingData(context);

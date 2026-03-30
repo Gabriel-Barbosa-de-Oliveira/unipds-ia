@@ -33,9 +33,11 @@ export class MovieView extends View {
             return this.replaceTemplate(this.#movieTemplate, {
                 id: movie.id,
                 name: movie.name,
-                category: movie.category,
-                price: movie.price,
-                color: movie.color,
+                genre: movie.genre,
+                language: movie.language,
+                rating: movie.rating,
+                duration: movie.duration,
+                year: movie.year,
                 movie: JSON.stringify(movie)
             });
         }).join('');

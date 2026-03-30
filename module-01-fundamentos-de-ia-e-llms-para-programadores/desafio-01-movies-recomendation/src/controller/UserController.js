@@ -51,25 +51,25 @@ export class UserController {
         return this.displayUserDetails(user);
     }
 
-    async handlePurchaseAdded({ user, product }) {
+    async handlePurchaseAdded({ user, movie }) {
         const updatedUser = await this.#userService.getUserById(user.id);
-        updatedUser.purchases.push({
-            ...product
+        updatedUser.movieWatches.push({
+            ...movie
         })
 
         await this.#userService.updateUser(updatedUser);
 
-        const lastPurchase = updatedUser.purchases[updatedUser.purchases.length - 1];
+        const lastPurchase = updatedUser.movieWatches[updatedUser.movieWatches.length - 1];
         this.#userView.addPastPurchase(lastPurchase);
         this.#events.dispatchUsersUpdated({ users: await this.#userService.getUsers() });
     }
 
-    async handlePurchaseRemove({ userId, product }) {
+    async handlePurchaseRemove({ userId, movie }) {
         const user = await this.#userService.getUserById(userId);
-        const index = user.purchases.findIndex(item => item.id === product.id);
+        const index = user.movieWatches.findIndex(item => item.id === movie.id);
 
         if (index !== -1) {
-            user.purchases.splice(index, 1); // directly remove one item at the found index
+            user.movieWatches.splice(index, 1); // directly remove one item at the found index
             await this.#userService.updateUser(user);
 
             const updatedUsers = await this.#userService.getUsers();
@@ -80,7 +80,7 @@ export class UserController {
 
     async displayUserDetails(user) {
         this.#userView.renderUserDetails(user);
-        this.#userView.renderPastPurchases(user.purchases);
+        this.#userView.renderPastPurchases(user.movieWatches);
 
     }
 

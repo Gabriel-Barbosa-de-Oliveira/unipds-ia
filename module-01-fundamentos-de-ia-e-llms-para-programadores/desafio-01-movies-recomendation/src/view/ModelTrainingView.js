@@ -61,8 +61,8 @@ export class ModelView extends View {
 
     renderAllUsersPurchases(users) {
         const html = users.map(user => {
-            const purchasesHtml = user.purchases.map(purchase => {
-                return `<span class="badge bg-light text-dark me-1 mb-1">${purchase.name}</span>`;
+            const purchasesHtml = user.movieWatches.map(watch => {
+                return `<span class="badge bg-light text-dark me-1 mb-1">${watch.name}</span>`;
             }).join('');
 
             return `
