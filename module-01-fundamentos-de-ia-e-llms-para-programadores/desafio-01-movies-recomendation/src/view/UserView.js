@@ -44,7 +44,7 @@ export class UserView extends View {
         if (!this.#purchaseTemplate) return;
 
         if (!pastPurchases || pastPurchases.length === 0) {
-            this.#pastPurchasesList.innerHTML = '<p>No past purchases found.</p>';
+            this.#pastPurchasesList.innerHTML = '<p>No Watched Movies found.</p>';
             return;
         }
 
@@ -61,7 +61,7 @@ export class UserView extends View {
 
     addPastPurchase(product) {
 
-        if (this.#pastPurchasesList.innerHTML.includes('No past purchases found')) {
+        if (this.#pastPurchasesList.innerHTML.includes('No Watched Movies found')) {
             this.#pastPurchasesList.innerHTML = '';
         }
 

@@ -1,4 +1,4 @@
-export class ProductController {
+export class MovieController {
     #productView;
     #currentUser = null;
     #events;
@@ -15,7 +15,7 @@ export class ProductController {
     }
 
     static init(deps) {
-        return new ProductController(deps);
+        return new MovieController(deps);
     }
 
     async init() {

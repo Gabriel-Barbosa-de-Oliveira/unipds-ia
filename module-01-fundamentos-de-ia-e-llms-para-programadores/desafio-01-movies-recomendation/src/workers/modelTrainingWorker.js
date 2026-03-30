@@ -512,9 +512,9 @@ async function trainModel({ users }) {
     console.log('Training model with users:', users)
 
     postMessage({ type: workerEvents.progressUpdate, progress: { progress: 50 } });
-    const products = await (await fetch('/data/products.json')).json();
-    const context = makeContext(products, users);
-    context.productVectors = products.map(product => {
+    const movies = await (await fetch('/data/movies.json')).json();
+    const context = makeContext(movies, users);
+    context.productVectors = movies.map(product => {
         return {
             name: product.name,
             meta: { ...product },

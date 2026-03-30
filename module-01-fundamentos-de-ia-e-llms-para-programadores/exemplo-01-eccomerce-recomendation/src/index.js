@@ -1,5 +1,5 @@
 import { UserController } from './controller/UserController.js';
-import { ProductController } from './controller/ProductController.js';
+import { MovieController } from './controller/MovieController.js';
 import { ModelController } from './controller/ModelTrainingController.js';
 import { TFVisorController } from './controller/TFVisorController.js';
 import { TFVisorView } from './view/TFVisorView.js';
@@ -43,7 +43,7 @@ TFVisorController.init({
     events: Events,
 });
 
-ProductController.init({
+MovieController.init({
     productView,
     userService,
     productService,

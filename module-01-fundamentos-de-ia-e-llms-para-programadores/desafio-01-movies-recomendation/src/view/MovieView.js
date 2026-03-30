@@ -27,9 +27,9 @@ export class MovieView extends View {
         this.#onBuyProduct = callback;
     }
 
-    render(products, disableButtons = true) {
+    render(movies, disableButtons = true) {
         if (!this.#productTemplate) return;
-        const html = products.map(product => {
+        const html = movies.map(product => {
             return this.replaceTemplate(this.#productTemplate, {
                 id: product.id,
                 name: product.name,

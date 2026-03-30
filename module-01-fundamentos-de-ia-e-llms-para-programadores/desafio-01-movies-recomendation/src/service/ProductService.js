@@ -1,16 +1,16 @@
-export class ProductService {
-    async getProducts() {
-        const response = await fetch('./data/products.json');
+export class MovieService {
+    async getMovies() {
+        const response = await fetch('./data/movies.json');
         return await response.json();
     }
 
-    async getProductById(id) {
-        const products = await this.getProducts();
-        return products.find(product => product.id === id);
+    async getMovieById(id) {
+        const movies = await this.getMovies();
+        return movies.find(movie => movie.id === id);
     }
 
-    async getProductsByIds(ids) {
-        const products = await this.getProducts();
-        return products.filter(product => ids.includes(product.id));
+    async getMoviesByIds(ids) {
+        const movies = await this.getMovies();
+        return movies.filter(movie => ids.includes(movie.id));
     }
 }
