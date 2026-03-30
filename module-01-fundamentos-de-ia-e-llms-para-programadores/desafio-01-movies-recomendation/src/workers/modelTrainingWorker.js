@@ -209,62 +209,163 @@ function encodeMovie(movie, context) {
     const rating = tf.tensor1d([
         normalize(movie.rating, context.minRating, context.maxRating) * WEIGHTS.rating
     ]);
-    
+
     const year = tf.tensor1d([
         normalize(movie.year, context.minYear, context.maxYear) * WEIGHTS.year
     ]);
-    
+
     const duration = tf.tensor1d([
         normalize(movie.duration, context.minDuration, context.maxDuration) * 0.05
     ]);
-    
+
     const genre = oneHotWeighted(
         context.genresIndex[movie.genre],
         context.numGenres,
         WEIGHTS.genre
     );
-    
+
     const director = oneHotWeighted(
         context.directorsIndex[movie.director],
         context.numDirectors,
         WEIGHTS.director
     );
-    
+
     const language = oneHotWeighted(
         context.languagesIndex[movie.language],
         context.numLanguages,
         WEIGHTS.language
     );
-    
+
     return tf.concat1d([rating, year, duration, genre, director, language]);
 }
 
 function encodeUser(user, context) {
-    if (user.purchases.length) {
-        return tf.stack(
-            user.purchases.map(
-                product => encodeMovie(product, context)
-            )
-        )
-            .mean(0)
-            .reshape([
-                1,
-                context.dimentions
-            ])
+
+    // ====================================================================
+    // CASO 1️⃣: USUÁRIO COM HISTÓRICO (assistiu filmes)
+    // ====================================================================
+    if (user.movieWatches && user.movieWatches.length > 0) {
+        console.log(`👤 Codificando usuário "${user.name}" (${user.age} anos)`);
+        console.log(`   📽️ Filmes assistidos: ${user.movieWatches.length}`);
+
+        // ┌─────────────────────────────────────────────────────────┐
+        // │ PASSO 1: Codificar CADA filme assistido                │
+        // └─────────────────────────────────────────────────────────┘
+        // 
+        // Exemplo: usuário assistiu 3 filmes
+        // filme1 → [0.35, 0.07, ..., 0.9]  (vetor 1)
+        // filme2 → [0.25, 0.10, ..., 0.8]  (vetor 2)
+        // filme3 → [0.15, 0.08, ..., 0.7]  (vetor 3)
+        //
+        const movieVectors = user.movieWatches.map(movie => {
+            const encoded = encodeMovie(movie, context);
+            console.log(`     ✅ "${movie.name}" codificado`);
+            return encoded;
+        });
+
+        // ┌─────────────────────────────────────────────────────────┐
+        // │ PASSO 2: EMPILHAR todos os vetores                     │
+        // └─────────────────────────────────────────────────────────┘
+        // 
+        // shape: [3, 18] (3 filmes, 18 dimensões cada)
+        //
+        const stacked = tf.stack(movieVectors);
+
+        // ┌─────────────────────────────────────────────────────────┐
+        // │ PASSO 3: CALCULAR MÉDIA (mean)                         │
+        // └─────────────────────────────────────────────────────────┘
+        // 
+        // Média coluna-por-coluna (axis=0)
+        // [0.35, 0.07, ..., 0.9]
+        // [0.25, 0.10, ..., 0.8]
+        // [0.15, 0.08, ..., 0.7]
+        // ───────────────────────────
+        // [0.25, 0.08, ..., 0.8]  ← MÉDIA (perfil do usuário)
+        //
+        // shape: [18] (1D)
+        //
+        const meanVector = stacked.mean(0);
+
+        // ┌─────────────────────────────────────────────────────────┐
+        // │ PASSO 4: RESHAPE para [1, 18] (requerido pelo modelo)  │
+        // └─────────────────────────────────────────────────────────┘
+        //
+        // O modelo sempre espera batch de exemplos, mesmo com 1 usuário
+        // shape: [1, 18] (1 lote, 18 dimensões)
+        //
+        const reshaped = meanVector.reshape([1, context.dimensions]);
+
+        console.log(`   ✅ Perfil do usuário: ${context.dimensions}D`);
+        return reshaped;
     }
 
-    return tf.concat1d(
-        [
-            tf.zeros([1]), // preço é ignorado,
-            tf.tensor1d([
-                normalize(user.age, context.minAge, context.maxAge)
-                * WEIGHTS.age
-            ]),
-            tf.zeros([context.numCategories]), // categoria ignorada,
-            tf.zeros([context.numColors]), // color ignorada,
+    // ====================================================================
+    // CASO 2️⃣: USUÁRIO NOVO (sem histórico de filmes)
+    // ====================================================================
+    else {
+        console.log(`👤 Codificando usuário NOVO "${user.name}" (${user.age} anos)`);
+        console.log(`   📽️ Sem histórico de filmes`);
 
-        ]
-    ).reshape([1, context.dimentions])
+        // ┌─────────────────────────────────────────────────────────┐
+        // │ Para novo usuário: usar APENAS a idade                │
+        // │ (é o único dado que temos)                            │
+        // └─────────────────────────────────────────────────────────┘
+        //
+        // Estratégia: preencher com zeros as partes de "gostos"
+        //            e apenas ter a idade normalizada
+        //
+        // Estrutura do vetor:
+        // [rating_zero, year_norm_idade, duration_zero, 
+        //  genre_zeros, director_zeros, language_zeros]
+        //
+        // Isso faz o modelo entender: "não sabemos os gostos,
+        // mas sabemos a idade deste usuário"
+
+        // 1. Rating → ignorado (zero)
+        const ratingZero = tf.zeros([1]);
+
+        // 2. Year normalizado → usar idade do usuário
+        //    (como proxy: usuários mais velhos preferem filmes mais antigos)
+        const ageNormalized = tf.tensor1d([
+            normalize(user.age, context.minAge, context.maxAge) * WEIGHTS.year
+        ]);
+
+        // 3. Duration → ignorado (zero)
+        const durationZero = tf.zeros([1]);
+
+        // 4. Genre → todos zeros
+        const genreZeros = tf.zeros([context.numGenres]);
+
+        // 5. Director → todos zeros
+        const directorZeros = tf.zeros([context.numDirectors]);
+
+        // 6. Language → todos zeros
+        const languageZeros = tf.zeros([context.numLanguages]);
+
+        // ┌──────────────────────��──────────────────────────────────┐
+        // │ Concatenar tudo e reshape                              │
+        // └─────────────────────────────────────────────────────────┘
+        //
+        // Resultado: [1, 0.4, 0, 0,0,0,0,0, 0,0,..., 0,0]
+        //            ^                  ^              ^
+        //            rating_zero    genre_zeros   language_zeros
+        //                   age_normalized
+        //
+        const userVector = tf.concat1d([
+            ratingZero,           // rating não é relevante para novo usuário
+            ageNormalized,        // idade normalizada (única pista)
+            durationZero,         // duration não é relevante
+            genreZeros,           // sem preferências de gênero (novo usuário)
+            directorZeros,        // sem preferências de diretor
+            languageZeros         // sem preferências de idioma
+        ]);
+
+        // Reshape para [1, dimensions]
+        const reshaped = userVector.reshape([1, context.dimensions]);
+
+        console.log(`   ✅ Perfil baseado APENAS em idade: ${context.dimensions}D`);
+        return reshaped;
+    }
 }
 
 function createTrainingData(context) {
