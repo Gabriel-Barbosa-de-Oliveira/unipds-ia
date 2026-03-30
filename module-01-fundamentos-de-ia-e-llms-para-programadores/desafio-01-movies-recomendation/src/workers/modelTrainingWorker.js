@@ -547,7 +547,7 @@ function recommend({ user }) {
     //    Isso transforma as informações do usuário no mesmo formato numérico
     //    que foi usado para treinar o modelo.
 
-    const userVector = encodeUser(user, context).dataSync()
+    const userVector = encodeUser(user, context).dataSync();
 
     // Em aplicações reais:
     //  Armazene todos os vetores de produtos em um banco de dados vetorial (como Postgres, Neo4j ou Pinecone)
@@ -559,9 +559,9 @@ function recommend({ user }) {
     //    Por quê? O modelo prevê o "score de compatibilidade" para cada par (usuário, produto).
 
 
-    const inputs = context.productVectors.map(({ vector }) => {
-        return [...userVector, ...vector]
-    })
+    const inputs = context.movieVectors.map(({ vector }) =>
+        [...userVector, ...vector]  // ← ÚNICO CHANGE
+    );
 
     // 3️⃣ Converta todos esses pares (usuário, produto) em um único Tensor.
     //    Formato: [numProdutos, inputDim]
@@ -570,17 +570,14 @@ function recommend({ user }) {
     // 4️⃣ Rode a rede neural treinada em todos os pares (usuário, produto) de uma vez.
     //    O resultado é uma pontuação para cada produto entre 0 e 1.
     //    Quanto maior, maior a probabilidade do usuário querer aquele produto.
-    const predictions = _model.predict(inputTensor)
+    const predictions = _model.predict(tf.tensor2d(inputs));
 
     // 5️⃣ Extraia as pontuações para um array JS normal.
     const scores = predictions.dataSync()
-    const recommendations = context.productVectors.map((item, index) => {
-        return {
-            ...item.meta,
-            name: item.name,
-            score: scores[index] // previsão do modelo para este produto
-        }
-    })
+    const recommendations = context.movieVectors.map((item, index) => ({
+        ...item.meta,
+        score: scores[index]
+    }));
 
     const sortedItems = recommendations
         .sort((a, b) => b.score - a.score)
