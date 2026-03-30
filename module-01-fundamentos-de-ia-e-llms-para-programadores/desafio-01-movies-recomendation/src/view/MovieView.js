@@ -2,11 +2,11 @@ import { View } from './View.js';
 
 export class MovieView extends View {
     // DOM elements
-    #productList = document.querySelector('#productList');
+    #movieList = document.querySelector('#productList');
 
     #buttons;
     // Templates and callbacks
-    #productTemplate;
+    #movieTemplate;
     #onBuyProduct;
 
     constructor() {
@@ -15,7 +15,7 @@ export class MovieView extends View {
     }
 
     async init() {
-        this.#productTemplate = await this.loadTemplate('./src/view/templates/product-card.html');
+        this.#movieTemplate = await this.loadTemplate('./src/view/templates/product-card.html');
     }
 
     onUserSelected(user) {
@@ -28,19 +28,19 @@ export class MovieView extends View {
     }
 
     render(movies, disableButtons = true) {
-        if (!this.#productTemplate) return;
-        const html = movies.map(product => {
-            return this.replaceTemplate(this.#productTemplate, {
-                id: product.id,
-                name: product.name,
-                category: product.category,
-                price: product.price,
-                color: product.color,
-                product: JSON.stringify(product)
+        if (!this.#movieTemplate) return;
+        const html = movies.map(movie => {
+            return this.replaceTemplate(this.#movieTemplate, {
+                id: movie.id,
+                name: movie.name,
+                category: movie.category,
+                price: movie.price,
+                color: movie.color,
+                movie: JSON.stringify(movie)
             });
         }).join('');
 
-        this.#productList.innerHTML = html;
+        this.#movieList.innerHTML = html;
         this.attachBuyButtonListeners();
 
         // Disable all buttons by default

@@ -4,7 +4,7 @@ import { ModelController } from './controller/ModelTrainingController.js';
 import { TFVisorController } from './controller/TFVisorController.js';
 import { TFVisorView } from './view/TFVisorView.js';
 import { UserService } from './service/UserService.js';
-import { ProductService } from './service/ProductService.js';
+import { MovieService } from './service/MovieService.js';
 import { UserView } from './view/UserView.js';
 import { MovieView } from './view/MovieView.js';
 import { ModelView } from './view/ModelTrainingView.js';
@@ -13,7 +13,7 @@ import { WorkerController } from './controller/WorkerController.js';
 
 // Create shared services
 const userService = new UserService();
-const productService = new ProductService();
+const movieService = new MovieService();
 
 // Create views
 const userView = new UserView();
@@ -44,9 +44,9 @@ TFVisorController.init({
 });
 
 MovieController.init({
-    productView: movieView,
+    movieView,
     userService,
-    productService,
+    movieService,
     events: Events,
 });
 
@@ -54,7 +54,7 @@ MovieController.init({
 const userController = UserController.init({
     userView,
     userService,
-    productService,
+    productService: movieService,
     events: Events,
 });
 

@@ -372,19 +372,19 @@ function createTrainingData(context) {
     const inputs = []
     const labels = []
     context.users
-        .filter(u => u.purchases.length)
+        .filter(u => u.movieWatches.length)
         .forEach(user => {
             const userVector = encodeUser(user, context).dataSync()
-            context.products.forEach(product => {
-                const productVector = encodeMovie(product, context).dataSync()
+            context.movies.forEach(movie => {
+                const movieVector = encodeMovie(movie, context).dataSync()
 
-                const label = user.purchases.some(
-                    purchase => purchase.name === product.name ?
+                const label = user.movieWatches.some(
+                    watch => watch.name === movie.name ?
                         1 :
                         0
                 )
                 // combinar user + product
-                inputs.push([...userVector, ...productVector])
+                inputs.push([...userVector, ...movieVector])
                 labels.push(label)
 
             })

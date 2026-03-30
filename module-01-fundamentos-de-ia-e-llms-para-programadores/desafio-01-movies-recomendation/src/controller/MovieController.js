@@ -1,15 +1,15 @@
 export class MovieController {
-    #productView;
+    movieView;
     #currentUser = null;
     #events;
-    #productService;
+    movieService;
     constructor({
-        productView,
+        movieView,
         events,
-        productService
+        movieService
     }) {
-        this.#productView = productView;
-        this.#productService = productService;
+        this.movieView = movieView;
+        this.movieService = movieService;
         this.#events = events;
         this.init();
     }
@@ -21,30 +21,30 @@ export class MovieController {
     async init() {
         this.setupCallbacks();
         this.setupEventListeners();
-        const products = await this.#productService.getProducts();
-        this.#productView.render(products, true);
+        const movies = await this.movieService.getMovies();
+        this.movieView.render(movies, true);
     }
 
     setupEventListeners() {
 
         this.#events.onUserSelected((user) => {
             this.#currentUser = user;
-            this.#productView.onUserSelected(user);
+            this.movieView.onUserSelected(user);
             this.#events.dispatchRecommend(user)
         })
 
         this.#events.onRecommendationsReady(({ recommendations }) => {
-            this.#productView.render(recommendations, false);
+            this.movieView.render(recommendations, false);
         });
     }
 
     setupCallbacks() {
-        this.#productView.registerBuyProductCallback(this.handleBuyProduct.bind(this));
+        this.movieView.registerBuyProductCallback(this.handleWatchMovie.bind(this));
     }
 
-    async handleBuyProduct(product) {
+    async handleWatchMovie(movie) {
         const user = this.#currentUser;
-        this.#events.dispatchPurchaseAdded({ user, product });
+        this.#events.dispatchPurchaseAdded({ user, movie });
     }
 
 }
