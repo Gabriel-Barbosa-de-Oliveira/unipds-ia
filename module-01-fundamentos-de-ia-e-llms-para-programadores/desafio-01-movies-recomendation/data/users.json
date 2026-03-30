@@ -1,0 +1,157 @@
+[
+    {
+        "id": 1,
+        "name": "Ana Lima",
+        "age": 25,
+        "movieWatches": [
+            {
+                "id": 1,
+                "name": "Inception",
+                "genre": "ficção científica",
+                "director": "Christopher Nolan",
+                "rating": 8.8,
+                "year": 2010,
+                "duration": 148,
+                "language": "english"
+            },
+            {
+                "id": 2,
+                "name": "The Dark Knight",
+                "genre": "ação",
+                "director": "Christopher Nolan",
+                "rating": 9.0,
+                "year": 2008,
+                "duration": 152,
+                "language": "english"
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Bruno Ferreira",
+        "age": 27,
+        "movieWatches": [
+            {
+                "id": 1,
+                "name": "Inception",
+                "genre": "ficção científica",
+                "director": "Christopher Nolan",
+                "rating": 8.8,
+                "year": 2010,
+                "duration": 148,
+                "language": "english"
+            },
+            {
+                "id": 3,
+                "name": "Interstellar",
+                "genre": "ficção científica",
+                "director": "Christopher Nolan",
+                "rating": 8.6,
+                "year": 2014,
+                "duration": 169,
+                "language": "english"
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "name": "Camila Souza",
+        "age": 30,
+        "movieWatches": [
+            {
+                "id": 4,
+                "name": "Carioca Confidencial",
+                "genre": "drama",
+                "director": "Paulo Morelli",
+                "rating": 7.2,
+                "year": 2005,
+                "duration": 110,
+                "language": "português"
+            },
+            {
+                "id": 5,
+                "name": "Central do Brasil",
+                "genre": "drama",
+                "director": "Walter Salles",
+                "rating": 7.8,
+                "year": 1998,
+                "duration": 113,
+                "language": "português"
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "name": "Diego Almeida",
+        "age": 22,
+        "movieWatches": [
+            {
+                "id": 2,
+                "name": "The Dark Knight",
+                "genre": "ação",
+                "director": "Christopher Nolan",
+                "rating": 9.0,
+                "year": 2008,
+                "duration": 152,
+                "language": "english"
+            },
+            {
+                "id": 3,
+                "name": "Interstellar",
+                "genre": "ficção científica",
+                "director": "Christopher Nolan",
+                "rating": 8.6,
+                "year": 2014,
+                "duration": 169,
+                "language": "english"
+            },
+            {
+                "id": 6,
+                "name": "Mad Max: Fury Road",
+                "genre": "ação",
+                "director": "George Miller",
+                "rating": 8.1,
+                "year": 2015,
+                "duration": 120,
+                "language": "english"
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "name": "Eduarda Nunes",
+        "age": 28,
+        "movieWatches": [
+            {
+                "id": 1,
+                "name": "Inception",
+                "genre": "ficção científica",
+                "director": "Christopher Nolan",
+                "rating": 8.8,
+                "year": 2010,
+                "duration": 148,
+                "language": "english"
+            },
+            {
+                "id": 6,
+                "name": "Mad Max: Fury Road",
+                "genre": "ação",
+                "director": "George Miller",
+                "rating": 8.1,
+                "year": 2015,
+                "duration": 120,
+                "language": "english"
+            },
+            {
+                "id": 5,
+                "name": "Central do Brasil",
+                "genre": "drama",
+                "director": "Walter Salles",
+                "rating": 7.8,
+                "year": 1998,
+                "duration": 113,
+                "language": "português"
+            }
+        ]
+    }
+]

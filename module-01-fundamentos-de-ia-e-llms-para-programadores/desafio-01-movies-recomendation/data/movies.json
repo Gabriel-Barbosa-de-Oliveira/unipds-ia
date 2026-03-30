@@ -1,0 +1,102 @@
+[
+    {
+        "id": 1,
+        "name": "Inception",
+        "genre": "ficção científica",
+        "director": "Christopher Nolan",
+        "rating": 8.8,
+        "year": 2010,
+        "duration": 148,
+        "language": "english"
+    },
+    {
+        "id": 2,
+        "name": "The Dark Knight",
+        "genre": "ação",
+        "director": "Christopher Nolan",
+        "rating": 9.0,
+        "year": 2008,
+        "duration": 152,
+        "language": "english"
+    },
+    {
+        "id": 3,
+        "name": "Interstellar",
+        "genre": "ficção científica",
+        "director": "Christopher Nolan",
+        "rating": 8.6,
+        "year": 2014,
+        "duration": 169,
+        "language": "english"
+    },
+    {
+        "id": 4,
+        "name": "Carioca Confidencial",
+        "genre": "drama",
+        "director": "Paulo Morelli",
+        "rating": 7.2,
+        "year": 2005,
+        "duration": 110,
+        "language": "português"
+    },
+    {
+        "id": 5,
+        "name": "Central do Brasil",
+        "genre": "drama",
+        "director": "Walter Salles",
+        "rating": 7.8,
+        "year": 1998,
+        "duration": 113,
+        "language": "português"
+    },
+    {
+        "id": 6,
+        "name": "Mad Max: Fury Road",
+        "genre": "ação",
+        "director": "George Miller",
+        "rating": 8.1,
+        "year": 2015,
+        "duration": 120,
+        "language": "english"
+    },
+    {
+        "id": 7,
+        "name": "Cidade de Deus",
+        "genre": "crime",
+        "director": "Fernando Meirelles",
+        "rating": 8.8,
+        "year": 2002,
+        "duration": 130,
+        "language": "português"
+    },
+    {
+        "id": 8,
+        "name": "The Matrix",
+        "genre": "ficção científica",
+        "director": "Lana Wachowski, Lilly Wachowski",
+        "rating": 8.7,
+        "year": 1999,
+        "duration": 136,
+        "language": "english"
+    },
+    {
+        "id": 9,
+        "name": "Dune",
+        "genre": "ficção científica",
+        "director": "Denis Villeneuve",
+        "rating": 8.0,
+        "year": 2021,
+        "duration": 156,
+        "language": "english"
+    },
+    {
+        "id": 10,
+        "name": "City of God: The Fight Back",
+        "genre": "documentário",
+        "director": "Rodrigo Bellott",
+        "rating": 7.0,
+        "year": 2014,
+        "duration": 98,
+        "language": "português"
+    }
+]
