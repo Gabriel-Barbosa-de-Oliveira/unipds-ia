@@ -205,46 +205,45 @@ function makeContext(movies, users) {
 const oneHotWeighted = (index, length, weight) =>
     tf.oneHot(index, length).cast('float32').mul(weight);
 
-function encodeProduct(product, context) {
-    //normalizando dados para ficar de 0 a 1 e 
-    //aplicar o peso na recomendação
-    const price = tf.tensor1d([
-        normalize(
-            product.price,
-            context.minPrice,
-            context.maxPrice
-        ) * WEIGHTS.price
+function encodeMovie(movie, context) {
+    const rating = tf.tensor1d([
+        normalize(movie.rating, context.minRating, context.maxRating) * WEIGHTS.rating
     ]);
-
-    const age = tf.tensor1d([
-        (
-            context.productAvgAgeNorm[product.name] ?? 0.5
-        ) * WEIGHTS.age
+    
+    const year = tf.tensor1d([
+        normalize(movie.year, context.minYear, context.maxYear) * WEIGHTS.year
     ]);
-
-    const category = oneHotWeighted(
-        context.categoriesIndex[product.category],
-        context.numCategories,
-        WEIGHTS.category
-    )
-
-    const color = oneHotWeighted(
-        context.colorsIndex[product.color],
-        context.numColors,
-        WEIGHTS.color
-    )
-
-
-    return tf.concat1d(
-        [price, age, category, color]
-    )
+    
+    const duration = tf.tensor1d([
+        normalize(movie.duration, context.minDuration, context.maxDuration) * 0.05
+    ]);
+    
+    const genre = oneHotWeighted(
+        context.genresIndex[movie.genre],
+        context.numGenres,
+        WEIGHTS.genre
+    );
+    
+    const director = oneHotWeighted(
+        context.directorsIndex[movie.director],
+        context.numDirectors,
+        WEIGHTS.director
+    );
+    
+    const language = oneHotWeighted(
+        context.languagesIndex[movie.language],
+        context.numLanguages,
+        WEIGHTS.language
+    );
+    
+    return tf.concat1d([rating, year, duration, genre, director, language]);
 }
 
 function encodeUser(user, context) {
     if (user.purchases.length) {
         return tf.stack(
             user.purchases.map(
-                product => encodeProduct(product, context)
+                product => encodeMovie(product, context)
             )
         )
             .mean(0)
@@ -276,7 +275,7 @@ function createTrainingData(context) {
         .forEach(user => {
             const userVector = encodeUser(user, context).dataSync()
             context.products.forEach(product => {
-                const productVector = encodeProduct(product, context).dataSync()
+                const productVector = encodeMovie(product, context).dataSync()
 
                 const label = user.purchases.some(
                     purchase => purchase.name === product.name ?
@@ -418,7 +417,7 @@ async function trainModel({ users }) {
         return {
             name: product.name,
             meta: { ...product },
-            vector: encodeProduct(product, context).dataSync() // Convert tensor to regular array for easier storage
+            vector: encodeMovie(product, context).dataSync() // Convert tensor to regular array for easier storage
         }
     });
 
