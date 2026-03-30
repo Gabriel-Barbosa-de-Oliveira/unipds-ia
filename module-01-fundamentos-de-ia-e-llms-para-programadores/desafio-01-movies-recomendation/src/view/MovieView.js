@@ -1,6 +1,6 @@
 import { View } from './View.js';
 
-export class ProductView extends View {
+export class MovieView extends View {
     // DOM elements
     #productList = document.querySelector('#productList');
 

@@ -6,7 +6,7 @@ import { TFVisorView } from './view/TFVisorView.js';
 import { UserService } from './service/UserService.js';
 import { ProductService } from './service/ProductService.js';
 import { UserView } from './view/UserView.js';
-import { ProductView } from './view/ProductView.js';
+import { MovieView } from './view/MovieView.js';
 import { ModelView } from './view/ModelTrainingView.js';
 import Events from './events/events.js';
 import { WorkerController } from './controller/WorkerController.js';
@@ -17,7 +17,7 @@ const productService = new ProductService();
 
 // Create views
 const userView = new UserView();
-const productView = new ProductView();
+const movieView = new MovieView();
 const modelView = new ModelView();
 const tfVisorView = new TFVisorView();
 const mlWorker = new Worker('/src/workers/modelTrainingWorker.js', { type: 'module' });
@@ -44,7 +44,7 @@ TFVisorController.init({
 });
 
 ProductController.init({
-    productView,
+    productView: movieView,
     userService,
     productService,
     events: Events,
