@@ -6,10 +6,11 @@ let _globalCtx = {};
 let _model = null;
 
 const WEIGHTS = {
-    category: 0.4,
-    color: 0.3,
-    price: 0.2,
-    age: 0.1,
+    rating: 0.4,       // avaliação - mais importante para recomendação
+    genre: 0.35,       // genero - influencia preferências de estilo
+    language: 0.3,     // linguagem - importante para recomendação
+    director: 0.25,    // diretor - influencia estilo do filme
+    year: 0.1,         // temporal
 };
 // Normalize continuous values (price, age) to 0-1 range
 // Why? Keeps all features balanced so no one dominates training
@@ -18,71 +19,186 @@ const WEIGHTS = {
 
 const normalize = (value, min, max) => (value - min) / ((max - min) || 1);
 
-function makeContext(products, users) {
-    const ages = users.map(u => u.age);
-    const price = products.map(p => p.price);
+/**
+ * ====================================================================
+ * 🏗️ CONSTRUIR CONTEXTO - Onde toda a mágica começa!
+ * ====================================================================
+ * 
+ * Este método:
+ * 1. Extrai valores únicos (gêneros, diretores, idiomas)
+ * 2. Cria índices para codificação one-hot
+ * 3. Calcula idade média dos assistidores por filme
+ * 4. Retorna contexto pronto para encoding
+ */
+function makeContext(movies, users) {
+    console.log('🎬 Construindo contexto de filmes...');
+    console.log(`   📽️ Filmes: ${movies.length}`);
+    console.log(`   👥 Usuários: ${users.length}`);
 
+    // ====================================================================
+    // 1️⃣ EXTRAIR RANGES DE VALORES CONTÍNUOS
+    // ====================================================================
+
+    // Idades dos usuários (para normalizar "idade média de quem assistiu")
+    const ages = users.map(u => u.age);
     const minAge = Math.min(...ages);
     const maxAge = Math.max(...ages);
 
-    const minPrice = Math.min(...price);
-    const maxPrice = Math.max(...price);
+    // Ratings dos filmes (0-10)
+    const ratings = movies.map(m => m.rating);
+    const minRating = Math.min(...ratings);
+    const maxRating = Math.max(...ratings);
 
-    const colors = [...new Set(products.map(p => p.color))]; //new Set para remover duplicados
-    const categories = [...new Set(products.map(p => p.category))];
+    // Anos de lançamento (1998-2021)
+    const years = movies.map(m => m.year);
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
 
+    // Durações dos filmes (em minutos: 98-169)
+    const durations = movies.map(m => m.duration);
+    const minDuration = Math.min(...durations);
+    const maxDuration = Math.max(...durations);
 
-    const colorsIndex = Object.fromEntries(
-        colors.map((color, index) => {
-            return [color, index];
-        })
+    console.log(`   📊 Ranges - Age: [${minAge}-${maxAge}], Rating: [${minRating}-${maxRating}], Year: [${minYear}-${maxYear}], Duration: [${minDuration}-${maxDuration}]`);
+
+    // ====================================================================
+    // 2️⃣ EXTRAIR CATEGORIAS ÚNICAS & CRIAR ÍNDICES
+    // ====================================================================
+
+    // Gêneros únicos (ficção científica, ação, drama, crime, documentário)
+    const genres = [...new Set(movies.map(m => m.genre))];
+
+    // Diretores únicos (Christopher Nolan, Walter Salles, etc)
+    const directors = [...new Set(movies.map(m => m.director))];
+
+    // Idiomas únicos (english, português)
+    const languages = [...new Set(movies.map(m => m.language))];
+
+    console.log(`   🎭 Gêneros (${genres.length}):`, genres);
+    console.log(`   🎥 Diretores (${directors.length}):`, directors.slice(0, 5), '...');
+    console.log(`   🗣️ Idiomas (${languages.length}):`, languages);
+
+    // ====================================================================
+    // 3️⃣ CRIAR DICIONÁRIOS: MAPEAMENTO DE ÍNDICES
+    // ====================================================================
+    // Exemplo: genresIndex = { 'ficção científica': 0, 'ação': 1, 'drama': 2, ... }
+    // Isso permite fazer one-hot encoding depois!
+
+    const genresIndex = Object.fromEntries(
+        genres.map((genre, index) => [genre, index])
     );
 
-    const categoriesIndex = Object.fromEntries(
-        categories.map((category, index) => {
-            return [category, index];
-        })
+    const directorsIndex = Object.fromEntries(
+        directors.map((director, index) => [director, index])
     );
 
-    //Computar a media de idade dos compradores por produto 
-    //(ajuda a entender quais produtos são mais populares entre diferentes faixas etárias)
+    const languagesIndex = Object.fromEntries(
+        languages.map((language, index) => [language, index])
+    );
 
-    const midAge = (minAge + maxAge) / 2;
-    const ageSums = {};
-    const ageCounts = {};
+    // ====================================================================
+    // 4️⃣ CALCULAR IDADE MÉDIA DE QUEM ASSISTIU CADA FILME
+    // ====================================================================
+    // 
+    // Por quê? Ajuda o modelo a entender que:
+    //   - Se um filme foi muito assistido por jovens (idade 22-25)
+    //   - Um novo usuário jovem terá preferência maior por esse filme
+    //
+    // Exemplo: "Dune" (2021) pode ser mais assistido por jovens (média 25 anos)
+    //          "Central do Brasil" (1998) pode ser mais assistido por adultos (média 30 anos)
+    //
 
+    const midAge = (minAge + maxAge) / 2; // média geral de idade
+    const ageSums = {};      // soma de idades que assistiram cada filme
+    const ageCounts = {};    // contagem de quantas pessoas assistiram
+
+    // Iterar por cada usuário e seus filmes assistidos
     users.forEach(user => {
-        user.purchases.forEach(p => {
-            ageSums[p.name] = (ageSums[p.name] || 0) + user.age; // Soma de todas as idades 
-            ageCounts[p.name] = (ageCounts[p.name] || 0) + 1; // Contagem de quantas vezes o produto foi comprado
+        user.movieWatches.forEach(movie => {
+            ageSums[movie.name] = (ageSums[movie.name] || 0) + user.age;
+            ageCounts[movie.name] = (ageCounts[movie.name] || 0) + 1;
         });
-    })
+    });
 
-    const productAvgAgeNorm = Object.fromEntries(
-        products.map(product => {
-            const avg =
-                ageCounts[product.name] ? ageSums[product.name] / ageCounts[product.name]
-                    : midAge; // Se o produto não foi comprado, usa a média geral
-            return [product.name, normalize(avg, minAge, maxAge)];
+    // Calcular a idade NORMALIZADA média para cada filme
+    const movieAvgAgeNorm = Object.fromEntries(
+        movies.map(movie => {
+            // Se ninguém assistiu esse filme ainda, usar idade média geral
+            const avg = ageCounts[movie.name]
+                ? ageSums[movie.name] / ageCounts[movie.name]
+                : midAge;
+
+            // Normalizar para 0-1
+            const normalized = normalize(avg, minAge, maxAge);
+
+            return [movie.name, normalized];
         })
-    )
+    );
 
+    console.log(`   ✅ Idade média normalizada calculada para ${Object.keys(movieAvgAgeNorm).length} filmes`);
+
+    // ====================================================================
+    // 5️⃣ CALCULAR DIMENSIONALIDADE DO VETOR
+    // ====================================================================
+    // 
+    // Dimensão total = quantos números cada filme será representado
+    // 
+    // Breakdown:
+    //   - Rating (normalizado 0-1): 1 valor
+    //   - Year (normalizado 0-1): 1 valor
+    //   - Duration (normalizado 0-1): 1 valor
+    //   - Genre (one-hot): N_GENRES valores (5 gêneros = 5 valores)
+    //   - Director (one-hot): N_DIRECTORS valores (varia)
+    //   - Language (one-hot): N_LANGUAGES valores (2 idiomas = 2 valores)
+    //
+    // Total = 3 + 5 + N_DIRECTORS + 2
+    //
+
+    const dimensions = 3 + genres.length + directors.length + languages.length;
+
+    console.log(`
+    ✅ CONTEXTO CONSTRUÍDO COM SUCESSO!
+    ├─ Dimensões do vetor de filme: ${dimensions}
+    │  ├─ Valores contínuos: 3 (rating, year, duration)
+    │  ├─ Gêneros (one-hot): ${genres.length}
+    │  ├─ Diretores (one-hot): ${directors.length}
+    │  └─ Idiomas (one-hot): ${languages.length}
+    ├─ Dimensões total (user+movie): ${dimensions * 2}
+    └─ Dados: ${movies.length} filmes × ${users.length} usuários
+    `);
+
+    // ====================================================================
+    // 6️⃣ RETORNAR CONTEXTO COMPLETO
+    // ====================================================================
     return {
-        products,
-        users,
-        colorsIndex,
-        categoriesIndex,
-        productAvgAgeNorm,
+        // 📊 Dados brutos
+        movies,                    // Array de filmes original
+        users,                     // Array de usuários original
+
+        // 📈 Índices para one-hot encoding
+        genresIndex,              // { 'ficção científica': 0, 'ação': 1, ... }
+        directorsIndex,           // { 'Christopher Nolan': 0, 'Walter Salles': 1, ... }
+        languagesIndex,           // { 'english': 0, 'português': 1 }
+
+        // 🔢 Ranges para normalização
         minAge,
         maxAge,
-        minPrice,
-        maxPrice,
-        numCategories: categories.length,
-        numColors: colors.length,
-        // price + age + colors + categories
-        dimentions: 2 + categories.length + colors.length
-    }
+        minRating,
+        maxRating,
+        minYear,
+        maxYear,
+        minDuration,
+        maxDuration,
+        // 📊 Metadados
+        movieAvgAgeNorm,          // { 'Inception': 0.45, 'Cidade de Deus': 0.8, ... }
+        // 📐 Contagens
+        numGenres: genres.length,
+        numDirectors: directors.length,
+        numLanguages: languages.length,
 
+        // 🎯 Dimensionalidade (importante para rede neural!)
+        dimensions: dimensions
+    };
 }
 
 
