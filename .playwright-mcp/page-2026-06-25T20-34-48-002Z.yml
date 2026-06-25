@@ -1,0 +1,7 @@
+- main [ref=e2]:
+  - heading "Hello World" [level=1] [ref=e3]
+  - generic [ref=e4]:
+    - paragraph [ref=e5]: Você não está logado
+    - button "Entrar com GitHub" [ref=e6] [cursor=pointer]:
+      - img [ref=e7]
+      - text: Entrar com GitHub
