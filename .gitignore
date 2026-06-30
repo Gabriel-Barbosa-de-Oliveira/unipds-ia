@@ -59,3 +59,12 @@ jspm_packages/
 # Logs
 logs
 *.log
+
+*.db.*
+*.cfe
+*.cfs
+*.si
+*index
+*neostore
+*auth
+*.tmp
