@@ -1,0 +1,19 @@
+{
+  "name": "02-langchain-intro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@langchain/core": "^1.1.19",
+    "@types/node": "^24.10.12",
+    "fastify": "^5.7.4",
+    "langchain": "^1.2.17"
+  }
+}
