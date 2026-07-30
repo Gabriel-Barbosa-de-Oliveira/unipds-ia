@@ -13,6 +13,8 @@ import { createIdentifyIntentNode} from "./nodes/identifyIntentNode.ts";
 import { createMessageGeneratorNode } from "./nodes/messageGeneratorNode.ts";
 
 import { z } from "zod/v3";
+import { AppointmentService } from "../services/appointmentService.ts";
+import { OpenRouterService } from "../services/openRouterService.ts";
 
 const AppointmentStateAnnotation = z.object({
   messages: withLangGraph(
@@ -36,14 +38,14 @@ const AppointmentStateAnnotation = z.object({
 
 export type GraphState = z.infer<typeof AppointmentStateAnnotation>;
 
-export function buildAppointmentGraph() {
+export function buildAppointmentGraph(llmClient: OpenRouterService, appointmentService: AppointmentService) {
 
 
   // Build workflow graph
   const workflow = new StateGraph({
     stateSchema: AppointmentStateAnnotation,
   })
-    .addNode('identifyIntent', createIdentifyIntentNode())
+    .addNode('identifyIntent', createIdentifyIntentNode(llmClient))
     .addNode('schedule', createSchedulerNode())
     .addNode('cancel', createCancellerNode())
     .addNode('message', createMessageGeneratorNode())
