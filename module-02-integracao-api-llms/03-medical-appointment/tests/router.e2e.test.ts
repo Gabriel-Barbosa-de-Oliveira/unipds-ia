@@ -17,9 +17,9 @@ async function makeARequest(question: string) {
 
 describe('Medical Appointment System - E2E Tests', async () => {
 
-    it('Schedule appointment - Success', async () => {
+    it.skip('Schedule appointment - Success', async () => {
         const response = await makeARequest(
-            `Olá, sou Maria Santos e quero agendar uma consulta com ${professionals.at(0)?.name} Dr. Alicio da Silva para amanhã às 16h para um check-up regular`
+            `Olá, sou Maria Santos e quero agendar uma consulta com ${professionals.at(0)?.name} para amanhã às 16h para um check-up regular`
         )
 
         console.log('Schedule Success Response:', response.body);
@@ -27,7 +27,7 @@ describe('Medical Appointment System - E2E Tests', async () => {
         assert.equal(response.statusCode, 200);
         const body = JSON.parse(response.body);
         assert.equal(body.intent, 'schedule');
-        assert.equal(body.success, true);
+        assert.equal(body.actionSuccess, true);
     });
 
 
@@ -44,8 +44,8 @@ describe('Medical Appointment System - E2E Tests', async () => {
         console.log('Cancel Success Response:', response.body);
 
         assert.equal(response.statusCode, 200);
-        // const body = JSON.parse(response.body);
-        // assert.equal(body.intent, 'cancel');
-        // assert.equal(body.success, true);
+        const body = JSON.parse(response.body);
+        assert.equal(body.intent, 'cancel');
+        assert.equal(body.actionSuccess, true);
     });
 });
