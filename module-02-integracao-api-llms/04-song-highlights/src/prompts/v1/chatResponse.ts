@@ -1,5 +1,6 @@
 import { z } from 'zod/v3';
 
+//Formato de json retornado apos input via chat
 export const UserPreferencesSchema = z.object({
   name: z.string().optional().describe('Nome do usuário'),
   age: z.number().optional().describe('Idade do usuário'),
