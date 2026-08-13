@@ -9,6 +9,12 @@ export const createChatNode = (openRouterService: OpenRouterService) => {
         try {
             const userPrompt = state.messages.at(-1)?.text!
             const template = PromptTemplate.fromTemplate(prompts.system);
+
+            // exemplo abaixo é mais inseguro!!
+            // const systemPrompt = prompts.system
+            //  .replace('{USER_ROLE}', state.user.role);
+            //  .replace('{USER_NAME}', state.user.displayName);
+            
             const systemPrompt = await template.format(
                 {
                     USER_ROLE: state.user.role,
