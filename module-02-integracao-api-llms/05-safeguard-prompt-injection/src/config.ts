@@ -43,8 +43,8 @@ export const config: ModelConfig = {
   httpReferer: '',
   xTitle: 'IA Devs - Guardrails'!,
   models: [
-    'nvidia/nemotron-3-super-120b-a12b:free',
-    // 'qwen/qwen-2.5-7b-instruct',// unsafe!
+    // 'nvidia/nemotron-3-super-120b-a12b:free',
+    'qwen/qwen-2.5-7b-instruct',// unsafe!
   ],
 
   guardrailsModel: 'openai/gpt-oss-safeguard-20b',

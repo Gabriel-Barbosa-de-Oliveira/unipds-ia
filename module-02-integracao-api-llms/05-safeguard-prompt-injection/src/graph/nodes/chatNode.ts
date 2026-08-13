@@ -20,9 +20,8 @@ export const createChatNode = (openRouterService: OpenRouterService) => {
 
             const response = await openRouterService.generate(systemPrompt, userPrompt);
 
-            console.log(response)
             return {
-                ...state,
+                messages: [new AIMessage(response)],
             };
         } catch (error) {
             console.error('Chat node error:', error);
