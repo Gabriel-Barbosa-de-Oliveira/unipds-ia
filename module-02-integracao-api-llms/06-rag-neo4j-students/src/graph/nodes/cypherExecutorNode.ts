@@ -8,6 +8,7 @@ export function createCypherExecutorNode(neo4jService: Neo4jService) {
 
       return {
         ...state,
+        isMultiStep: false,
       };
     } catch (error) {
       console.error('Error executing Cypher query:', error instanceof Error ? error.message : error);
