@@ -4,7 +4,7 @@ import { SystemMessage, HumanMessage, BaseMessage, AIMessage } from '@langchain/
 import { createAgent, providerStrategy } from 'langchain';
 import { getMCPTools } from './mcpService.ts';
 import { z } from 'zod/v3';
-import { ChatGeneration } from '@langchain/core/outputs';
+import type { ChatGeneration } from '@langchain/core/outputs';
 
 export class OpenRouterService {
     private config: ModelConfig;
