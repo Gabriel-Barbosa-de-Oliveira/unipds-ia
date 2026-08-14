@@ -21,7 +21,7 @@ export function createQueryPlannerNode(llmClient: OpenRouterService) {
         return {
           ...state,
           error,
-          isMultiStep: true,
+          isMultiStep: false,
 
         }
       }
