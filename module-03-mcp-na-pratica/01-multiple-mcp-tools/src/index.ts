@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { createServer } from './server.ts';
+import { closeMCPTools } from './services/mcpService.ts';
 
 const app = await createServer();
 
@@ -27,11 +28,13 @@ app.inject({
   payload: {
     question,
   },
-}).then(response => {
+}).then(async response => {
   console.log('Response from /chat:', response.statusCode)
   console.log(response.body);
+  await closeMCPTools();
   process.exit(0);
-}).catch(error => {
+}).catch(async error => {
   console.error('Error testing /chat endpoint:', error);
+  await closeMCPTools();
   process.exit(1);
 });

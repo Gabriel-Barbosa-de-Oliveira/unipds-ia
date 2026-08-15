@@ -22,7 +22,7 @@ export const config: ModelConfig = {
   httpReferer: '',
   xTitle: 'IA Devs - Transforming Services into Tools',
   models: [
-    'nvidia/nemotron-3-ultra-550b-a55b:free',
+    'arcee-ai/trinity-large-thinking',
   ],
   provider: {
     sort: {

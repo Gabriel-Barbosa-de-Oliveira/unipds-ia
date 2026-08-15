@@ -7,21 +7,18 @@ export function agentNode(openRouterService: OpenRouterService) {
     return async (state: GraphState): Promise<Partial<GraphState>> => {
         console.log('🤖 Agent node processing...');
         try {
-
-            const userMessage = getUserPrompt(
-                {
-                    intent: state.intent!,
-                    fileName: state.fileName!,
-                    fileContent: state.fileContent!
-                }
-            )
-
+            const userMessage = getUserPrompt({
+                intent: state.intent!,
+                fileName: state.fileName!,
+                fileContent: state.fileContent!
+            })
             const result = await openRouterService.generateStructured(
                 getSystemPrompt(),
-                userMessage
+                userMessage,
             )
 
             return {
+                error: undefined,
                 messages: [new AIMessage(result.data as string)]
             };
 
