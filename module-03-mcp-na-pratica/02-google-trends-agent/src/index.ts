@@ -9,7 +9,7 @@ console.log(`Server is running on http://0.0.0.0:3000`);
 app.inject({
   method: 'POST',
   url: '/chat',
-  payload: { question: "O que você me recomendaria para lançar uma nova musica no youtube chamada letargia ?" },
+  payload: { question: "Estou pensando em criar um video sobre Web AI, quais titulos você me recomendaria sobre?" },
 }).then(response => {
   console.log('Response from /chat:', response.statusCode)
   console.log(response.body);
