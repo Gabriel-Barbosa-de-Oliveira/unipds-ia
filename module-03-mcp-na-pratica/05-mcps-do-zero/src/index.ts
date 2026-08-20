@@ -1,13 +1,12 @@
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { decrypt, encrypt } from "./service.ts";
+import { server } from "./mcp.ts";
 
 async function main() {
-    const myMessage = "Hello, World!";
-    const encryptionKey = "my-secret-passphrase";
-
-    const encryptedMessage = encrypt(myMessage, encryptionKey);
-    console.log("Encrypted message:", encryptedMessage);
-    const decryptedMessage = decrypt(encryptedMessage, encryptionKey);
-    console.log("Decrypted message:", decryptedMessage);
+    const transport = new StdioServerTransport();
+    await server.connect(transport)
+    //não tem console log em server mcp
+    console.error('Encrypt MCP Server running on stdio')
 }
 
 main().catch((error) => {
