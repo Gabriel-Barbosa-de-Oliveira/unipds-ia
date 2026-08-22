@@ -77,3 +77,53 @@ server.registerTool(
         }
     }
 )
+
+server.registerResource(
+    'encryption://info',
+    'encryption://info',
+    {
+        description: 'Describes the encryption algorithm, key requirements, and output format used by this server',
+    },
+    () => ({
+        contents: [
+            {
+                uri: "encryption://info",
+                mimeType: "text/plain",
+                text: `
+Algorithm : AES-256-CBC
+Key derivation: scrypt (passphrase + fixed server salt → 32-byte key)
+Output format: <16-byte IV in hex>:<ciphertext in hex>  (separated by ":")
+Notes:
+  - Users pass any passphrase — the server derives a strong 32-byte key automatically using scrypt.
+  - A random IV is generated for every encryption — the same message encrypted twice will produce different output.
+  - Use the exact same passphrase to decrypt.
+  - Keep the full "iv:ciphertext" string to decrypt later.
+                `.trim(),
+            },
+        ]
+    })
+)
+
+server.registerPrompt(
+    "encrypt_message_prompt",
+    {
+        description: "Prompt to encrypt a plain-text message using the encrypt_message tool",
+        argsSchema: {
+            message: z.string().describe("The message to encrypt"),
+            encryptionKey: z.string().describe(
+                "Any passphrase to use for encryption — the server derives a strong key from it automatically"
+            )
+        }
+    },
+    ({ message, encryptionKey }) => ({
+        messages: [
+            {
+                role: 'user',
+                content: {
+                    type: "text",
+                    text: `Please encrypt the following message using the encrypt_message tool.\nMessage: ${message}\nEncryption key: ${encryptionKey}`,
+                }
+            }
+        ]
+    })
+)

@@ -29,7 +29,7 @@ async function decryptMessage(client: Client, encryptedMessage: string, encrypti
 
 describe("MCP Tool Tests", () => {
     let client: Client
-    let encryptionKey = 'my-syper-passphrase';
+    let encryptionKey = 'my-super-passphrase';
 
     before(async () => {
         client = await createTestClient()
@@ -60,12 +60,36 @@ describe("MCP Tool Tests", () => {
 
         const result = await decryptMessage(client, encryptedMessage, key);
         assert.deepStrictEqual(
-            result.structuredContent.decryptedMessage, 
-            message, 
+            result.structuredContent.decryptedMessage,
+            message,
             "Decrypted message should not be empty"
         );
-
-
     })
 
+    it("should list the encryption://info resource", async () => {
+        const { resources } = await client.listResources();
+        const info = resources.find(item => item.uri === "encryption://info")
+
+        assert.ok(info, "encryption://info")
+    })
+
+    it('should return the encrypt_message_prompt', async () => {
+        const result = await client.getPrompt({
+            name: 'encrypt_message_prompt',
+            arguments: {
+                message: 'Secret text',
+                encryptionKey,
+            }
+        })
+
+        const item = result.messages.at(0)?.content as unknown as { text: string }
+        const expected = `Please encrypt the following message using the encrypt_message tool.
+Message: Secret text
+Encryption key: my-super-passphrase`
+        assert.deepStrictEqual(
+            item.text,
+            expected,
+            'Prompt should be in the correct format'
+        )
+    })
 })
