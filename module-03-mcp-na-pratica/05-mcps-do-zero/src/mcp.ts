@@ -40,4 +40,40 @@ server.registerTool(
             }
         }
     }
-) 
+)
+
+server.registerTool(
+    'decrypt_message',
+    {
+        description: 'Decrypt a message that was encrypted with the encrypt_message tool',
+        inputSchema: {
+            encryptedMessage: z.string().describe("The encrypted message (format: iv:ciphertext)"),
+            encryptionKey: z.string().describe("The same passphrase used during encryption")
+        },
+        outputSchema: {
+            decryptedMessage: z.string().describe("The decrypted plain-text message")
+        }
+    },
+    async ({ encryptedMessage, encryptionKey }) => {
+        try {
+            const decryptedMessage = decrypt(encryptedMessage, encryptionKey)
+            return {
+                content: [{ type: 'text', text: decryptedMessage }],
+                structuredContent: { decryptedMessage }
+            }
+
+        } catch (error) {
+            return {
+                isError: true,
+                content: [
+                    {
+                        type: "text",
+                        text: `Failed to decrypt message! Check if the encrypted message is correct and if the encryption key matches the one used for encryption. Error details: ${error instanceof Error ? error.message : String(error)}`,
+
+                    }
+                ]
+            }
+
+        }
+    }
+)

@@ -15,6 +15,18 @@ async function encryptMessage(client: Client, message: string, encryptionKey: st
     return result;
 }
 
+async function decryptMessage(client: Client, encryptedMessage: string, encryptionKey: string) {
+    const result = await client.callTool({
+        name: "decrypt_message",
+        arguments: {
+            encryptedMessage,
+            encryptionKey
+        }
+    }) as unknown as { structuredContent: { decryptedMessage: string } }
+
+    return result;
+}
+
 describe("MCP Tool Tests", () => {
     let client: Client
     let encryptionKey = 'my-syper-passphrase';
@@ -25,7 +37,7 @@ describe("MCP Tool Tests", () => {
 
     after(async () => {
         await client.close()
-    }) 
+    })
 
     it("should encrypt a message", async () => {
         const message = "Hello World"
@@ -38,6 +50,22 @@ describe("MCP Tool Tests", () => {
             "Encrypted message should not be empty"
         )
     })
-    it.todo("should decrypt a message")
+
+    it("should decrypt a message", async () => {
+        const message = "Heyyyyy"
+        const key = "my-super-key"
+        const { structuredContent: { encryptedMessage } } = await encryptMessage(
+            client, message, key
+        )
+
+        const result = await decryptMessage(client, encryptedMessage, key);
+        assert.deepStrictEqual(
+            result.structuredContent.decryptedMessage, 
+            message, 
+            "Decrypted message should not be empty"
+        );
+
+
+    })
 
 })
