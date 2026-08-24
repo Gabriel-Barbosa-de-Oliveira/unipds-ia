@@ -104,6 +104,7 @@ fastify.post('/v1/customers', {
 })
 
 fastify.put('/v1/customers/:id', {
+    preHandler: [requireRole('admin')],
     schema: {
         body: {
             type: 'object',
@@ -154,6 +155,7 @@ fastify.put('/v1/customers/:id', {
 })
 
 fastify.delete('/v1/customers/:id', {
+    preHandler: [requireRole('admin')],
     schema: {
         response: {
             200: {

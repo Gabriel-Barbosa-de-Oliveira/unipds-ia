@@ -173,7 +173,7 @@ describe('API Workflow', () => {
         })
     })
 
-    describe.skip('POST /v1/auth/login', () => {
+    describe('POST /v1/auth/login', () => {
         it('should return a token for valid credentials (admin)', async () => {
             const res = await _testServer.inject({
                 method: 'POST',
@@ -214,7 +214,7 @@ describe('API Workflow', () => {
         })
     })
 
-    describe.skip('RBAC - member role', () => {
+    describe('RBAC - member role', () => {
         it('member can list customers (GET /v1/customers)', async () => {
             const res = await getCustomers(_memberToken)
             deepStrictEqual(res.statusCode, 200)
