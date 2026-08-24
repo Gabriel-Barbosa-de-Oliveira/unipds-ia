@@ -15,13 +15,17 @@ export const JWT_SECRET = "supersecret"
 export function initAuthRoute(fastify) {
     fastify.addHook('onRequest', async (request, reply) => {
         const publicRoutes = [
-            "/v1/health",
-            "/v1/auth/login",
-            "/v1/auth/service-token"
+            '/v1/health',
+            '/v1/auth/login',
+            '/v1/auth/service-token'
         ]
-
         if (publicRoutes.includes(request.originalUrl)) return
-        return reply.code(401).send({ message: "Unauthorized" })
+        try {
+            await request.jwtVerify()
+        } catch (error) {
+            console.error('[onRequest]', error)
+            return reply.code(401).send({ message: 'Unauthorized' })
+        }
     })
 
     fastify.post("/v1/auth/login",
@@ -67,4 +71,14 @@ export function initAuthRoute(fastify) {
             return reply.send({ token })
         })
 
+}
+
+export function requireRole(role) {
+    return async function (request, reply) {
+        if (request.user.role === role) return
+
+        return reply.code(403).send({
+            message: 'Forbidden: insufficient permissions'
+        })
+    }
 }

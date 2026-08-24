@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import fastifyJwt from '@fastify/jwt'
 import { getDb } from './db.js'
 import { ObjectId } from 'mongodb'
-import { initAuthRoute, JWT_SECRET } from './auth.js';
+import { initAuthRoute, JWT_SECRET, requireRole } from './auth.js';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 if (!isTestEnv && !process.env.DB_NAME) {
@@ -77,6 +77,7 @@ fastify.get('/v1/customers/:id', {
 })
 
 fastify.post('/v1/customers', {
+    preHandler: [requireRole('admin')],
     schema: {
         body: {
             type: 'object',
@@ -238,14 +239,14 @@ const authResponse = await fastify.inject({
 const { token } = await authResponse.json()
 console.log(token)
 
-// const createCustomerResponse = await fastify.inject({
-//     method: 'POST',
-//     url: `/v1/customers`,
-//     headers: {
-//         'Authorization': `bearer ${token}`
-//     },
-//     payload: { name: 'test', phone: 'test' },
-// })
+const createCustomerResponse = await fastify.inject({
+    method: 'POST',
+    url: `/v1/customers`,
+    headers: {
+        'Authorization': `bearer ${token}`
+    },
+    payload: { name: 'test', phone: 'test' },
+})
 
-// console.log(' createCustomerResponse ', await createCustomerResponse.json())
+console.log(' createCustomerResponse ', await createCustomerResponse.json())
 
