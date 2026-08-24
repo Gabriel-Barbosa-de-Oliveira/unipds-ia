@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import fastifyJwt from '@fastify/jwt'
 import { getDb } from './db.js'
 import { ObjectId } from 'mongodb'
+import { initAuthRoute, JWT_SECRET } from './auth.js';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 if (!isTestEnv && !process.env.DB_NAME) {
@@ -10,6 +11,9 @@ if (!isTestEnv && !process.env.DB_NAME) {
 }
 
 const fastify = Fastify({})
+fastify.register(fastifyJwt, {secret: JWT_SECRET})
+
+initAuthRoute(fastify)
 
 const { dbClient, collections: { dbUsers } } = await getDb()
 
@@ -218,21 +222,21 @@ if (!isTestEnv) {
 export const server = fastify
 
 
-// import { authUsers } from './auth.js'
+import { authUsers } from './auth.js'
 
-// const adminUser = authUsers.at(0)
-// const memberUser = authUsers.at(1)
-// const user = adminUser
+const adminUser = authUsers.at(0)
+const memberUser = authUsers.at(1)
+const user = adminUser
 
-// console.log(user)
+console.log(user)
 
-// const authResponse = await fastify.inject({
-//     method: 'POST',
-//     url: `/v1/auth/login`,
-//     payload: user,
-// })
-// const { token } = await authResponse.json()
-// console.log(token)
+const authResponse = await fastify.inject({
+    method: 'POST',
+    url: `/v1/auth/login`,
+    payload: user,
+})
+const { token } = await authResponse.json()
+console.log(token)
 
 // const createCustomerResponse = await fastify.inject({
 //     method: 'POST',
