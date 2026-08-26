@@ -1,6 +1,6 @@
 {
-  "name": "@erickwendel/customers-mcp",
-  "version": "0.0.2",
+  "name": "@gabriel_barbosa/customers-mcp",
+  "version": "0.0.6",
   "description": "MCP server that exposes a customer CRUD API as tools for use with GitHub Copilot and other MCP-compatible agents",
   "main": "index.js",
   "bin": {
