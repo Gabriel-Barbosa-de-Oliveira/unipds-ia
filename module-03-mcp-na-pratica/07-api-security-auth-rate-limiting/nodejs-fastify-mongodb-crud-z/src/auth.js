@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import { REQUESTS_PER_MINUTE } from "./config.js"
 
 export const authUsers = [{
     username: 'erickwendel',
@@ -16,6 +17,12 @@ export const JWT_SECRET = "supersecret"
 export const ADMIN_SUPER_SECRET = "AM I THE BOSS?"
 const issuedServiceToken = new Map()
 
+export const rateLimitOptions = {
+    max: REQUESTS_PER_MINUTE,
+    timeWindow: "1 minute",
+    keyGenerator: (request) => request.headers?.authorization?.replace(/bearer /i, "") ?? request.ip
+}
+
 export function initAuthRoute(fastify) {
     fastify.addHook('onRequest', async (request, reply) => {
         const publicRoutes = [
@@ -27,13 +34,13 @@ export function initAuthRoute(fastify) {
 
         const token = request.headers?.authorization?.replace(/bearer /i, "");
         const serviceUser = issuedServiceToken.get(token)
-        if(serviceUser){
+        if (serviceUser) {
             request.user = serviceUser
             return;
         }
 
         try {
-            await request.  jwtVerify()
+            await request.jwtVerify()
         } catch (error) {
             console.error('[onRequest]', error)
             return reply.code(401).send({ message: 'Unauthorized' })
