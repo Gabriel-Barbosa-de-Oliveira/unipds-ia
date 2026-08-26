@@ -149,7 +149,7 @@ describe('API Workflow', () => {
         })
     })
 
-    describe.skip('Service token - API access & rate limiting', () => {
+    describe('Service token - API access & rate limiting', () => {
         const ADMIN_SUPER_SECRET = 'AM I THE BOSS?'
 
         it(`should allow API access and rate limit after ${REQUESTS_PER_MINUTE} requests with the service token`, async () => {
