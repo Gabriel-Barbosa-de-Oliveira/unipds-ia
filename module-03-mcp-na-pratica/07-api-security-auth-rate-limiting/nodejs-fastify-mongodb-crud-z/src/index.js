@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import fastifyJwt from '@fastify/jwt'
 import { getDb } from './db.js'
 import { ObjectId } from 'mongodb'
-import { initAuthRoute, JWT_SECRET, requireRole } from './auth.js';
+import { ADMIN_SUPER_SECRET, initAuthRoute, JWT_SECRET, requireRole } from './auth.js';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 if (!isTestEnv && !process.env.DB_NAME) {
@@ -233,22 +233,26 @@ const user = adminUser
 
 console.log(user)
 
-const authResponse = await fastify.inject({
-    method: 'POST',
-    url: `/v1/auth/login`,
-    payload: user,
-})
-const { token } = await authResponse.json()
-console.log(token)
+// const authResponse = await fastify.inject({
+//     method: 'POST',
+//     url: `/v1/auth/service-token`,
+//     payload: {
+//         ...user,
+//         adminSuperSecret: ADMIN_SUPER_SECRET
+//     },
+// })
+// const { role, serviceToken } = await authResponse.json()
+// console.log(role, serviceToken)
 
-const createCustomerResponse = await fastify.inject({
-    method: 'POST',
-    url: `/v1/customers`,
-    headers: {
-        'Authorization': `bearer ${token}`
-    },
-    payload: { name: 'test', phone: 'test' },
-})
+// const createCustomerResponse = await fastify.inject({
+//     method: 'POST',
+//     url: `/v1/customers`,
+//     headers: {
+//         'Authorization': `bearer ${serviceToken}`,
+//         // "X-Service-Token": `${serviceToken}` - Jeito Correto
+//     },
+//     payload: { name: 'test', phone: 'test' },
+// })
 
-console.log(' createCustomerResponse ', await createCustomerResponse.json())
+// console.log(' createCustomerResponse ', await createCustomerResponse.json())
 

@@ -100,7 +100,7 @@ describe('API Workflow', () => {
     after(async () => _testServer.close())
 
 
-    describe.skip('POST /v1/auth/service-token', () => {
+    describe('POST /v1/auth/service-token', () => {
         const ADMIN_SUPER_SECRET = 'AM I THE BOSS?'
 
         it('should return role and a UUID serviceToken for valid admin credentials', async () => {
