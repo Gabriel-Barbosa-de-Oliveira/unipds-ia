@@ -18,7 +18,7 @@ export class InMemoryTaskStore implements TaskStore {
     return task;
   }
 
-  list(): Task[] {
+  list(): string {
     return [...this.#tasks.values()];
   }
 
