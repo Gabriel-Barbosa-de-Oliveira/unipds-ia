@@ -1,6 +1,10 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 import { ZodError } from "zod";
-import { listTaskFilterSchema, TaskNotFoundError } from "../domain/task.js";
+import {
+  listTaskFilterSchema,
+  TaskFileCorruptedError,
+  TaskNotFoundError,
+} from "../domain/task.js";
 import { TaskService } from "../service/task-service.js";
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -69,6 +73,10 @@ export function createTaskRouter(service: TaskService) {
     } catch (error) {
       if (error instanceof TaskNotFoundError) {
         sendError(res, 404, error.message);
+        return true;
+      }
+      if (error instanceof TaskFileCorruptedError) {
+        sendError(res, 500, error.message);
         return true;
       }
       if (error instanceof ZodError) {

@@ -24,3 +24,18 @@ export class TaskNotFoundError extends Error {
     this.name = "TaskNotFoundError";
   }
 }
+
+export const taskSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  status: z.enum(["open", "done"]),
+});
+
+export const taskFileSchema = z.array(taskSchema);
+
+export class TaskFileCorruptedError extends Error {
+  constructor(path: string, cause: string) {
+    super(`Arquivo de dados corrompido em ${path}: ${cause}`);
+    this.name = "TaskFileCorruptedError";
+  }
+}

@@ -1,9 +1,9 @@
 import { createServer } from "node:http";
 import { createTaskRouter } from "./http/task-routes.js";
 import { TaskService } from "./service/task-service.js";
-import { InMemoryTaskStore } from "./store/task-store.js";
+import { JsonFileTaskStore } from "./store/json-file-task-store.js";
 
-const service = new TaskService(new InMemoryTaskStore());
+const service = new TaskService(new JsonFileTaskStore());
 const handleTaskRoutes = createTaskRouter(service);
 
 const server = createServer((req, res) => {

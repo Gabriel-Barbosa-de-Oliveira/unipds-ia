@@ -1,6 +1,6 @@
 import { TaskNotFoundError } from "./domain/task.js";
 import { TaskService } from "./service/task-service.js";
-import { InMemoryTaskStore } from "./store/task-store.js";
+import { JsonFileTaskStore } from "./store/json-file-task-store.js";
 
 export interface Writable {
   write(chunk: string): void;
@@ -70,7 +70,7 @@ export function dispatch(args: string[], deps: DispatchDeps): number {
 const isMainModule = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
 
 if (isMainModule) {
-  const service = new TaskService(new InMemoryTaskStore());
+  const service = new TaskService(new JsonFileTaskStore());
   const exitCode = dispatch(process.argv.slice(2), {
     service,
     out: process.stdout,
