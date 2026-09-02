@@ -14,7 +14,8 @@ Copiloto de plantão que gerencia alertas e incidentes de produção. A API é u
 ## Comandos
 
 - `npm run dev` — inicia a API (`src/index.ts`)
-- `npm run arena` — roda `src/arena.ts`
+- `npm run arena` — roda `src/arena.ts` (`--input`, `--strategies`, `--max-iterations`)
+- `npm run seed` — semeia/restaura o MySQL com o dataset canônico (`src/scripts/seed.ts`)
 - `npm run bench` — roda `src/bench.ts`
 - `npm test` — roda os testes (`node --import tsx --test`)
 - `npm run typecheck` — `tsc --noEmit`
