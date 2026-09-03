@@ -2,10 +2,16 @@ import { z } from "zod";
 
 import { planAndExecuteStrategy } from "./agents/plan-and-execute.ts";
 import { reactStrategy } from "./agents/react.ts";
+import { withReflection } from "./agents/reflection.ts";
 import { formatMetrics, formatTrace } from "./agents/trace.ts";
 import type { ReasoningStrategy } from "./agents/types.ts";
 
-const STRATEGY_NAMES = ["react", "plan-and-execute"] as const;
+const STRATEGY_NAMES = [
+  "react",
+  "plan-and-execute",
+  "reflect:react",
+  "reflect:plan-and-execute",
+] as const;
 
 const ArgsSchema = z.object({
   input: z.string().min(1, "--input é obrigatório e não pode ser vazio"),
@@ -19,6 +25,8 @@ type Args = z.infer<typeof ArgsSchema>;
 const STRATEGIES: Record<(typeof STRATEGY_NAMES)[number], ReasoningStrategy> = {
   react: reactStrategy,
   "plan-and-execute": planAndExecuteStrategy,
+  "reflect:react": withReflection(reactStrategy),
+  "reflect:plan-and-execute": withReflection(planAndExecuteStrategy),
 };
 
 function parseArgs(argv: string[]): Args {

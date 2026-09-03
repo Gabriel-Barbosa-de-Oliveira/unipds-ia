@@ -26,6 +26,8 @@ export interface RunResult {
 
 export interface RunOptions {
   maxIterations?: number;
+  /** Aplica-se apenas à estratégia plan-and-execute: pula o replanner e executa o plano inicial até o fim. */
+  noReplanner?: boolean;
 }
 
 export interface ReasoningStrategy {

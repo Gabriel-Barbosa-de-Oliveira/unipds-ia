@@ -107,10 +107,19 @@ export class InMemoryOpsStore implements OpsStoreRepository {
     this.persist();
   }
 
+  /** Retorna o estado atual do store. Usado pelo bench para conferir o resultado das estratégias. */
+  getState(): OpsState {
+    return this.state;
+  }
+
   private persist(): void {
     writeOpsStateFile(this.filePath, this.state);
   }
 }
 
-/** Instância padrão compartilhada, usada por `src/agents/tools.ts` e por `src/arena.ts`. */
-export const store: OpsStoreRepository = new InMemoryOpsStore();
+/**
+ * Instância padrão compartilhada, usada por `src/agents/tools.ts`, `src/arena.ts` e `src/bench.ts`.
+ * Sem anotação de tipo `OpsStoreRepository`: o bench precisa de `reset`/`getState`, que não fazem
+ * parte do contrato do repositório.
+ */
+export const store = new InMemoryOpsStore();
