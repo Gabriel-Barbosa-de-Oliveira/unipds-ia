@@ -27,3 +27,23 @@ export class InvalidSeverityError extends Error {
     this.severity = severity;
   }
 }
+
+export class UnknownStrategyError extends Error {
+  readonly strategy: string;
+
+  constructor(strategy: string) {
+    super(`Unknown strategy: ${strategy}`);
+    this.name = "UnknownStrategyError";
+    this.strategy = strategy;
+  }
+}
+
+export class ChatTimeoutError extends Error {
+  readonly timeoutMs: number;
+
+  constructor(timeoutMs: number) {
+    super(`Chat execution exceeded timeout of ${timeoutMs}ms`);
+    this.name = "ChatTimeoutError";
+    this.timeoutMs = timeoutMs;
+  }
+}

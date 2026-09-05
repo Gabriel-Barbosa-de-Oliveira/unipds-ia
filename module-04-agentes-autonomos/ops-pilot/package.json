@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "node --env-file-if-exists=.env --import tsx src/index.ts",
     "arena": "node --env-file-if-exists=.env --import tsx src/arena.ts",
     "bench": "node --env-file-if-exists=.env --import tsx src/bench.ts",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
