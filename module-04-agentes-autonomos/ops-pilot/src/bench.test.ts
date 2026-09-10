@@ -27,6 +27,7 @@ function incident(overrides: Partial<Incident> & Pick<Incident, "id" | "serviceI
     severity: "high",
     status: "open",
     resolvedAt: null,
+    summary: null,
     ...overrides,
   };
 }

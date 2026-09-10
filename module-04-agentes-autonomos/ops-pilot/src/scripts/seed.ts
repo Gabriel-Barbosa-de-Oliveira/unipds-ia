@@ -1,19 +1,17 @@
-import { buildSeedState } from "../domain/seed-data.ts";
-import { DEFAULT_DATA_FILE, writeOpsStateFile } from "../services/ops-store.memory.ts";
+import { seedCanonicalScenario, SqliteOpsStore } from "../store/sqlite-ops-store.ts";
+
+const DEFAULT_DB_PATH = "./data/opspilot.db";
 
 /**
- * Semeia/restaura o arquivo JSON local (usado como base de dados enquanto a validação desta
- * feature não depende de um MySQL real — ver `src/services/ops-store.memory.ts`) para o dataset
- * canônico (5 serviços, 6 alertas: 3 firing, 3 resolved, sem incidentes). Idempotente:
- * reexecutar produz o mesmo estado (SC-006). O adaptador Sequelize/MySQL (`ops-store.sequelize.ts`)
- * permanece disponível para quando um banco real for necessário.
+ * Semeia/restaura o `SqliteOpsStore` (`OPSPILOT_DB`, default `./data/opspilot.db`) com o
+ * cenário canônico (5 serviços, 6 alertas: 3 firing, 3 resolved, 3 runbooks, 0 incidentes).
+ * Idempotente: reexecutar produz o mesmo estado (SC-005).
  */
 function seed(): void {
-  const state = buildSeedState();
-  writeOpsStateFile(DEFAULT_DATA_FILE, state);
-  console.log(
-    `Seed concluído em ${DEFAULT_DATA_FILE}: ${state.services.length} serviços, ${state.alerts.length} alertas (0 incidentes).`,
-  );
+  const dbPath = process.env.OPSPILOT_DB ?? DEFAULT_DB_PATH;
+  const store = new SqliteOpsStore(dbPath);
+  seedCanonicalScenario(store);
+  console.log(`Seed concluído em ${dbPath}: 5 serviços, 6 alertas, 3 runbooks (0 incidentes).`);
 }
 
 try {

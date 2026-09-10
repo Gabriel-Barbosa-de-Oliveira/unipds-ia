@@ -3,6 +3,7 @@ import { IncidentNotFoundError, InvalidSeverityError, ServiceNotFoundError } fro
 export type AlertStatus = "firing" | "resolved";
 export type IncidentSeverity = "low" | "medium" | "high" | "critical";
 export type IncidentStatus = "open" | "resolved";
+export type IncidentStatusFilter = IncidentStatus | "all";
 
 export const INCIDENT_SEVERITIES: readonly IncidentSeverity[] = [
   "low",
@@ -32,12 +33,20 @@ export interface Incident {
   readonly status: IncidentStatus;
   readonly createdAt: string;
   readonly resolvedAt: string | null;
+  readonly summary: string | null;
+}
+
+export interface Runbook {
+  readonly id: string;
+  readonly serviceId: string;
+  readonly content: string;
 }
 
 export interface OpsState {
   readonly services: readonly Service[];
   readonly alerts: readonly Alert[];
   readonly incidents: readonly Incident[];
+  readonly runbooks: readonly Runbook[];
 }
 
 export interface OpenIncidentInput {
@@ -53,6 +62,7 @@ export interface OpenIncidentContext {
 
 export interface ResolveIncidentContext {
   readonly now: string;
+  readonly summary?: string;
 }
 
 /** Retorna os alertas do estado, opcionalmente filtrados por status. Lista vazia é um resultado válido. */
@@ -63,9 +73,33 @@ export function listAlerts(state: OpsState, status?: AlertStatus): Alert[] {
   return state.alerts.filter((alert) => alert.status === status);
 }
 
+/**
+ * Retorna os incidentes do estado, opcionalmente filtrados por status. `"all"` ou omitido
+ * retorna todos. Lista vazia é um resultado válido, não erro.
+ */
+export function listIncidents(state: OpsState, status?: IncidentStatusFilter): Incident[] {
+  if (!status || status === "all") {
+    return [...state.incidents];
+  }
+  return state.incidents.filter((incident) => incident.status === status);
+}
+
 function findServiceByName(state: OpsState, name: string): Service | undefined {
   const target = name.trim().toLowerCase();
   return state.services.find((service) => service.name.toLowerCase() === target);
+}
+
+/**
+ * Resolve o runbook de um serviço pelo nome. Lança `ServiceNotFoundError` se o nome não
+ * corresponde a nenhum serviço; retorna `null` (não é erro) se o serviço existe mas não tem
+ * runbook cadastrado.
+ */
+export function getRunbookForService(state: OpsState, serviceName: string): Runbook | null {
+  const service = findServiceByName(state, serviceName);
+  if (!service) {
+    throw new ServiceNotFoundError(serviceName);
+  }
+  return state.runbooks.find((runbook) => runbook.serviceId === service.id) ?? null;
 }
 
 /** Abre um novo incidente. Não muta `state`; retorna o próximo estado e o incidente criado. */
@@ -91,6 +125,7 @@ export function openIncident(
     status: "open",
     createdAt: ctx.now,
     resolvedAt: null,
+    summary: null,
   };
 
   return {
@@ -117,7 +152,12 @@ export function resolveIncident(
     return { state, incident: existing };
   }
 
-  const resolved: Incident = { ...existing, status: "resolved", resolvedAt: ctx.now };
+  const resolved: Incident = {
+    ...existing,
+    status: "resolved",
+    resolvedAt: ctx.now,
+    summary: ctx.summary ?? existing.summary,
+  };
   return {
     state: {
       ...state,

@@ -1,21 +1,18 @@
 <!--
 Sync Impact Report
-- Version change: (unset/template) → 1.0.0
-- Modified principles: n/a (initial ratification)
-- Added sections:
-  - Core Principles: I. Camadas Explícitas, II. Validação na Fronteira, III. Erros de Domínio,
-    IV. Funções Puras, V. Teste Obrigatório, VI. Segurança por Padrão, VII. Spec Antes de Código,
-    VIII. Pequeno e Reversível
-  - Stack Tecnológica Obrigatória
-  - Fluxo de Desenvolvimento & Quality Gates
-  - Governance
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: n/a (nenhum princípio I-VIII foi removido ou redefinido)
+- Modified sections:
+  - Stack Tecnológica Obrigatória: "Sequelize + MySQL como banco" → "SQLite via `node:sqlite`
+    (`DatabaseSync`) como banco". MySQL deixa de ser um serviço externo tradicional; a
+    persistência passa a ser um arquivo local gerenciado pela própria aplicação (com suporte a
+    `:memory:` em testes).
+- Added sections: n/a
 - Removed sections: n/a
 - Templates requiring updates: no dependent templates modified by this command (read constitution
-  at runtime per Scope Guard); no other references to a prior constitution version were found.
-- Follow-up TODOs:
-  - TODO(RATIFICATION_DATE): original adoption date of the project's governing principles is
-    unknown; using the date this constitution was formalized in Spec Kit format as the
-    ratification date.
+  at runtime per Scope Guard); CLAUDE.md ainda referencia Sequelize/MySQL e precisa de amendment
+  manual para permanecer consistente com esta constitution (ver Next Actions da conversa).
+- Follow-up TODOs: n/a
 -->
 
 # OpsPilot Constitution
@@ -83,7 +80,8 @@ Rationale: reduz o raio de impacto de um erro e facilita review, bisect e rollba
 - zod na fronteira (HTTP/CLI)
 - Testes com `node:test` via `tsx`
 - Express como servidor HTTP
-- Sequelize + MySQL como banco
+- SQLite via `node:sqlite` (`DatabaseSync`) como banco: arquivo local (caminho configurável via
+  env, ex.: `OPSPILOT_DB`), sem servidor externo; `:memory:` é o modo padrão em testes
 - LangChain/LangGraph sobre OpenRouter para o agente
 
 Mudar qualquer item desta stack é uma decisão arquitetural e exige amendment desta constitution.
@@ -114,4 +112,4 @@ princípio (ex.: IO dentro do domínio, entrada não validada, ausência de test
 justificada explicitamente na PR ou corrigida antes do merge. Uso diário do dia a dia é guiado
 por `CLAUDE.md`, que deve permanecer consistente com esta constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-01 | **Last Amended**: 2026-09-01
+**Version**: 1.1.0 | **Ratified**: 2026-09-01 | **Last Amended**: 2026-09-10

@@ -20,4 +20,4 @@ Princípios não-negociáveis que toda spec, plano, tarefa e código seguem.
 
 ## Stack Obrigatória
 
-Node 24 LTS, TypeScript ESM `strict`, zod, `node:test` via `tsx`, Express, Sequelize + MySQL, LangChain/LangGraph sobre OpenRouter.
+Node 24 LTS, TypeScript ESM `strict`, zod, `node:test` via `tsx`, Express, SQLite via `node:sqlite` (`DatabaseSync`), LangChain/LangGraph sobre OpenRouter.

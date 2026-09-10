@@ -1,4 +1,9 @@
-export type ToolName = "list_alerts" | "open_incident" | "resolve_incident";
+export type ToolName =
+  | "list_alerts"
+  | "open_incident"
+  | "resolve_incident"
+  | "list_incidents"
+  | "consultar_runbook";
 
 export type TraceEvent =
   | { type: "thought"; at: number; content: string }

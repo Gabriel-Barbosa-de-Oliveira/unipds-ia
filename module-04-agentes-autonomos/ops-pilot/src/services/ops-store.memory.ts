@@ -1,81 +1,34 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { z } from "zod";
-
 import type {
   Alert,
   AlertStatus,
   Incident,
-  IncidentSeverity,
+  IncidentStatusFilter,
   OpenIncidentInput,
   OpsState,
+  Runbook,
 } from "../domain/ops-store.ts";
-import { INCIDENT_SEVERITIES, listAlerts, openIncident, resolveIncident } from "../domain/ops-store.ts";
+import {
+  getRunbookForService,
+  listAlerts,
+  listIncidents,
+  openIncident,
+  resolveIncident,
+} from "../domain/ops-store.ts";
 import { buildSeedState } from "../domain/seed-data.ts";
 import type { OpsStoreRepository } from "./ops-store.repository.ts";
 
-const PROJECT_ROOT = fileURLToPath(new URL("../../", import.meta.url));
-
 /**
- * Caminho do arquivo JSON usado como base de dados enquanto a feature não depende de um MySQL
- * real (ver `npm run seed`). Ponto único de configuração — trocar por uma URL de conexão real
- * mais tarde não deve exigir mudanças no domínio nem nas tools.
- */
-export const DEFAULT_DATA_FILE = join(PROJECT_ROOT, "data", "ops-store.json");
-
-const OpsStateSchema = z.object({
-  services: z.array(z.object({ id: z.string(), name: z.string() })),
-  alerts: z.array(
-    z.object({
-      id: z.string(),
-      serviceId: z.string(),
-      title: z.string(),
-      status: z.enum(["firing", "resolved"]),
-      createdAt: z.string(),
-    }),
-  ),
-  incidents: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-      serviceId: z.string(),
-      severity: z.enum(INCIDENT_SEVERITIES as [IncidentSeverity, ...IncidentSeverity[]]),
-      status: z.enum(["open", "resolved"]),
-      createdAt: z.string(),
-      resolvedAt: z.string().nullable(),
-    }),
-  ),
-});
-
-/** Lê o estado persistido do arquivo JSON, ou parte do dataset canônico se ele ainda não existir. */
-export function readOpsStateFile(filePath: string): OpsState {
-  if (!existsSync(filePath)) {
-    return buildSeedState();
-  }
-  return OpsStateSchema.parse(JSON.parse(readFileSync(filePath, "utf-8")));
-}
-
-/** Grava o estado no arquivo JSON, criando o diretório pai se necessário. */
-export function writeOpsStateFile(filePath: string, state: OpsState): void {
-  mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
-}
-
-/**
- * Adaptador do OpsStoreRepository apoiado em um arquivo JSON local (`data/ops-store.json`),
- * usado no lugar do MySQL enquanto os testes/validação manual desta feature não dependem de um
- * banco real: lê o estado existente do arquivo na inicialização (ou o dataset canônico, se o
- * arquivo ainda não existir) e persiste cada mutação de volta, para que execuções separadas da
- * arena (`npm run arena`) enxerguem os incidentes criados por execuções anteriores. É o
- * adaptador padrão usado por `src/agents/tools.ts` e pela arena.
+ * Adaptador do `OpsStoreRepository` mantido inteiramente em memória (sem IO) — reservado a
+ * testes e ao bench (`src/bench.ts`), onde reprodutibilidade entre execuções e isolamento do
+ * banco real (`SqliteOpsStore`) importam mais do que fidelidade ao SQL de produção
+ * (spec 004 Assumptions; research.md item 2). Cada instância começa no dataset canônico
+ * (`buildSeedState()`) e só é afetada por chamadas feitas na própria instância.
  */
 export class InMemoryOpsStore implements OpsStoreRepository {
   private state: OpsState;
 
-  constructor(private readonly filePath: string = DEFAULT_DATA_FILE) {
-    this.state = readOpsStateFile(filePath);
+  constructor() {
+    this.state = buildSeedState();
   }
 
   async listAlerts(status?: AlertStatus): Promise<Alert[]> {
@@ -88,38 +41,33 @@ export class InMemoryOpsStore implements OpsStoreRepository {
       now: new Date().toISOString(),
     });
     this.state = state;
-    this.persist();
     return incident;
   }
 
-  async resolveIncident(id: string): Promise<Incident> {
+  async resolveIncident(id: string, summary?: string): Promise<Incident> {
     const { state, incident } = resolveIncident(this.state, id, {
       now: new Date().toISOString(),
+      summary,
     });
     this.state = state;
-    this.persist();
     return incident;
+  }
+
+  async listIncidents(status?: IncidentStatusFilter): Promise<Incident[]> {
+    return listIncidents(this.state, status);
+  }
+
+  async getRunbook(service: string): Promise<Runbook | null> {
+    return getRunbookForService(this.state, service);
   }
 
   /** Restaura o store para o dataset semeado, descartando incidentes criados. */
   reset(): void {
     this.state = buildSeedState();
-    this.persist();
   }
 
   /** Retorna o estado atual do store. Usado pelo bench para conferir o resultado das estratégias. */
   getState(): OpsState {
     return this.state;
   }
-
-  private persist(): void {
-    writeOpsStateFile(this.filePath, this.state);
-  }
 }
-
-/**
- * Instância padrão compartilhada, usada por `src/agents/tools.ts`, `src/arena.ts` e `src/bench.ts`.
- * Sem anotação de tipo `OpsStoreRepository`: o bench precisa de `reset`/`getState`, que não fazem
- * parte do contrato do repositório.
- */
-export const store = new InMemoryOpsStore();

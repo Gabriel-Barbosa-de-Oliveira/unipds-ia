@@ -1,6 +1,7 @@
 import { GraphRecursionError } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import type { BaseMessage } from "@langchain/core/messages";
+import type { StructuredToolInterface } from "@langchain/core/tools";
 
 import { lastAnswer, messagesToTrace } from "./message-trace.ts";
 import { createModel } from "./model.ts";
@@ -12,47 +13,57 @@ const DEFAULT_MAX_ITERATIONS = 8;
 const LIMIT_REACHED_ANSWER =
   "Não foi possível concluir dentro do limite de passos configurado; encerrando de forma controlada.";
 
-export const reactStrategy: ReasoningStrategy = {
-  name: "react",
+/**
+ * Fábrica da estratégia ReAct, fechada sobre `tools` — permite compor a estratégia sobre um
+ * conjunto de tools diferente do padrão (`opsTools`, sobre `SqliteOpsStore`), como faz
+ * `src/bench.ts` sobre um mock em memória isolado e reprodutível (research.md item 2).
+ */
+export function createReactStrategy(tools: StructuredToolInterface[]): ReasoningStrategy {
+  return {
+    name: "react",
 
-  async run(input: string, options?: RunOptions): Promise<RunResult> {
-    const elapsed = startTimer();
-    const counter = new LlmCallCounter();
-    const maxIterations = options?.maxIterations ?? DEFAULT_MAX_ITERATIONS;
+    async run(input: string, options?: RunOptions): Promise<RunResult> {
+      const elapsed = startTimer();
+      const counter = new LlmCallCounter();
+      const maxIterations = options?.maxIterations ?? DEFAULT_MAX_ITERATIONS;
 
-    const agent = createReactAgent({
-      llm: createModel(),
-      tools: opsTools,
-    });
+      const agent = createReactAgent({
+        llm: createModel(),
+        tools,
+      });
 
-    let lastMessages: BaseMessage[] = [];
+      let lastMessages: BaseMessage[] = [];
 
-    try {
-      const stream = await agent.stream(
-        { messages: [{ role: "user", content: input }] },
-        { recursionLimit: maxIterations, callbacks: [counter], streamMode: "values" },
-      );
+      try {
+        const stream = await agent.stream(
+          { messages: [{ role: "user", content: input }] },
+          { recursionLimit: maxIterations, callbacks: [counter], streamMode: "values" },
+        );
 
-      for await (const chunk of stream) {
-        lastMessages = chunk.messages;
-      }
+        for await (const chunk of stream) {
+          lastMessages = chunk.messages;
+        }
 
-      const trace = messagesToTrace(lastMessages);
-      return {
-        answer: lastAnswer(trace) ?? LIMIT_REACHED_ANSWER,
-        trace,
-        metrics: buildMetrics(counter, elapsed()),
-      };
-    } catch (error) {
-      if (error instanceof GraphRecursionError) {
-        // Guardrail: limite de passos atingido sem resposta final — encerra de forma
-        // controlada com o trace parcial acumulado até aqui, conforme o contrato de
-        // ReasoningStrategy (FR-006).
         const trace = messagesToTrace(lastMessages);
-        trace.push({ type: "answer", at: trace.length, content: LIMIT_REACHED_ANSWER });
-        return { answer: LIMIT_REACHED_ANSWER, trace, metrics: buildMetrics(counter, elapsed()) };
+        return {
+          answer: lastAnswer(trace) ?? LIMIT_REACHED_ANSWER,
+          trace,
+          metrics: buildMetrics(counter, elapsed()),
+        };
+      } catch (error) {
+        if (error instanceof GraphRecursionError) {
+          // Guardrail: limite de passos atingido sem resposta final — encerra de forma
+          // controlada com o trace parcial acumulado até aqui, conforme o contrato de
+          // ReasoningStrategy (FR-006).
+          const trace = messagesToTrace(lastMessages);
+          trace.push({ type: "answer", at: trace.length, content: LIMIT_REACHED_ANSWER });
+          return { answer: LIMIT_REACHED_ANSWER, trace, metrics: buildMetrics(counter, elapsed()) };
+        }
+        throw error;
       }
-      throw error;
-    }
-  },
-};
+    },
+  };
+}
+
+/** Composição padrão, usada por `agents/index.ts`/`http/server.ts`/`arena.ts` — sobre `opsTools`. */
+export const reactStrategy: ReasoningStrategy = createReactStrategy(opsTools);

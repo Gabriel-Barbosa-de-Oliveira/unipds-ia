@@ -1,11 +1,22 @@
 import { z } from "zod";
 
-import { planAndExecuteStrategy } from "./agents/plan-and-execute.ts";
-import { reactStrategy } from "./agents/react.ts";
+import { createPlanAndExecuteStrategy } from "./agents/plan-and-execute.ts";
+import { createReactStrategy } from "./agents/react.ts";
 import { formatMetrics, formatTrace } from "./agents/trace.ts";
 import type { ReasoningStrategy, RunOptions } from "./agents/types.ts";
+import { createOpsTools } from "./agents/tools.ts";
 import type { Incident, OpsState } from "./domain/ops-store.ts";
-import { store } from "./services/ops-store.memory.ts";
+import { InMemoryOpsStore } from "./services/ops-store.memory.ts";
+
+/**
+ * O bench roda sobre seu próprio `InMemoryOpsStore`, isolado do `SqliteOpsStore` real usado em
+ * produção (`opsTools` em `src/agents/tools.ts`) — cenários reprodutíveis entre execuções, sem
+ * acumular incidentes no banco real (spec 004, User Story 4; research.md item 2). As tools/
+ * estratégias abaixo são construídas sobre este mesmo `store`, para que `reset()`/`getState()`
+ * reflitam exatamente o que as tools de fato mutam durante `run()`.
+ */
+const store = new InMemoryOpsStore();
+const tools = createOpsTools(store);
 
 const SCENARIO_IDS = ["C1", "C2", "C3"] as const;
 type ScenarioId = (typeof SCENARIO_IDS)[number];
@@ -14,8 +25,8 @@ const STRATEGY_NAMES = ["react", "plan-and-execute"] as const;
 type StrategyName = (typeof STRATEGY_NAMES)[number];
 
 const STRATEGIES: Record<StrategyName, ReasoningStrategy> = {
-  react: reactStrategy,
-  "plan-and-execute": planAndExecuteStrategy,
+  react: createReactStrategy(tools),
+  "plan-and-execute": createPlanAndExecuteStrategy(tools),
 };
 
 const NUMBER_WORDS_PT = [

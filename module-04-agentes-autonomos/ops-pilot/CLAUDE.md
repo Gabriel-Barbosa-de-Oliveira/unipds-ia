@@ -9,13 +9,13 @@ Copiloto de plantão que gerencia alertas e incidentes de produção. A API é u
 - zod na fronteira (HTTP/CLI)
 - Testes com `node:test` via `tsx`
 - Express como servidor HTTP
-- Sequelize + MySQL como banco
+- SQLite via `node:sqlite` (`DatabaseSync`) como banco — arquivo local (caminho via env `OPSPILOT_DB`), `:memory:` em testes
 
 ## Comandos
 
 - `npm run dev` — inicia a API (`src/index.ts`)
 - `npm run arena` — roda `src/arena.ts` (`--input`, `--strategies`, `--max-iterations`)
-- `npm run seed` — semeia/restaura o MySQL com o dataset canônico (`src/scripts/seed.ts`)
+- `npm run seed` — semeia/restaura o SQLite com o dataset canônico (`src/scripts/seed.ts`)
 - `npm run bench` — roda `src/bench.ts`
 - `npm test` — roda os testes (`node --import tsx --test`)
 - `npm run typecheck` — `tsc --noEmit`

@@ -1,6 +1,7 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import type { BaseMessage } from "@langchain/core/messages";
+import type { StructuredToolInterface } from "@langchain/core/tools";
 import { z } from "zod";
 
 import { lastAnswer, messagesToTrace } from "./message-trace.ts";
@@ -67,11 +68,16 @@ function buildReplanPrompt(state: PlanExecuteStateType): string {
 }
 
 /** Constrói o grafo Plan-and-Execute (planner → executor → replanner), com corte em `stepCap` passos. */
-function buildGraph(counter: LlmCallCounter, stepCap: number, noReplanner: boolean) {
+function buildGraph(
+  tools: StructuredToolInterface[],
+  counter: LlmCallCounter,
+  stepCap: number,
+  noReplanner: boolean,
+) {
   const model = createModel();
   const plannerModel = model.withStructuredOutput(PlanSchema);
   const replannerModel = model.withStructuredOutput(ReplanSchema);
-  const executorAgent = createReactAgent({ llm: model, tools: opsTools });
+  const executorAgent = createReactAgent({ llm: model, tools });
 
   async function planner(state: PlanExecuteStateType): Promise<Partial<PlanExecuteStateType>> {
     const result = await plannerModel.invoke([{ role: "user", content: state.input }], {
@@ -206,25 +212,35 @@ function buildGraph(counter: LlmCallCounter, stepCap: number, noReplanner: boole
     .compile();
 }
 
-export const planAndExecuteStrategy: ReasoningStrategy = {
-  name: "plan-and-execute",
+/**
+ * Fábrica da estratégia Plan-and-Execute, fechada sobre `tools` — mesmo propósito de
+ * `createReactStrategy` (ver react.ts): permite compor sobre um conjunto de tools diferente do
+ * padrão, como faz `src/bench.ts` sobre um mock em memória isolado.
+ */
+export function createPlanAndExecuteStrategy(tools: StructuredToolInterface[]): ReasoningStrategy {
+  return {
+    name: "plan-and-execute",
 
-  async run(input: string, options?: RunOptions): Promise<RunResult> {
-    const elapsed = startTimer();
-    const counter = new LlmCallCounter();
-    const stepCap = Math.min(options?.maxIterations ?? HARD_STEP_CAP, HARD_STEP_CAP);
-    const noReplanner = options?.noReplanner ?? false;
+    async run(input: string, options?: RunOptions): Promise<RunResult> {
+      const elapsed = startTimer();
+      const counter = new LlmCallCounter();
+      const stepCap = Math.min(options?.maxIterations ?? HARD_STEP_CAP, HARD_STEP_CAP);
+      const noReplanner = options?.noReplanner ?? false;
 
-    const graph = buildGraph(counter, stepCap, noReplanner);
-    const result = await graph.invoke(
-      { input, plan: [], pastSteps: [], trace: [], stepsTaken: 0, response: undefined },
-      { recursionLimit: 2 + stepCap * 2 },
-    );
+      const graph = buildGraph(tools, counter, stepCap, noReplanner);
+      const result = await graph.invoke(
+        { input, plan: [], pastSteps: [], trace: [], stepsTaken: 0, response: undefined },
+        { recursionLimit: 2 + stepCap * 2 },
+      );
 
-    return {
-      answer: result.response ?? LIMIT_REACHED_ANSWER,
-      trace: result.trace,
-      metrics: buildMetrics(counter, elapsed()),
-    };
-  },
-};
+      return {
+        answer: result.response ?? LIMIT_REACHED_ANSWER,
+        trace: result.trace,
+        metrics: buildMetrics(counter, elapsed()),
+      };
+    },
+  };
+}
+
+/** Composição padrão, usada por `agents/index.ts`/`http/server.ts`/`arena.ts` — sobre `opsTools`. */
+export const planAndExecuteStrategy: ReasoningStrategy = createPlanAndExecuteStrategy(opsTools);
