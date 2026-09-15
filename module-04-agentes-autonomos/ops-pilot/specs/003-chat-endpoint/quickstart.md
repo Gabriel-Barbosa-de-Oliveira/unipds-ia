@@ -65,3 +65,22 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/chat \
 **Esperado** (SC-002, SC-003): `400` para corpo sem `message`; `422` para estratégia desconhecida — em nenhum dos dois casos o servidor faz qualquer chamada ao modelo (confirmável pela resposta instantânea, sem o atraso típico de uma chamada real).
 
 > O cenário de timeout (`504`, SC-004) não é prático de reproduzir manualmente aqui (exigiria 180s reais) — é coberto pelo teste de integração do passo 1 com um `timeoutMs` reduzido injetado via `createApp({ timeoutMs })`.
+
+## Troubleshooting: `.answer` veio `null`
+
+Se `curl ... | jq -r .answer` imprimir `null`, o corpo recebido quase certamente **não é** uma resposta `200` — `answer` é sempre uma string não vazia em qualquer resposta de sucesso (ver [contracts/post-chat.md](./contracts/post-chat.md)). `jq -r .answer` imprime `"null"` tanto para um `answer: null` quanto para uma chave ausente, então uma resposta de erro (400/422/504/500, nenhuma delas tem `answer`) produz o mesmo sintoma.
+
+Sempre inspecione o status HTTP antes de depurar o conteúdo:
+
+```sh
+curl -s -w "\nHTTP %{http_code}\n" -X POST http://localhost:3000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "..."}'
+```
+
+Causas mais comuns, por status:
+
+- **504** — a execução passou de `timeoutMs` (180000ms por padrão, FR-008). Estratégias com muitas iterações de correção (ex.: mensagem citando um serviço inexistente, levando o agente a tentar `list_alerts`/retries) podem se aproximar desse teto.
+- **500** — falha não classificada; o `internal_error` da resposta não traz detalhe por design (ver contrato), mas a causa completa é sempre logada no servidor (`console.error("Erro inesperado no /chat:", ...)` em `src/http/server.ts`) — confira o terminal onde `npm run dev` está rodando. Causa frequente: `OPENROUTER_API_KEY`/`OPENROUTER_MODEL` ausente no processo do servidor (`src/agents/model.ts`).
+- **422** — `strategy` informado não corresponde a nenhum nome registrado.
+- **400** — corpo da requisição inválido (`message` ausente/vazio).
