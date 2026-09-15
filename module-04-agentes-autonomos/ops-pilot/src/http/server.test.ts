@@ -7,6 +7,7 @@ import type { Express } from "express";
 import type { RunOptions, RunResult, ReasoningStrategy } from "../agents/types.ts";
 import type { ConversationMessage } from "../domain/conversation.ts";
 import { ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
+import type { RecallMatch, MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import { createApp } from "./server.ts";
 
@@ -61,6 +62,31 @@ function fakeConversationStore(
   };
 }
 
+/** `MemoryStore` em memória, isolado por instância — usado só pelos testes, sem SQLite/modelo real. */
+function fakeMemoryStore(
+  seed: Record<string, RecallMatch[]> = {},
+): MemoryStore & { rememberCalls: { userId: string; fact: string }[]; forgetCalls: { userId: string; description: string }[] } {
+  const facts = new Map<string, RecallMatch[]>(Object.entries(seed));
+
+  return {
+    rememberCalls: [],
+    forgetCalls: [],
+    async remember(userId: string, fact: string) {
+      this.rememberCalls.push({ userId, fact });
+      const existing = facts.get(userId) ?? [];
+      facts.set(userId, [...existing, { fact, score: 1 }]);
+      return { stored: true, id: `mem-${existing.length}` };
+    },
+    async recall(userId: string, _query: string, limit = 3) {
+      return (facts.get(userId) ?? []).slice(0, limit);
+    },
+    async forget(userId: string, description: string) {
+      this.forgetCalls.push({ userId, description });
+      return { removed: false };
+    },
+  };
+}
+
 function startServer(app: Express): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   return new Promise((resolve) => {
     const server = app.listen(0, () => {
@@ -85,7 +111,11 @@ describe("POST /chat", () => {
         trace: [{ type: "answer", at: 0, content: "há 3 alertas firing" }],
         metrics: { llmCalls: 1, latencyMs: 5 },
       });
-      const app = createApp({ resolveStrategy: () => fake, conversationStore: fakeConversationStore() });
+      const app = createApp({
+        resolveStrategy: () => fake,
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+      });
       ({ baseUrl, close } = await startServer(app));
     });
 
@@ -162,6 +192,7 @@ describe("POST /chat", () => {
           throw new UnknownStrategyError(name);
         },
         conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -222,6 +253,7 @@ describe("POST /chat", () => {
       const app = createApp({
         resolveStrategy: (_name, reflect) => (reflect ? reflectedFake : baseFake),
         conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -270,6 +302,7 @@ describe("POST /chat", () => {
         resolveStrategy: () => neverResolvingFake,
         timeoutMs: 20,
         conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -312,6 +345,7 @@ describe("POST /chat", () => {
           };
         },
         conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -362,7 +396,7 @@ describe("POST /chat", () => {
           { role: "assistant", content: "Combinado, Gabriel!" },
         ],
       });
-      const app = createApp({ resolveStrategy: () => fake, conversationStore });
+      const app = createApp({ resolveStrategy: () => fake, conversationStore, memoryStore: fakeMemoryStore() });
       ({ baseUrl, close } = await startServer(app));
     });
 
@@ -454,6 +488,7 @@ describe("POST /chat", () => {
       const app = createApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore({ "conv-longa": longHistory }),
+        memoryStore: fakeMemoryStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -496,6 +531,7 @@ describe("POST /chat", () => {
             { role: "assistant", content: "olá!" },
           ],
         }),
+        memoryStore: fakeMemoryStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -522,6 +558,74 @@ describe("POST /chat", () => {
 
       const body = (await response.json()) as ChatResponseBody;
       assert.equal(body.metrics.historyMessages, 2);
+    });
+  });
+
+  describe("User Story 1 (007) — memória semântica via userId", () => {
+    let baseUrl: string;
+    let close: () => Promise<void>;
+    let fake: ReturnType<typeof fakeStrategy>;
+    let memoryStore: ReturnType<typeof fakeMemoryStore>;
+    let lastExtraTools: { length: number; names: string[] } | undefined;
+
+    before(async () => {
+      fake = fakeStrategy("fake-memory", {
+        answer: "ok",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1 },
+      });
+      memoryStore = fakeMemoryStore({
+        gabriel: [{ fact: "Gabriel cuida de pagamentos", score: 1 }],
+      });
+
+      const app = createApp({
+        resolveStrategy: (_name, _reflect, extraTools) => {
+          lastExtraTools = extraTools
+            ? { length: extraTools.length, names: extraTools.map((t) => t.name) }
+            : undefined;
+          return fake;
+        },
+        conversationStore: fakeConversationStore(),
+        memoryStore,
+      });
+      ({ baseUrl, close } = await startServer(app));
+    });
+
+    after(() => close());
+
+    test("[US1] mensagem sem userId não chama recall nem disponibiliza tools de memória", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "quais alertas estão firing?" }),
+      });
+
+      assert.equal(response.status, 200);
+      assert.equal(lastExtraTools, undefined);
+      assert.ok(!fake.lastInput?.includes("Gabriel cuida de pagamentos"));
+    });
+
+    test("[US1] mensagem com userId injeta os fatos recuperados no prompt e disponibiliza remember_fact/forget_fact", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "quem cuida do checkout?", userId: "gabriel" }),
+      });
+
+      assert.equal(response.status, 200);
+      assert.ok(fake.lastInput?.includes("Gabriel cuida de pagamentos"));
+      assert.deepEqual(lastExtraTools, { length: 2, names: ["remember_fact", "forget_fact"] });
+    });
+
+    test("[US1] userId sem fatos registrados nunca recebe fatos de outro userId", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "quem cuida do checkout?", userId: "ana" }),
+      });
+
+      assert.equal(response.status, 200);
+      assert.ok(!fake.lastInput?.includes("Gabriel cuida de pagamentos"));
     });
   });
 });

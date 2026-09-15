@@ -1,7 +1,10 @@
+import type { StructuredToolInterface } from "@langchain/core/tools";
+
 import { UnknownStrategyError } from "../domain/errors.ts";
-import { planAndExecuteStrategy } from "./plan-and-execute.ts";
-import { reactStrategy } from "./react.ts";
+import { createPlanAndExecuteStrategy, planAndExecuteStrategy } from "./plan-and-execute.ts";
+import { createReactStrategy, reactStrategy } from "./react.ts";
 import { withReflection } from "./reflection.ts";
+import { opsTools } from "./tools.ts";
 import type { ReasoningStrategy } from "./types.ts";
 
 export type BaseStrategyName = "react" | "plan-and-execute";
@@ -20,15 +23,35 @@ function isBaseStrategyName(name: string): name is BaseStrategyName {
 
 /**
  * Resolve um nome de estratégia (ou o padrão, quando omitido) para a `ReasoningStrategy`
- * executável correspondente. Pura: nenhuma IO, mesma entrada sempre produz a mesma resolução.
+ * executável correspondente. Quando `extraTools` é informado e não vazio, compõe uma estratégia
+ * nova por requisição sobre `[...opsTools, ...extraTools]` (mesmas fábricas já usadas por
+ * `bench.ts`) em vez do singleton — usado por `007-semantic-memory` para disponibilizar
+ * `remember_fact`/`forget_fact` escopadas a um `userId` específico (research.md item 7). Quando
+ * omitido, comportamento idêntico ao de antes: mesmo singleton, nenhuma IO extra.
  */
-export function resolveStrategy(name?: string, reflect?: boolean): ReasoningStrategy {
+export function resolveStrategy(
+  name?: string,
+  reflect?: boolean,
+  extraTools?: StructuredToolInterface[],
+): ReasoningStrategy {
   const resolvedName = name ?? DEFAULT_STRATEGY_NAME;
 
   if (!isBaseStrategyName(resolvedName)) {
     throw new UnknownStrategyError(resolvedName);
   }
 
-  const strategy = STRATEGIES[resolvedName];
+  const strategy =
+    extraTools && extraTools.length > 0
+      ? buildStrategyWithExtraTools(resolvedName, extraTools)
+      : STRATEGIES[resolvedName];
+
   return reflect ? withReflection(strategy) : strategy;
+}
+
+function buildStrategyWithExtraTools(
+  name: BaseStrategyName,
+  extraTools: StructuredToolInterface[],
+): ReasoningStrategy {
+  const tools = [...opsTools, ...extraTools];
+  return name === "react" ? createReactStrategy(tools) : createPlanAndExecuteStrategy(tools);
 }

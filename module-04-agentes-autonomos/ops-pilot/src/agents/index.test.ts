@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+
 import { UnknownStrategyError } from "../domain/errors.ts";
 import { planAndExecuteStrategy } from "./plan-and-execute.ts";
 import { reactStrategy } from "./react.ts";
@@ -34,4 +37,31 @@ test("resolveStrategy('plan-and-execute', true) retorna a estratégia decorada c
 
 test("resolveStrategy(name, false) retorna a estratégia base, sem decoração", () => {
   assert.equal(resolveStrategy("react", false), reactStrategy);
+});
+
+const fakeExtraTool = tool(async () => "ok", {
+  name: "fake_extra_tool",
+  description: "tool extra usada só para testar composição por requisição",
+  schema: z.object({}),
+});
+
+test("resolveStrategy sem extraTools continua retornando exatamente o singleton (react)", () => {
+  assert.equal(resolveStrategy("react", false, undefined), reactStrategy);
+});
+
+test("resolveStrategy com extraTools vazio continua retornando exatamente o singleton (plan-and-execute)", () => {
+  assert.equal(resolveStrategy("plan-and-execute", false, []), planAndExecuteStrategy);
+});
+
+test("resolveStrategy com extraTools não vazio compõe uma estratégia nova, distinta do singleton", () => {
+  const strategy = resolveStrategy("react", false, [fakeExtraTool]);
+
+  assert.notEqual(strategy, reactStrategy);
+  assert.equal(strategy.name, "react");
+});
+
+test("resolveStrategy com extraTools e reflect:true decora a estratégia nova, não o singleton", () => {
+  const strategy = resolveStrategy("plan-and-execute", true, [fakeExtraTool]);
+
+  assert.equal(strategy.name, "reflect:plan-and-execute");
 });
