@@ -7,6 +7,7 @@
     "arena": "node --env-file-if-exists=.env --import tsx src/arena.ts",
     "bench": "node --env-file-if-exists=.env --import tsx src/bench.ts",
     "seed": "node --env-file-if-exists=.env --import tsx src/scripts/seed.ts",
+    "mcp": "node --env-file-if-exists=.env --import tsx src/mcp/server.ts",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
@@ -14,6 +15,7 @@
     "@langchain/core": "^0.3.0",
     "@langchain/langgraph": "^0.2.0",
     "@langchain/openai": "^0.3.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "express": "^4.19.0",
     "zod": "^3.23.0"
   },

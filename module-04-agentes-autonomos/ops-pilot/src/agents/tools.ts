@@ -5,7 +5,36 @@ import { IncidentNotFoundError, InvalidSeverityError, ServiceNotFoundError } fro
 import type { OpsStoreRepository } from "../services/ops-store.repository.ts";
 import { SqliteOpsStore } from "../store/sqlite-ops-store.ts";
 
-function toStructuredError(error: unknown, extra: Record<string, unknown>): Record<string, unknown> {
+/**
+ * Shapes zod reaproveitados tanto pelas tools do LangChain abaixo quanto pelo servidor MCP
+ * (`src/mcp/server.ts`) — única fonte de verdade para os schemas de `list_alerts`,
+ * `open_incident` e `resolve_incident` (ver specs/005-mcp-server/research.md item 2).
+ */
+export const listAlertsShape = {
+  status: z
+    .enum(["firing", "resolved"])
+    .optional()
+    .describe("Filtra por status do alerta; omita para listar todos os alertas."),
+};
+
+export const openIncidentShape = {
+  title: z.string().min(1).describe("Título curto descrevendo o problema do incidente."),
+  service: z.string().min(1).describe("Nome do serviço afetado, ex.: \"checkout-api\"."),
+  severity: z
+    .enum(["low", "medium", "high", "critical"])
+    .describe("Severidade do incidente, do menos ao mais grave."),
+};
+
+export const resolveIncidentShape = {
+  id: z.string().min(1).describe("Id do incidente a resolver, retornado por open_incident ou list_incidents."),
+  summary: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Resumo opcional do que foi feito para resolver o incidente, para consulta futura."),
+};
+
+export function toStructuredError(error: unknown, extra: Record<string, unknown>): Record<string, unknown> {
   if (error instanceof ServiceNotFoundError) {
     return { error: "ServiceNotFoundError", ...extra };
   }
@@ -38,12 +67,7 @@ export function createOpsTools(store: OpsStoreRepository): StructuredToolInterfa
         "Consulta (somente leitura) os alertas de monitoramento. Use quando o plantonista perguntar o " +
         "que está disparando, o estado dos serviços, ou pedir a lista de alertas. Não abre nem resolve " +
         "nada — para incidentes já abertos/resolvidos pelo próprio copiloto, use list_incidents.",
-      schema: z.object({
-        status: z
-          .enum(["firing", "resolved"])
-          .optional()
-          .describe("Filtra por status do alerta; omita para listar todos os alertas."),
-      }),
+      schema: z.object(listAlertsShape),
     },
   );
 
@@ -70,13 +94,7 @@ export function createOpsTools(store: OpsStoreRepository): StructuredToolInterfa
         "Cria um incidente NOVO para um serviço. Use somente quando o plantonista pedir explicitamente " +
         "para abrir/registrar um incidente — nunca para consultar incidentes que já existem (isso é " +
         "list_incidents) nem para saber os passos de mitigação de um serviço (isso é consultar_runbook).",
-      schema: z.object({
-        title: z.string().min(1).describe("Título curto descrevendo o problema do incidente."),
-        service: z.string().min(1).describe("Nome do serviço afetado, ex.: \"checkout-api\"."),
-        severity: z
-          .enum(["low", "medium", "high", "critical"])
-          .describe("Severidade do incidente, do menos ao mais grave."),
-      }),
+      schema: z.object(openIncidentShape),
     },
   );
 
@@ -94,14 +112,7 @@ export function createOpsTools(store: OpsStoreRepository): StructuredToolInterfa
       description:
         "Resolve um incidente já existente pelo id. Use quando o plantonista pedir para fechar/resolver " +
         "um incidente que já foi aberto — para descobrir esse id primeiro, use list_incidents.",
-      schema: z.object({
-        id: z.string().min(1).describe("Id do incidente a resolver, retornado por open_incident ou list_incidents."),
-        summary: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Resumo opcional do que foi feito para resolver o incidente, para consulta futura."),
-      }),
+      schema: z.object(resolveIncidentShape),
     },
   );
 
