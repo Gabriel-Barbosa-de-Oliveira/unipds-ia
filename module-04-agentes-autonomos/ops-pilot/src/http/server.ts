@@ -3,15 +3,22 @@ import { z } from "zod";
 
 import { resolveStrategy as resolveStrategyDefault } from "../agents/index.ts";
 import type { ReasoningStrategy } from "../agents/types.ts";
-import { ChatTimeoutError, UnknownStrategyError } from "../domain/errors.ts";
+import { composePrompt } from "../domain/conversation.ts";
+import { ChatTimeoutError, ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
+import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import { runWithTimeout } from "../services/chat.service.ts";
+import { SqliteConversationStore } from "../store/sqlite-conversation-store.ts";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
+
+/** Quantidade máxima de mensagens de histórico consideradas na composição do prompt (FR-004). */
+const HISTORY_LIMIT = 12;
 
 export const ChatRequestSchema = z.object({
   message: z.string().min(1, "message é obrigatório e não pode ser vazio"),
   strategy: z.string().optional(),
   reflect: z.boolean().optional(),
+  conversationId: z.string().optional(),
 });
 
 export type ChatRequestBody = z.infer<typeof ChatRequestSchema>;
@@ -21,12 +28,19 @@ export interface CreateAppOptions {
   resolveStrategy?: (name: string | undefined, reflect: boolean | undefined) => ReasoningStrategy;
   /** Teto de tempo por requisição, em ms. Padrão 180000 (FR-008); overridable para testes rápidos. */
   timeoutMs?: number;
+  /** Sobrescreve o armazenamento de conversas — usado por testes para injetar fakes, sem SQLite real. */
+  conversationStore?: ConversationStore;
 }
 
 /** Middleware de erro do Express: traduz falhas em status HTTP, nunca o contrário (Principle III). */
 function errorMiddleware(error: unknown, _req: Request, res: Response, _next: NextFunction): void {
   if (error instanceof UnknownStrategyError) {
     res.status(422).json({ error: "unknown_strategy", strategy: error.strategy });
+    return;
+  }
+
+  if (error instanceof ConversationNotFoundError) {
+    res.status(404).json({ error: "conversation_not_found", conversationId: error.conversationId });
     return;
   }
 
@@ -42,6 +56,7 @@ function errorMiddleware(error: unknown, _req: Request, res: Response, _next: Ne
 export function createApp(options: CreateAppOptions = {}): Express {
   const resolveStrategy = options.resolveStrategy ?? resolveStrategyDefault;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const conversationStore = options.conversationStore ?? new SqliteConversationStore();
 
   const app = express();
   app.use(express.json());
@@ -54,9 +69,25 @@ export function createApp(options: CreateAppOptions = {}): Express {
     }
 
     try {
+      const conversationId = parsed.data.conversationId ?? (await conversationStore.create());
+      const history = parsed.data.conversationId
+        ? await conversationStore.lastMessages(conversationId, HISTORY_LIMIT)
+        : [];
+
       const strategy = resolveStrategy(parsed.data.strategy, parsed.data.reflect);
-      const result = await runWithTimeout(strategy, parsed.data.message, undefined, timeoutMs);
-      res.status(200).json(result);
+      const prompt = composePrompt(history, parsed.data.message);
+      const result = await runWithTimeout(strategy, prompt, undefined, timeoutMs);
+
+      await conversationStore.append(conversationId, [
+        { role: "user", content: parsed.data.message },
+        { role: "assistant", content: result.answer },
+      ]);
+
+      res.status(200).json({
+        ...result,
+        conversationId,
+        metrics: { ...result.metrics, historyMessages: history.length },
+      });
     } catch (error) {
       next(error);
     }

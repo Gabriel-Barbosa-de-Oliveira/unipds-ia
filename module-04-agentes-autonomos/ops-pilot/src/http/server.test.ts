@@ -5,19 +5,60 @@ import { after, before, describe, test } from "node:test";
 import type { Express } from "express";
 
 import type { RunOptions, RunResult, ReasoningStrategy } from "../agents/types.ts";
-import { UnknownStrategyError } from "../domain/errors.ts";
+import type { ConversationMessage } from "../domain/conversation.ts";
+import { ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
+import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import { createApp } from "./server.ts";
 
-function fakeStrategy(name: string, result: RunResult): ReasoningStrategy & { calls: number } {
+/** Corpo de resposta real do endpoint após 006 — `RunResult` com `conversationId` e `metrics.historyMessages`. */
+type ChatResponseBody = Omit<RunResult, "metrics"> & {
+  conversationId: string;
+  metrics: RunResult["metrics"] & { historyMessages: number };
+};
+
+function fakeStrategy(name: string, result: RunResult): ReasoningStrategy & { calls: number; lastInput?: string } {
   const strategy = {
     name,
     calls: 0,
-    async run(_input: string, _options?: RunOptions): Promise<RunResult> {
+    lastInput: undefined as string | undefined,
+    async run(input: string, _options?: RunOptions): Promise<RunResult> {
       strategy.calls += 1;
+      strategy.lastInput = input;
       return result;
     },
   };
   return strategy;
+}
+
+/** `ConversationStore` em memória, isolado por instância — usado só pelos testes, sem SQLite real. */
+function fakeConversationStore(
+  seed: Record<string, ConversationMessage[]> = {},
+): ConversationStore & { conversations: Map<string, ConversationMessage[]> } {
+  const conversations = new Map<string, ConversationMessage[]>(Object.entries(seed));
+  let nextId = 0;
+
+  return {
+    conversations,
+    async create(): Promise<string> {
+      const id = `conv-${nextId++}`;
+      conversations.set(id, []);
+      return id;
+    },
+    async append(conversationId: string, messages: ConversationMessage[]): Promise<void> {
+      const existing = conversations.get(conversationId);
+      if (!existing) {
+        throw new ConversationNotFoundError(conversationId);
+      }
+      conversations.set(conversationId, [...existing, ...messages]);
+    },
+    async lastMessages(conversationId: string, limit: number): Promise<ConversationMessage[]> {
+      const existing = conversations.get(conversationId);
+      if (!existing) {
+        throw new ConversationNotFoundError(conversationId);
+      }
+      return existing.slice(-limit);
+    },
+  };
 }
 
 function startServer(app: Express): Promise<{ baseUrl: string; close: () => Promise<void> }> {
@@ -44,13 +85,13 @@ describe("POST /chat", () => {
         trace: [{ type: "answer", at: 0, content: "há 3 alertas firing" }],
         metrics: { llmCalls: 1, latencyMs: 5 },
       });
-      const app = createApp({ resolveStrategy: () => fake });
+      const app = createApp({ resolveStrategy: () => fake, conversationStore: fakeConversationStore() });
       ({ baseUrl, close } = await startServer(app));
     });
 
     after(() => close());
 
-    test("retorna 200 com answer/trace/metrics ao enviar apenas message", async () => {
+    test("retorna 200 com answer/trace/metrics/conversationId ao enviar apenas message", async () => {
       const response = await fetch(`${baseUrl}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,12 +99,12 @@ describe("POST /chat", () => {
       });
 
       assert.equal(response.status, 200);
-      const body = await response.json();
-      assert.deepEqual(body, {
-        answer: "há 3 alertas firing",
-        trace: [{ type: "answer", at: 0, content: "há 3 alertas firing" }],
-        metrics: { llmCalls: 1, latencyMs: 5 },
-      });
+      const body = (await response.json()) as ChatResponseBody;
+      assert.equal(body.answer, "há 3 alertas firing");
+      assert.deepEqual(body.trace, [{ type: "answer", at: 0, content: "há 3 alertas firing" }]);
+      assert.deepEqual(body.metrics, { llmCalls: 1, latencyMs: 5, historyMessages: 0 });
+      assert.equal(typeof body.conversationId, "string");
+      assert.ok(body.conversationId.length > 0);
       assert.equal(fake.calls, 1);
     });
 
@@ -120,6 +161,7 @@ describe("POST /chat", () => {
           if (name === "plan-and-execute") return planFake;
           throw new UnknownStrategyError(name);
         },
+        conversationStore: fakeConversationStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -179,6 +221,7 @@ describe("POST /chat", () => {
 
       const app = createApp({
         resolveStrategy: (_name, reflect) => (reflect ? reflectedFake : baseFake),
+        conversationStore: fakeConversationStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -226,6 +269,7 @@ describe("POST /chat", () => {
       const app = createApp({
         resolveStrategy: () => neverResolvingFake,
         timeoutMs: 20,
+        conversationStore: fakeConversationStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -267,6 +311,7 @@ describe("POST /chat", () => {
             run: async () => ({ answer: "resposta rápida", trace: [], metrics: { llmCalls: 1, latencyMs: 0 } }),
           };
         },
+        conversationStore: fakeConversationStore(),
       });
       ({ baseUrl, close } = await startServer(app));
     });
@@ -296,6 +341,187 @@ describe("POST /chat", () => {
       assert.equal(fastResponse.status, 200);
       assert.equal(slowBody.answer, "resposta lenta");
       assert.equal(fastBody.answer, "resposta rápida");
+    });
+  });
+
+  describe("User Story 5 (006) — conversa nova, continuada e id desconhecido", () => {
+    let baseUrl: string;
+    let close: () => Promise<void>;
+    let fake: ReturnType<typeof fakeStrategy>;
+    let conversationStore: ReturnType<typeof fakeConversationStore>;
+
+    before(async () => {
+      fake = fakeStrategy("fake-conversation", {
+        answer: "Gabriel, entendido!",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1 },
+      });
+      conversationStore = fakeConversationStore({
+        "conv-existente": [
+          { role: "user", content: "me chame de Gabriel" },
+          { role: "assistant", content: "Combinado, Gabriel!" },
+        ],
+      });
+      const app = createApp({ resolveStrategy: () => fake, conversationStore });
+      ({ baseUrl, close } = await startServer(app));
+    });
+
+    after(() => close());
+
+    test("[US1] mensagem sem conversationId cria uma conversa nova e reporta historyMessages: 0", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "primeira mensagem" }),
+      });
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as ChatResponseBody;
+      assert.equal(typeof body.conversationId, "string");
+      assert.equal(body.metrics.historyMessages, 0);
+      assert.equal(fake.lastInput, "primeira mensagem");
+    });
+
+    test("[US1] mensagem com conversationId existente inclui o histórico na composição do prompt", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "qual é o meu nome?", conversationId: "conv-existente" }),
+      });
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as ChatResponseBody;
+      assert.equal(body.conversationId, "conv-existente");
+      assert.equal(body.metrics.historyMessages, 2);
+      assert.ok(fake.lastInput?.includes("me chame de Gabriel"));
+      assert.ok(fake.lastInput?.includes("qual é o meu nome?"));
+    });
+
+    test("[US1] conversationId desconhecido retorna 404 sem chamar a estratégia", async () => {
+      const callsBefore = fake.calls;
+
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "oi", conversationId: "id-que-nao-existe" }),
+      });
+
+      assert.equal(response.status, 404);
+      const body = (await response.json()) as { error: string; conversationId: string };
+      assert.equal(body.error, "conversation_not_found");
+      assert.equal(body.conversationId, "id-que-nao-existe");
+      assert.equal(fake.calls, callsBefore);
+    });
+
+    test("[US1] duas conversas diferentes nunca compartilham histórico entre si", async () => {
+      const first = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "me chame de Ana" }),
+      });
+      const { conversationId: conversationA } = (await first.json()) as { conversationId: string };
+
+      const second = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "qual é o meu nome?" }),
+      });
+      const secondBody = (await second.json()) as ChatResponseBody;
+
+      assert.notEqual(secondBody.conversationId, conversationA);
+      assert.equal(secondBody.metrics.historyMessages, 0);
+      assert.ok(!fake.lastInput?.includes("Ana"));
+    });
+  });
+
+  describe("User Story 6 (006) — conversas longas e historyMessages nunca excede 12", () => {
+    let baseUrl: string;
+    let close: () => Promise<void>;
+    let fake: ReturnType<typeof fakeStrategy>;
+
+    before(async () => {
+      fake = fakeStrategy("fake-long-conversation", {
+        answer: "ok",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1 },
+      });
+
+      const longHistory: ConversationMessage[] = Array.from({ length: 15 }, (_, index) => ({
+        role: index % 2 === 0 ? "user" : "assistant",
+        content: `mensagem antiga ${index}`,
+      }));
+
+      const app = createApp({
+        resolveStrategy: () => fake,
+        conversationStore: fakeConversationStore({ "conv-longa": longHistory }),
+      });
+      ({ baseUrl, close } = await startServer(app));
+    });
+
+    after(() => close());
+
+    test("[US2][US3] conversa com mais de 12 mensagens responde 200 e historyMessages é exatamente 12, nunca 15", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "mensagem nova", conversationId: "conv-longa" }),
+      });
+
+      assert.equal(response.status, 200);
+      const body = (await response.json()) as ChatResponseBody;
+      assert.equal(body.metrics.historyMessages, 12);
+      // As 3 mensagens mais antigas (0, 1, 2) foram descartadas pelo corte de 12.
+      assert.ok(!fake.lastInput?.includes("mensagem antiga 0"));
+      assert.ok(fake.lastInput?.includes("mensagem antiga 14"));
+    });
+  });
+
+  describe("User Story 7 (006) — auditoria de historyMessages em diferentes tamanhos de conversa", () => {
+    let baseUrl: string;
+    let close: () => Promise<void>;
+    let fake: ReturnType<typeof fakeStrategy>;
+
+    before(async () => {
+      fake = fakeStrategy("fake-audit", {
+        answer: "ok",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1 },
+      });
+
+      const app = createApp({
+        resolveStrategy: () => fake,
+        conversationStore: fakeConversationStore({
+          "conv-poucas": [
+            { role: "user", content: "oi" },
+            { role: "assistant", content: "olá!" },
+          ],
+        }),
+      });
+      ({ baseUrl, close } = await startServer(app));
+    });
+
+    after(() => close());
+
+    test("[US3] conversa nova reporta historyMessages: 0", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "primeira mensagem" }),
+      });
+
+      const body = (await response.json()) as ChatResponseBody;
+      assert.equal(body.metrics.historyMessages, 0);
+    });
+
+    test("[US3] conversa com poucas mensagens reporta a quantidade exata", async () => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "mais uma", conversationId: "conv-poucas" }),
+      });
+
+      const body = (await response.json()) as ChatResponseBody;
+      assert.equal(body.metrics.historyMessages, 2);
     });
   });
 });
