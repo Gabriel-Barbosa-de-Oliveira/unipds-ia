@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { mergeTokenUsage, UsageCollector, type TokenUsage } from "../context/tokens.ts";
 import { createModel } from "./model.ts";
 import { startTimer } from "./metrics.ts";
 import type { ReasoningStrategy, RunOptions, RunResult, TraceEvent } from "./types.ts";
@@ -29,7 +30,7 @@ export interface ReflectionOptions {
 }
 
 type RunAttempt = (input: string, options?: RunOptions) => Promise<RunResult>;
-type CritiqueFn = (input: string, result: RunResult) => Promise<Verdict>;
+type CritiqueFn = (input: string, result: RunResult) => Promise<{ verdict: Verdict; tokenUsage: TokenUsage }>;
 
 /** Extrai apenas os resultados das observações de um trace — é contra isso que o crítico avalia a resposta (FR-002). */
 export function observationsOf(trace: readonly TraceEvent[]): unknown[] {
@@ -66,10 +67,11 @@ export function buildRetryInput(
   ].join("\n");
 }
 
-async function critique(input: string, result: RunResult): Promise<Verdict> {
+async function critique(input: string, result: RunResult): Promise<{ verdict: Verdict; tokenUsage: TokenUsage }> {
+  const usageCollector = new UsageCollector();
   const verdict = await createModel()
     .withStructuredOutput(verdictSchema)
-    .invoke(buildCritiqueMessages(input, result.trace, result.answer));
+    .invoke(buildCritiqueMessages(input, result.trace, result.answer), { callbacks: [usageCollector] });
 
   if (!verdict) {
     throw new Error(
@@ -77,13 +79,14 @@ async function critique(input: string, result: RunResult): Promise<Verdict> {
     );
   }
 
-  return verdict;
+  return { verdict, tokenUsage: usageCollector.tokenUsage };
 }
 
 interface ReflectionResult {
   answer: string;
   trace: TraceEvent[];
   llmCalls: number;
+  tokenUsage: TokenUsage;
 }
 
 /**
@@ -100,6 +103,7 @@ export async function runReflectionLoop(
 ): Promise<ReflectionResult> {
   let trace: TraceEvent[] = [];
   let llmCalls = 0;
+  let tokenUsage: TokenUsage | undefined;
   let currentInput = input;
   let regenerationsDone = 0;
 
@@ -108,13 +112,16 @@ export async function runReflectionLoop(
     const offset = trace.length;
     trace = trace.concat(attempt.trace.map((event, index) => ({ ...event, at: offset + index })));
     llmCalls += attempt.metrics.llmCalls;
+    const attemptUsage: TokenUsage = { promptTokens: attempt.metrics.promptTokens, source: attempt.metrics.tokenSource };
 
-    const verdict = await critiqueFn(input, attempt);
+    const { verdict, tokenUsage: critiqueUsage } = await critiqueFn(input, attempt);
     llmCalls += 1;
+    const iterationUsage = mergeTokenUsage(attemptUsage, critiqueUsage);
+    tokenUsage = tokenUsage ? mergeTokenUsage(tokenUsage, iterationUsage) : iterationUsage;
     trace = trace.concat([{ type: "critique", at: trace.length, content: verdict.feedback }]);
 
     if (verdict.approved || regenerationsDone >= maxReflections) {
-      return { answer: attempt.answer, trace, llmCalls };
+      return { answer: attempt.answer, trace, llmCalls, tokenUsage };
     }
 
     regenerationsDone += 1;
@@ -148,7 +155,12 @@ export function withReflection(
       return {
         answer: result.answer,
         trace: result.trace,
-        metrics: { llmCalls: result.llmCalls, latencyMs: elapsed() },
+        metrics: {
+          llmCalls: result.llmCalls,
+          latencyMs: elapsed(),
+          promptTokens: result.tokenUsage.promptTokens,
+          tokenSource: result.tokenUsage.source,
+        },
       };
     },
   };

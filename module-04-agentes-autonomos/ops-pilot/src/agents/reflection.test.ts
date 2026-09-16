@@ -1,21 +1,35 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import type { TokenUsage } from "../context/tokens.ts";
 import {
   buildCritiqueMessages,
   buildRetryInput,
   observationsOf,
   runReflectionLoop,
+  type Verdict,
 } from "./reflection.ts";
 import type { RunResult, TraceEvent } from "./types.ts";
 
-function fakeAttempt(answer: string, llmCalls = 1): RunResult {
+const DEFAULT_ATTEMPT_USAGE: TokenUsage = { promptTokens: 10, source: "real" };
+const DEFAULT_CRITIQUE_USAGE: TokenUsage = { promptTokens: 5, source: "real" };
+
+function fakeAttempt(answer: string, llmCalls = 1, tokenUsage: TokenUsage = DEFAULT_ATTEMPT_USAGE): RunResult {
   const trace: TraceEvent[] = [
     { type: "action", at: 0, tool: "list_alerts", args: { status: "firing" } },
     { type: "observation", at: 1, result: [{ id: "alert-1", status: "firing" }] },
     { type: "answer", at: 2, content: answer },
   ];
-  return { answer, trace, metrics: { llmCalls, latencyMs: 10 } };
+  return {
+    answer,
+    trace,
+    metrics: { llmCalls, latencyMs: 10, promptTokens: tokenUsage.promptTokens, tokenSource: tokenUsage.source },
+  };
+}
+
+/** Fábrica de `CritiqueFn` fake — combina o veredito com um `tokenUsage` fixo (padrão: real, 5 tokens). */
+function fakeCritique(verdict: Verdict, tokenUsage: TokenUsage = DEFAULT_CRITIQUE_USAGE) {
+  return async () => ({ verdict, tokenUsage });
 }
 
 test("observationsOf extrai apenas os resultados dos eventos observation", () => {
@@ -53,7 +67,7 @@ test("runReflectionLoop: aprovação já na 1ª tentativa não gera regeneraçã
     attemptCalls += 1;
     return fakeAttempt("resposta correta");
   };
-  const critique = async () => ({ approved: true, feedback: "consistente com as observações" });
+  const critique = fakeCritique({ approved: true, feedback: "consistente com as observações" });
 
   const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
 
@@ -73,9 +87,9 @@ test("runReflectionLoop: reprovação seguida de aprovação regenera com o feed
   };
   const critique = async (_input: string, result: RunResult) => {
     if (result.answer === "resposta incompleta") {
-      return { approved: false, feedback: "faltou o alerta X" };
+      return { verdict: { approved: false, feedback: "faltou o alerta X" }, tokenUsage: DEFAULT_CRITIQUE_USAGE };
     }
-    return { approved: true, feedback: "agora está completo" };
+    return { verdict: { approved: true, feedback: "agora está completo" }, tokenUsage: DEFAULT_CRITIQUE_USAGE };
   };
 
   const result = await runReflectionLoop(runAttempt, critique, "pedido original", undefined, 2);
@@ -99,7 +113,7 @@ test("runReflectionLoop: esgota maxReflections (padrão) sem aprovação e retor
     attemptCalls += 1;
     return fakeAttempt(`tentativa ${attemptCalls}`);
   };
-  const critique = async () => ({ approved: false, feedback: "ainda não está certo" });
+  const critique = fakeCritique({ approved: false, feedback: "ainda não está certo" });
 
   const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
 
@@ -114,7 +128,7 @@ test("runReflectionLoop: maxReflections = 0 nunca regenera, mesmo com reprovaç�
     attemptCalls += 1;
     return fakeAttempt("única tentativa");
   };
-  const critique = async () => ({ approved: false, feedback: "reprovado" });
+  const critique = fakeCritique({ approved: false, feedback: "reprovado" });
 
   const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 0);
 
@@ -127,7 +141,7 @@ test("runReflectionLoop: erro na tentativa propaga em vez de ser mascarado", asy
   const runAttempt = async () => {
     throw new Error("falha de infraestrutura");
   };
-  const critique = async () => ({ approved: true, feedback: "n/a" });
+  const critique = fakeCritique({ approved: true, feedback: "n/a" });
 
   await assert.rejects(
     runReflectionLoop(runAttempt, critique, "pedido", undefined, 2),
@@ -145,4 +159,61 @@ test("runReflectionLoop: erro na crítica propaga em vez de ser mascarado", asyn
     runReflectionLoop(runAttempt, critique, "pedido", undefined, 2),
     /crítico indisponível/,
   );
+});
+
+test("runReflectionLoop: tokenUsage combina tentativa + crítica numa única iteração (real + real = real)", async () => {
+  const runAttempt = async () => fakeAttempt("resposta correta", 1, { promptTokens: 20, source: "real" });
+  const critique = fakeCritique(
+    { approved: true, feedback: "consistente" },
+    { promptTokens: 8, source: "real" },
+  );
+
+  const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
+
+  assert.deepEqual(result.tokenUsage, { promptTokens: 28, source: "real" });
+});
+
+test("runReflectionLoop: tokenUsage acumula entre iterações numa regeneração", async () => {
+  let attemptCalls = 0;
+  const runAttempt = async () => {
+    attemptCalls += 1;
+    return fakeAttempt(
+      attemptCalls === 1 ? "resposta incompleta" : "resposta corrigida",
+      1,
+      { promptTokens: 10, source: "real" },
+    );
+  };
+  let critiqueCalls = 0;
+  const critique = async (_input: string, result: RunResult) => {
+    critiqueCalls += 1;
+    if (result.answer === "resposta incompleta") {
+      return {
+        verdict: { approved: false, feedback: "faltou o alerta X" },
+        tokenUsage: { promptTokens: 5, source: "real" as const },
+      };
+    }
+    return {
+      verdict: { approved: true, feedback: "completo" },
+      tokenUsage: { promptTokens: 5, source: "real" as const },
+    };
+  };
+
+  const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
+
+  assert.equal(attemptCalls, 2);
+  assert.equal(critiqueCalls, 2);
+  // 2 tentativas (10 cada) + 2 críticas (5 cada) = 30, todas reais.
+  assert.deepEqual(result.tokenUsage, { promptTokens: 30, source: "real" });
+});
+
+test("runReflectionLoop: tokenUsage vira mixed quando tentativa e crítica têm origens diferentes", async () => {
+  const runAttempt = async () => fakeAttempt("resposta", 1, { promptTokens: 15, source: "real" });
+  const critique = fakeCritique(
+    { approved: true, feedback: "ok" },
+    { promptTokens: 3, source: "estimated" },
+  );
+
+  const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
+
+  assert.deepEqual(result.tokenUsage, { promptTokens: 18, source: "mixed" });
 });

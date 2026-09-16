@@ -3,6 +3,7 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 
+import { UsageCollector } from "../context/tokens.ts";
 import { lastAnswer, messagesToTrace } from "./message-trace.ts";
 import { createModel } from "./model.ts";
 import { buildMetrics, LlmCallCounter, startTimer } from "./metrics.ts";
@@ -25,6 +26,7 @@ export function createReactStrategy(tools: StructuredToolInterface[]): Reasoning
     async run(input: string, options?: RunOptions): Promise<RunResult> {
       const elapsed = startTimer();
       const counter = new LlmCallCounter();
+      const usageCollector = new UsageCollector();
       const maxIterations = options?.maxIterations ?? DEFAULT_MAX_ITERATIONS;
 
       const agent = createReactAgent({
@@ -37,7 +39,7 @@ export function createReactStrategy(tools: StructuredToolInterface[]): Reasoning
       try {
         const stream = await agent.stream(
           { messages: [{ role: "user", content: input }] },
-          { recursionLimit: maxIterations, callbacks: [counter], streamMode: "values" },
+          { recursionLimit: maxIterations, callbacks: [counter, usageCollector], streamMode: "values" },
         );
 
         for await (const chunk of stream) {
@@ -48,7 +50,7 @@ export function createReactStrategy(tools: StructuredToolInterface[]): Reasoning
         return {
           answer: lastAnswer(trace) ?? LIMIT_REACHED_ANSWER,
           trace,
-          metrics: buildMetrics(counter, elapsed()),
+          metrics: buildMetrics(counter, usageCollector, elapsed()),
         };
       } catch (error) {
         if (error instanceof GraphRecursionError) {
@@ -57,7 +59,7 @@ export function createReactStrategy(tools: StructuredToolInterface[]): Reasoning
           // ReasoningStrategy (FR-006).
           const trace = messagesToTrace(lastMessages);
           trace.push({ type: "answer", at: trace.length, content: LIMIT_REACHED_ANSWER });
-          return { answer: LIMIT_REACHED_ANSWER, trace, metrics: buildMetrics(counter, elapsed()) };
+          return { answer: LIMIT_REACHED_ANSWER, trace, metrics: buildMetrics(counter, usageCollector, elapsed()) };
         }
         throw error;
       }

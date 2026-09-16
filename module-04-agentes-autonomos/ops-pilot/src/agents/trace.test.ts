@@ -41,5 +41,8 @@ test("formatTrace junta os eventos em ordem, uma linha por evento", () => {
 });
 
 test("formatMetrics formata llmCalls e latencyMs", () => {
-  assert.equal(formatMetrics({ llmCalls: 3, latencyMs: 120 }), "llmCalls=3 latencyMs=120");
+  assert.equal(
+    formatMetrics({ llmCalls: 3, latencyMs: 120, promptTokens: 0, tokenSource: "real" }),
+    "llmCalls=3 latencyMs=120",
+  );
 });

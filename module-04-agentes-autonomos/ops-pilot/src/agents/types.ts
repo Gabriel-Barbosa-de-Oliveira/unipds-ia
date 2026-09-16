@@ -1,3 +1,5 @@
+import type { TokenSource } from "../context/tokens.ts";
+
 export type ToolName =
   | "list_alerts"
   | "open_incident"
@@ -21,6 +23,8 @@ export type TraceEvent =
 export interface Metrics {
   llmCalls: number;
   latencyMs: number;
+  promptTokens: number;
+  tokenSource: TokenSource;
 }
 
 export interface RunResult {

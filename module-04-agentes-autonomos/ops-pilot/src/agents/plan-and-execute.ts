@@ -4,6 +4,7 @@ import type { BaseMessage } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { z } from "zod";
 
+import { UsageCollector } from "../context/tokens.ts";
 import { lastAnswer, messagesToTrace } from "./message-trace.ts";
 import { createModel } from "./model.ts";
 import { buildMetrics, LlmCallCounter, startTimer } from "./metrics.ts";
@@ -71,6 +72,7 @@ function buildReplanPrompt(state: PlanExecuteStateType): string {
 function buildGraph(
   tools: StructuredToolInterface[],
   counter: LlmCallCounter,
+  usageCollector: UsageCollector,
   stepCap: number,
   noReplanner: boolean,
 ) {
@@ -81,7 +83,7 @@ function buildGraph(
 
   async function planner(state: PlanExecuteStateType): Promise<Partial<PlanExecuteStateType>> {
     const result = await plannerModel.invoke([{ role: "user", content: state.input }], {
-      callbacks: [counter],
+      callbacks: [counter, usageCollector],
     });
 
     if (!result) {
@@ -105,7 +107,7 @@ function buildGraph(
 
     const stream = await executorAgent.stream(
       { messages: [{ role: "user", content: step }] },
-      { callbacks: [counter], streamMode: "values" },
+      { callbacks: [counter, usageCollector], streamMode: "values" },
     );
 
     let messages: BaseMessage[] = [];
@@ -127,7 +129,7 @@ function buildGraph(
   async function replanner(state: PlanExecuteStateType): Promise<Partial<PlanExecuteStateType>> {
     const result = await replannerModel.invoke(
       [{ role: "user", content: buildReplanPrompt(state) }],
-      { callbacks: [counter] },
+      { callbacks: [counter, usageCollector] },
     );
 
     if (!result) {
@@ -224,10 +226,11 @@ export function createPlanAndExecuteStrategy(tools: StructuredToolInterface[]): 
     async run(input: string, options?: RunOptions): Promise<RunResult> {
       const elapsed = startTimer();
       const counter = new LlmCallCounter();
+      const usageCollector = new UsageCollector();
       const stepCap = Math.min(options?.maxIterations ?? HARD_STEP_CAP, HARD_STEP_CAP);
       const noReplanner = options?.noReplanner ?? false;
 
-      const graph = buildGraph(tools, counter, stepCap, noReplanner);
+      const graph = buildGraph(tools, counter, usageCollector, stepCap, noReplanner);
       const result = await graph.invoke(
         { input, plan: [], pastSteps: [], trace: [], stepsTaken: 0, response: undefined },
         { recursionLimit: 2 + stepCap * 2 },
@@ -236,7 +239,7 @@ export function createPlanAndExecuteStrategy(tools: StructuredToolInterface[]): 
       return {
         answer: result.response ?? LIMIT_REACHED_ANSWER,
         trace: result.trace,
-        metrics: buildMetrics(counter, elapsed()),
+        metrics: buildMetrics(counter, usageCollector, elapsed()),
       };
     },
   };

@@ -1,5 +1,6 @@
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 
+import type { UsageCollector } from "../context/tokens.ts";
 import type { Metrics } from "./types.ts";
 
 /**
@@ -21,6 +22,7 @@ export function startTimer(): () => number {
   return () => Date.now() - startedAt;
 }
 
-export function buildMetrics(counter: LlmCallCounter, latencyMs: number): Metrics {
-  return { llmCalls: counter.calls, latencyMs };
+export function buildMetrics(counter: LlmCallCounter, usageCollector: UsageCollector, latencyMs: number): Metrics {
+  const { promptTokens, source } = usageCollector.tokenUsage;
+  return { llmCalls: counter.calls, latencyMs, promptTokens, tokenSource: source };
 }

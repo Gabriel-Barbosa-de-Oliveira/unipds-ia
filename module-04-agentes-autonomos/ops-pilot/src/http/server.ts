@@ -6,7 +6,9 @@ import { resolveStrategy as resolveStrategyDefault } from "../agents/index.ts";
 import type { ReasoningStrategy } from "../agents/types.ts";
 import { composePrompt } from "../domain/conversation.ts";
 import { ChatTimeoutError, ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
+import { buildContextBreakdown } from "../context/tokens.ts";
 import { composeWithFacts } from "../domain/memory.ts";
+import { reflectAndRemember as reflectAndRememberDefault } from "../memory/learning-reflector.ts";
 import { createMemoryTools, SqliteMemoryStore, type MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import { runWithTimeout } from "../services/chat.service.ts";
@@ -43,6 +45,8 @@ export interface CreateAppOptions {
   conversationStore?: ConversationStore;
   /** Sobrescreve o armazenamento de memória semântica — usado por testes para injetar fakes, sem SQLite/modelo real. */
   memoryStore?: MemoryStore;
+  /** Sobrescreve o refletor de aprendizado (008) — usado por testes para injetar fakes, sem rede. */
+  reflectAndRemember?: typeof reflectAndRememberDefault;
 }
 
 /** Middleware de erro do Express: traduz falhas em status HTTP, nunca o contrário (Principle III). */
@@ -71,6 +75,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const conversationStore = options.conversationStore ?? new SqliteConversationStore();
   const memoryStore = options.memoryStore ?? new SqliteMemoryStore();
+  const reflectAndRemember = options.reflectAndRemember ?? reflectAndRememberDefault;
 
   const app = express();
   app.use(express.json());
@@ -94,10 +99,20 @@ export function createApp(options: CreateAppOptions = {}): Express {
         : [];
       const extraTools = userId ? createMemoryTools(memoryStore, userId) : undefined;
 
+      const contextBreakdown = buildContextBreakdown({
+        currentMessage: parsed.data.message,
+        historyTexts: history.map((message) => message.content),
+        factTexts: recalledFacts,
+      });
+
       const strategy = resolveStrategy(parsed.data.strategy, parsed.data.reflect, extraTools);
       const promptWithHistory = composePrompt(history, parsed.data.message);
       const prompt = composeWithFacts(recalledFacts, promptWithHistory);
       const result = await runWithTimeout(strategy, prompt, undefined, timeoutMs);
+
+      if (userId) {
+        void reflectAndRemember(memoryStore, userId, parsed.data.message).catch(() => {});
+      }
 
       await conversationStore.append(conversationId, [
         { role: "user", content: parsed.data.message },
@@ -107,7 +122,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
       res.status(200).json({
         ...result,
         conversationId,
-        metrics: { ...result.metrics, historyMessages: history.length },
+        metrics: { ...result.metrics, historyMessages: history.length, contextBreakdown },
       });
     } catch (error) {
       next(error);

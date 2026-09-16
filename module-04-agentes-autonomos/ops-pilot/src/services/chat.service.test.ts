@@ -15,7 +15,11 @@ function delayedStrategy(result: RunResult, delayMs: number): ReasoningStrategy 
   };
 }
 
-const FAKE_RESULT: RunResult = { answer: "ok", trace: [], metrics: { llmCalls: 1, latencyMs: 1 } };
+const FAKE_RESULT: RunResult = {
+  answer: "ok",
+  trace: [],
+  metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+};
 
 test("runWithTimeout resolve normalmente quando a estratégia termina antes do limite", async () => {
   const strategy = delayedStrategy(FAKE_RESULT, 5);
