@@ -104,3 +104,12 @@ Toda chamada ao modelo passa a usar uma nova tentativa e, se `OPENROUTER_MODEL_F
 - eventos `{ "type": "fallback", "from", "to", "reason", "node" }` no `trace`, um para cada troca do modelo principal para a reserva.
 
 Se o principal e a reserva falharem, o erro continua sendo `500`. Contrato completo: [specs/013-model-resilience/contracts/post-chat.md](../013-model-resilience/contracts/post-chat.md).
+
+## Nota: trace persistido e logs JSON (014)
+
+- Toda resposta do `/chat`, inclusive as de erro, traz o cabeçalho `X-Request-Id` e o campo `requestId` no corpo, com o mesmo valor.
+- `GET /requests/<requestId>` devolve o registro da execução (métricas, rota, modelo, desfecho) e o trace na ordem original. Timeout e erro interno também são gravados, com trace vazio.
+- O servidor escreve uma linha JSON por evento no stdout, só com metadados e nunca com o conteúdo da conversa.
+- **Investigar um 500**: em vez do antigo `console.error`, procure no stdout a linha `request.failed` com o `requestId` da resposta, que traz o tipo do erro, e consulte `GET /requests/<requestId>`.
+
+Contrato completo: [specs/014-persisted-trace/contracts/http.md](../014-persisted-trace/contracts/http.md).

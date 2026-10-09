@@ -17,11 +17,32 @@ import {
   type ContextInput,
 } from "../context/context-builder.ts";
 import { mergeTokenUsage, type TokenUsage } from "../context/tokens.ts";
+import { buildRequestRecord, chatMetricsOf } from "../domain/request-record.ts";
+import { errorTypeOf, traceToLogEvents, type Logger } from "../obs/logger.ts";
+import type { RequestStore } from "../services/request-store.repository.ts";
 import { resolveRouteDecision, type DecideRoute } from "./router.ts";
 
 export interface ProductionGraphDeps {
   decideRoute: DecideRoute;
   strategyFor: (route: RouteName) => ReasoningStrategy;
+  /** Onde o nó `resposta` grava registro + trace (spec 014). Ausente: nada é gravado. */
+  requestStore?: RequestStore;
+  /** Logger JSON do nó `resposta` (spec 014). Ausente: nada é logado. */
+  logger?: Logger;
+  now?: () => Date;
+}
+
+/** Identificação da requisição HTTP que disparou a execução (spec 014). */
+export interface RequestContext {
+  requestId: string;
+  conversationId: string | null;
+  userId?: string;
+  startedAt: Date;
+  /**
+   * true quando quem chamou já desistiu (ex.: timeout do /chat, que grava o próprio registro). A
+   * execução não é cancelada, então o nó `resposta` precisa saber que não deve gravar nem logar.
+   */
+  abandoned?: () => boolean;
 }
 
 export interface ProductionInput {
@@ -29,6 +50,7 @@ export interface ProductionInput {
   budget: ContextBudget;
   /** Rota informada pelo cliente — quando presente, o roteador não é consultado (FR-008). */
   override?: RouteName;
+  request?: RequestContext;
 }
 
 export type ProductionRunResult = RunResult & {
@@ -53,6 +75,7 @@ const GraphState = Annotation.Root({
   routerUsage: Annotation<RouterUsage>,
   strategyResult: Annotation<RunResult>,
   trace: Annotation<ProductionTraceEvent[]>({ reducer: (prev, next) => prev.concat(next), default: () => [] }),
+  request: Annotation<RequestContext | undefined>(replace<RequestContext | undefined>()),
   result: Annotation<ProductionRunResult>,
 });
 
@@ -125,16 +148,70 @@ export function createProductionGraph(deps: ProductionGraphDeps) {
     };
   }
 
+  /**
+   * Nó `resposta`: consolida o resultado e, quando há requisição associada, grava registro +
+   * trace numa transação e emite os logs de metadados (spec 014). Falha de gravação nunca derruba
+   * a resposta (FR-008) — só vira `persistence.failed`.
+   */
   function answerNode(latency: () => number) {
-    return async (state: GraphStateType): Promise<Partial<GraphStateType>> => ({
-      result: {
+    const now = deps.now ?? (() => new Date());
+
+    return async (state: GraphStateType): Promise<Partial<GraphStateType>> => {
+      const result: ProductionRunResult = {
         answer: state.strategyResult.answer,
         trace: state.trace,
         metrics: combineMetrics(state.routerUsage, state.strategyResult.metrics, latency()),
         route: state.decision,
         context: state.built,
-      },
-    });
+      };
+
+      const request = state.request;
+      if (request && !request.abandoned?.()) {
+        const durationMs = now().getTime() - request.startedAt.getTime();
+        await persist(
+          buildRequestRecord({
+            requestId: request.requestId,
+            conversationId: request.conversationId,
+            userId: request.userId,
+            startedAt: request.startedAt,
+            durationMs,
+            outcome: "ok",
+            route: result.route,
+            metrics: chatMetricsOf(result.metrics, result.context),
+          }),
+          result.trace,
+        );
+
+        for (const event of traceToLogEvents(request.requestId, result.trace)) {
+          deps.logger?.log(event);
+        }
+        deps.logger?.log({
+          event: "request.completed",
+          requestId: request.requestId,
+          node: "resposta",
+          durationMs,
+          route: result.route.route,
+          llmCalls: result.metrics.llmCalls,
+          promptTokens: result.metrics.promptTokens,
+          tokenSource: result.metrics.tokenSource,
+          modelUsed: result.metrics.modelUsed,
+          traceEvents: result.trace.length,
+        });
+      }
+
+      return { result };
+    };
+  }
+
+  async function persist(record: Parameters<RequestStore["save"]>[0], trace: ProductionTraceEvent[]): Promise<void> {
+    if (!deps.requestStore) {
+      return;
+    }
+    try {
+      await deps.requestStore.save(record, trace);
+    } catch (error) {
+      deps.logger?.log({ event: "persistence.failed", requestId: record.requestId, errorType: errorTypeOf(error) });
+    }
   }
 
   return {
@@ -165,6 +242,7 @@ export function createProductionGraph(deps: ProductionGraphDeps) {
         contextInput: input.context,
         budget: input.budget,
         override: input.override,
+        request: input.request,
       });
       return state.result;
     },

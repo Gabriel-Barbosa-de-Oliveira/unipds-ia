@@ -12,10 +12,13 @@ import { composeWithFacts } from "../domain/memory.ts";
 import type { RecallMatch, MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import type { DecideRoute } from "../graph/router.ts";
+import { createLogger } from "../obs/logger.ts";
+import { SqliteRequestStore } from "../store/sqlite-request-store.ts";
 import { createApp, type CreateAppOptions } from "./server.ts";
 
 /** Corpo de resposta real do endpoint após 009 — `RunResult` com `conversationId` e `metrics.historyMessages`/`metrics.contextBreakdown`. */
 type ChatResponseBody = Omit<RunResult, "metrics"> & {
+  requestId: string;
   conversationId: string;
   route: RouteDecision;
   metrics: RunResult["metrics"] & {
@@ -37,9 +40,17 @@ function fixedRouter(route: RouteName = "react"): DecideRoute & { calls: number 
   return router;
 }
 
-/** `createApp` com roteador fake por padrão — nenhum teste chama o OpenRouter. */
+/**
+ * `createApp` com roteador fake (nenhum teste chama o OpenRouter), registros num SQLite em memória
+ * (nunca cria `./data/opspilot.db`) e logger silencioso (014) por padrão.
+ */
 function createTestApp(options: CreateAppOptions = {}): Express {
-  return createApp({ decideRoute: fixedRouter(), ...options });
+  return createApp({
+    decideRoute: fixedRouter(),
+    requestStore: new SqliteRequestStore(":memory:"),
+    logger: { log() {} },
+    ...options,
+  });
 }
 
 function fakeStrategy(name: string, result: RunResult): ReasoningStrategy & { calls: number; lastInput?: string } {
@@ -1120,7 +1131,10 @@ describe("POST /chat", () => {
 });
 
 describe("POST /chat — grafo unificado (012)", () => {
-  async function postChat(app: Express, body: Record<string, unknown>): Promise<{ status: number; body: ChatResponseBody }> {
+  async function postChat(
+    app: Express,
+    body: Record<string, unknown>,
+  ): Promise<{ status: number; body: ChatResponseBody; requestIdHeader: string | null }> {
     const { baseUrl, close } = await startServer(app);
     try {
       const response = await fetch(`${baseUrl}/chat`, {
@@ -1128,7 +1142,11 @@ describe("POST /chat — grafo unificado (012)", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      return { status: response.status, body: (await response.json()) as ChatResponseBody };
+      return {
+        status: response.status,
+        body: (await response.json()) as ChatResponseBody,
+        requestIdHeader: response.headers.get("x-request-id"),
+      };
     } finally {
       await close();
     }
@@ -1299,11 +1317,315 @@ describe("POST /chat — grafo unificado (012)", () => {
       const response = await postChat(app, { message: "oi", strategy: "nao-existe" });
 
       assert.equal(response.status, 422);
-      assert.deepEqual(response.body as unknown, { error: "unknown_strategy", strategy: "nao-existe" });
+      assert.deepEqual(response.body as unknown, {
+        requestId: response.requestIdHeader,
+        error: "unknown_strategy",
+        strategy: "nao-existe",
+      });
       assert.equal(router.calls, 0);
       assert.deepEqual(resolveCalls, []);
       assert.equal(fakes.react.calls + fakes.plan.calls + fakes.reflected.calls, 0);
       assert.equal(conversationStore.conversations.size, 0);
+    });
+  });
+});
+
+describe("Trace persistido e logs JSON (014)", () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  const MARKER = "MARCADOR-SECRETO-123";
+
+  interface Call {
+    status: number;
+    body: Record<string, unknown>;
+    requestIdHeader: string | null;
+  }
+
+  async function withServer<T>(app: Express, run: (baseUrl: string) => Promise<T>): Promise<T> {
+    const { baseUrl, close } = await startServer(app);
+    try {
+      return await run(baseUrl);
+    } finally {
+      await close();
+    }
+  }
+
+  async function post(baseUrl: string, body: unknown): Promise<Call> {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return {
+      status: response.status,
+      body: (await response.json()) as Record<string, unknown>,
+      requestIdHeader: response.headers.get("x-request-id"),
+    };
+  }
+
+  async function lookup(baseUrl: string, id: string): Promise<{ status: number; body: Record<string, unknown> }> {
+    const response = await fetch(`${baseUrl}/requests/${id}`);
+    return { status: response.status, body: (await response.json()) as Record<string, unknown> };
+  }
+
+  function okStrategy(content = "há 1 alerta firing"): ReasoningStrategy {
+    return {
+      name: "fake",
+      run: async () => ({
+        answer: content,
+        trace: [
+          { type: "action", at: 0, tool: "list_alerts", args: { status: "firing" } },
+          { type: "observation", at: 1, result: [{ id: "alert-1" }] },
+          { type: "answer", at: 2, content },
+        ],
+        metrics: { llmCalls: 2, latencyMs: 1, promptTokens: 40, tokenSource: "real", modelUsed: "fake-model" },
+      }),
+    };
+  }
+
+  function collector() {
+    const lines: string[] = [];
+    return { lines, logger: createLogger((line) => lines.push(line)) };
+  }
+
+  describe("Foundational + User Story 2 — X-Request-Id e requestId em toda resposta", () => {
+    test("200 traz cabeçalho UUID igual ao requestId do corpo; pedidos concorrentes têm ids distintos", async () => {
+      const app = createTestApp({ resolveStrategy: () => okStrategy(), conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore() });
+      await withServer(app, async (baseUrl) => {
+        const [a, b] = await Promise.all([post(baseUrl, { message: "oi" }), post(baseUrl, { message: "oi" })]);
+        for (const call of [a, b]) {
+          assert.equal(call.status, 200);
+          assert.match(call.requestIdHeader ?? "", UUID);
+          assert.equal(call.body.requestId, call.requestIdHeader);
+        }
+        assert.notEqual(a.requestIdHeader, b.requestIdHeader);
+      });
+    });
+
+    test("o X-Request-Id enviado pelo cliente é ignorado", async () => {
+      const app = createTestApp({ resolveStrategy: () => okStrategy(), conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore() });
+      await withServer(app, async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Request-Id": "do-cliente" },
+          body: JSON.stringify({ message: "oi" }),
+        });
+        assert.match(response.headers.get("x-request-id") ?? "", UUID);
+      });
+    });
+
+    const errorCases: { name: string; status: number; options: CreateAppOptions; body: unknown }[] = [
+      { name: "400 corpo inválido", status: 400, options: {}, body: {} },
+      { name: "404 conversa desconhecida", status: 404, options: {}, body: { message: "oi", conversationId: "nao-existe" } },
+      { name: "422 estratégia desconhecida", status: 422, options: {}, body: { message: "oi", strategy: "nao-existe" } },
+      {
+        name: "504 timeout",
+        status: 504,
+        options: { timeoutMs: 20, resolveStrategy: () => ({ name: "lenta", run: () => new Promise(() => {}) }) },
+        body: { message: "oi" },
+      },
+      {
+        name: "500 erro interno",
+        status: 500,
+        options: { resolveStrategy: () => ({ name: "quebrada", run: () => Promise.reject(new Error("boom")) }) },
+        body: { message: "oi" },
+      },
+    ];
+
+    for (const errorCase of errorCases) {
+      test(`${errorCase.name}: requestId no corpo igual ao cabeçalho`, async () => {
+        const app = createTestApp({
+          resolveStrategy: () => okStrategy(),
+          conversationStore: fakeConversationStore(),
+          memoryStore: fakeMemoryStore(),
+          ...errorCase.options,
+        });
+        await withServer(app, async (baseUrl) => {
+          const call = await post(baseUrl, errorCase.body);
+          assert.equal(call.status, errorCase.status);
+          assert.match(call.requestIdHeader ?? "", UUID);
+          assert.equal(call.body.requestId, call.requestIdHeader);
+        });
+      });
+    }
+  });
+
+  describe("User Story 1 — reabrir registro + trace por GET /requests/:id", () => {
+    test("POST 200 seguido de GET devolve métricas e trace idêntico ao original", async () => {
+      const app = createTestApp({ resolveStrategy: () => okStrategy(), conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore() });
+      await withServer(app, async (baseUrl) => {
+        const chat = await post(baseUrl, { message: "quais alertas?", userId: "gabriel" });
+        const found = await lookup(baseUrl, chat.requestIdHeader!);
+        const request = found.body.request as Record<string, unknown>;
+        const metrics = chat.body.metrics as Record<string, unknown>;
+
+        assert.equal(found.status, 200);
+        assert.deepEqual(found.body.trace, chat.body.trace);
+        assert.equal(request.requestId, chat.requestIdHeader);
+        assert.equal(request.outcome, "ok");
+        assert.equal(request.errorType, null);
+        assert.equal(request.conversationId, chat.body.conversationId);
+        assert.equal(request.userId, "gabriel");
+        assert.equal(request.route, "react");
+        assert.equal(request.routeSource, "router");
+        assert.equal(request.llmCalls, metrics.llmCalls);
+        assert.equal(request.modelUsed, "fake-model");
+        assert.deepEqual(request.context, { breakdown: metrics.contextBreakdown, trimmed: metrics.contextTrimmed });
+      });
+    });
+
+    test("override é registrado com routeSource override (FR-012)", async () => {
+      const app = createTestApp({ resolveStrategy: () => okStrategy(), conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore() });
+      await withServer(app, async (baseUrl) => {
+        const chat = await post(baseUrl, { message: "oi", strategy: "plan-and-execute" });
+        const request = (await lookup(baseUrl, chat.requestIdHeader!)).body.request as Record<string, unknown>;
+        assert.deepEqual([request.route, request.routeSource], ["planExecute", "override"]);
+      });
+    });
+
+    test("timeout e erro interno são registrados com outcome, errorType e trace vazio", async () => {
+      const cases = [
+        { outcome: "timeout", errorType: "ChatTimeoutError", options: { timeoutMs: 20, resolveStrategy: () => ({ name: "lenta", run: () => new Promise<RunResult>(() => {}) }) } },
+        { outcome: "error", errorType: "TypeError", options: { resolveStrategy: () => ({ name: "quebrada", run: () => Promise.reject(new TypeError("boom")) }) } },
+      ];
+      for (const item of cases) {
+        const app = createTestApp({ conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore(), ...item.options });
+        await withServer(app, async (baseUrl) => {
+          const chat = await post(baseUrl, { message: "oi" });
+          const found = await lookup(baseUrl, chat.requestIdHeader!);
+          const request = found.body.request as Record<string, unknown>;
+          assert.equal(found.status, 200);
+          assert.deepEqual([request.outcome, request.errorType, request.route, request.llmCalls], [item.outcome, item.errorType, null, null]);
+          assert.deepEqual(found.body.trace, []);
+        });
+      }
+    });
+
+    test("id inexistente ou malformado → 404 request_not_found", async () => {
+      const app = createTestApp({ conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore() });
+      await withServer(app, async (baseUrl) => {
+        for (const id of [crypto.randomUUID(), "nao-e-uuid"]) {
+          const found = await lookup(baseUrl, id);
+          assert.equal(found.status, 404);
+          assert.deepEqual(found.body, { error: "request_not_found", requestId: id });
+        }
+      });
+    });
+
+    test("rejeição antes de executar (422) não é persistida", async () => {
+      const app = createTestApp({ conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore() });
+      await withServer(app, async (baseUrl) => {
+        const chat = await post(baseUrl, { message: "oi", strategy: "nao-existe" });
+        assert.equal((await lookup(baseUrl, chat.requestIdHeader!)).status, 404);
+      });
+    });
+
+    test("falha ao gravar não altera a resposta e vira persistence.failed (FR-008)", async () => {
+      const { lines, logger } = collector();
+      const app = createTestApp({
+        resolveStrategy: () => okStrategy(),
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+        logger,
+        requestStore: {
+          save: () => Promise.reject(new RangeError("disco cheio")),
+          find: async () => undefined,
+        },
+      });
+      await withServer(app, async (baseUrl) => {
+        const chat = await post(baseUrl, { message: "oi" });
+        assert.equal(chat.status, 200);
+        assert.equal(chat.body.answer, "há 1 alerta firing");
+        const failure = lines.map((line) => JSON.parse(line) as Record<string, unknown>).find((line) => line.event === "persistence.failed");
+        assert.deepEqual(failure && { requestId: failure.requestId, errorType: failure.errorType }, {
+          requestId: chat.requestIdHeader,
+          errorType: "RangeError",
+        });
+      });
+    });
+  });
+
+  describe("User Story 3 — logs JSON, uma linha por evento, só metadados", () => {
+    test("200 emite received → route.chosen → tool.called → request.completed, todos com o mesmo requestId", async () => {
+      const { lines, logger } = collector();
+      const app = createTestApp({ resolveStrategy: () => okStrategy(), conversationStore: fakeConversationStore(), memoryStore: fakeMemoryStore(), logger });
+      await withServer(app, async (baseUrl) => {
+        const chat = await post(baseUrl, { message: "oi" });
+        const events = lines.map((line) => JSON.parse(line) as Record<string, unknown>);
+
+        assert.deepEqual(
+          events.map((event) => event.event),
+          ["request.received", "route.chosen", "tool.called", "request.completed"],
+        );
+        assert.ok(events.every((event) => event.requestId === chat.requestIdHeader));
+        const completed = events.at(-1)!;
+        assert.equal(completed.node, "resposta");
+        assert.equal(completed.llmCalls, (chat.body.metrics as Record<string, unknown>).llmCalls);
+        assert.equal(completed.modelUsed, "fake-model");
+        assert.equal(completed.traceEvents, (chat.body.trace as unknown[]).length);
+      });
+    });
+
+    test("400 e 422 viram request.rejected; 500 vira request.failed sem a mensagem do erro", async () => {
+      const { lines, logger } = collector();
+      const app = createTestApp({
+        resolveStrategy: () => ({ name: "quebrada", run: () => Promise.reject(new Error(`falhou com ${MARKER}`)) }),
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+        logger,
+      });
+      await withServer(app, async (baseUrl) => {
+        await post(baseUrl, {});
+        await post(baseUrl, { message: "oi", strategy: "nao-existe" });
+        await post(baseUrl, { message: "oi" });
+      });
+      const events = lines.map((line) => JSON.parse(line) as Record<string, unknown>);
+      const pick = (name: string) => events.filter((event) => event.event === name).map(({ status, errorCode, errorType }) => ({ status, errorCode, errorType }));
+
+      assert.deepEqual(pick("request.rejected"), [
+        { status: 400, errorCode: "invalid_body", errorType: undefined },
+        { status: 422, errorCode: "unknown_strategy", errorType: undefined },
+      ]);
+      assert.deepEqual(pick("request.failed"), [{ status: 500, errorCode: undefined, errorType: "Error" }]);
+      assert.ok(lines.every((line) => !line.includes(MARKER)));
+    });
+
+    test("teste-âncora (SC-004): nenhum conteúdo de conversa vaza para os logs", async () => {
+      const { lines, logger } = collector();
+      const leaky: ReasoningStrategy = {
+        name: "vazadora",
+        run: async () => ({
+          answer: `resposta ${MARKER}`,
+          trace: [
+            { type: "thought", at: 0, content: `pensando ${MARKER}` },
+            { type: "action", at: 1, tool: "list_alerts", args: { service: MARKER } },
+            { type: "observation", at: 2, result: [{ note: MARKER }] },
+            { type: "fallback", at: 3, from: "a", to: "b", reason: `429 ${MARKER}` },
+            { type: "answer", at: 4, content: `resposta ${MARKER}` },
+          ],
+          metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 1, tokenSource: "real", modelUsed: "b" },
+        }),
+      };
+      const app = createTestApp({
+        resolveStrategy: () => leaky,
+        decideRoute: async () => ({ decided: { route: "react", reason: `motivo ${MARKER}` }, tokenUsage: { promptTokens: 0, source: "real" }, fallbacks: [] }),
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+        logger,
+      });
+
+      await withServer(app, async (baseUrl) => {
+        const chat = await post(baseUrl, { message: `pergunta ${MARKER}`, userId: "gabriel" });
+        assert.equal(chat.status, 200);
+        assert.ok(JSON.stringify(chat.body).includes(MARKER), "a resposta HTTP mantém o conteúdo");
+        assert.ok(JSON.stringify((await lookup(baseUrl, chat.requestIdHeader!)).body.trace).includes(MARKER), "o banco guarda o payload completo");
+      });
+
+      assert.ok(lines.length >= 5);
+      for (const line of lines) {
+        assert.ok(!line.includes("\n"));
+        JSON.parse(line);
+        assert.ok(!line.includes(MARKER), `vazou: ${line}`);
+      }
     });
   });
 });
