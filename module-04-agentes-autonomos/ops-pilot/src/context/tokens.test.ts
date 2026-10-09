@@ -97,7 +97,14 @@ test("UsageCollector: handleLLMEnd para runId desconhecido não lança erro, usa
 test("buildContextBreakdown: partes vazias produzem todos os campos zero", () => {
   const breakdown = buildContextBreakdown({ currentMessage: "", historyTexts: [], factTexts: [] });
 
-  assert.deepEqual(breakdown, { currentMessage: 0, conversationHistory: 0, recalledFacts: 0, total: 0 });
+  assert.deepEqual(breakdown, {
+    system: 0,
+    summary: 0,
+    currentMessage: 0,
+    conversationHistory: 0,
+    recalledFacts: 0,
+    total: 0,
+  });
 });
 
 test("buildContextBreakdown: total é sempre a soma exata das partes (partes não-vazias)", () => {
@@ -111,6 +118,23 @@ test("buildContextBreakdown: total é sempre a soma exata das partes (partes nã
   assert.ok(breakdown.currentMessage > 0);
   assert.ok(breakdown.conversationHistory > 0);
   assert.ok(breakdown.recalledFacts > 0);
+});
+
+test("buildContextBreakdown: system e resumo entram no total", () => {
+  const breakdown = buildContextBreakdown({
+    system: "instrução de sistema",
+    summary: "resumo",
+    currentMessage: "mensagem",
+    historyTexts: ["histórico"],
+    factTexts: ["fato"],
+  });
+
+  assert.equal(breakdown.system, estimateTokens("instrução de sistema"));
+  assert.equal(breakdown.summary, estimateTokens("resumo"));
+  assert.equal(
+    breakdown.total,
+    breakdown.system + breakdown.summary + breakdown.currentMessage + breakdown.conversationHistory + breakdown.recalledFacts,
+  );
 });
 
 test("buildContextBreakdown: só mensagem atual presente -> histórico e fatos zero, total igual à mensagem", () => {

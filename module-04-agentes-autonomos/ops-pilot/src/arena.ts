@@ -5,6 +5,7 @@ import { reactStrategy } from "./agents/react.ts";
 import { withReflection } from "./agents/reflection.ts";
 import { formatMetrics, formatTrace } from "./agents/trace.ts";
 import type { ReasoningStrategy } from "./agents/types.ts";
+import { buildContext } from "./context/context-builder.ts";
 
 const STRATEGY_NAMES = [
   "react",
@@ -71,7 +72,9 @@ async function main(): Promise<void> {
 
   for (const name of args.strategies) {
     const strategy = STRATEGIES[name];
-    const result = await strategy.run(args.input, { maxIterations: args.maxIterations });
+    const result = await strategy.run(buildContext({ message: args.input }).prompt, {
+      maxIterations: args.maxIterations,
+    });
 
     console.log(`\n=== ${name} ===`);
     console.log(formatTrace(result.trace));

@@ -1,6 +1,15 @@
 node_modules
 .env
+.env*
 *.env.*
 dist
+build/
+*.log
 data/
 .cache/
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/

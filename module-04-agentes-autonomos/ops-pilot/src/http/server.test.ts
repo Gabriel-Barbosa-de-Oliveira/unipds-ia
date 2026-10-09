@@ -6,8 +6,9 @@ import type { Express } from "express";
 
 import type { RunOptions, RunResult, ReasoningStrategy } from "../agents/types.ts";
 import { estimateTokens, type ContextBreakdown } from "../context/tokens.ts";
-import type { ConversationMessage } from "../domain/conversation.ts";
+import { composePrompt, type ConversationMessage } from "../domain/conversation.ts";
 import { ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
+import { composeWithFacts } from "../domain/memory.ts";
 import type { RecallMatch, MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import { createApp } from "./server.ts";
@@ -15,7 +16,11 @@ import { createApp } from "./server.ts";
 /** Corpo de resposta real do endpoint após 009 — `RunResult` com `conversationId` e `metrics.historyMessages`/`metrics.contextBreakdown`. */
 type ChatResponseBody = Omit<RunResult, "metrics"> & {
   conversationId: string;
-  metrics: RunResult["metrics"] & { historyMessages: number; contextBreakdown: ContextBreakdown };
+  metrics: RunResult["metrics"] & {
+    historyMessages: number;
+    contextBreakdown: ContextBreakdown;
+    contextTrimmed: { historyMessages: number; recalledFacts: number };
+  };
 };
 
 function fakeStrategy(name: string, result: RunResult): ReasoningStrategy & { calls: number; lastInput?: string } {
@@ -139,7 +144,10 @@ describe("POST /chat", () => {
         promptTokens: 0,
         tokenSource: "real",
         historyMessages: 0,
+        contextTrimmed: { historyMessages: 0, recalledFacts: 0 },
         contextBreakdown: {
+          system: 0,
+          summary: 0,
           currentMessage: estimateTokens("quais alertas estão firing?"),
           conversationHistory: 0,
           recalledFacts: 0,
@@ -901,12 +909,18 @@ describe("POST /chat", () => {
         assert.equal(response.status, 200);
         const body = (await response.json()) as ChatResponseBody;
         const { contextBreakdown } = body.metrics;
+        assert.equal(body.metrics.historyMessages, 2);
+        assert.deepEqual(body.metrics.contextTrimmed, { historyMessages: 0, recalledFacts: 0 });
         assert.ok(contextBreakdown.conversationHistory > 0);
         assert.ok(contextBreakdown.recalledFacts > 0);
         assert.ok(contextBreakdown.currentMessage > 0);
         assert.equal(
           contextBreakdown.total,
-          contextBreakdown.currentMessage + contextBreakdown.conversationHistory + contextBreakdown.recalledFacts,
+          contextBreakdown.system +
+            contextBreakdown.summary +
+            contextBreakdown.currentMessage +
+            contextBreakdown.conversationHistory +
+            contextBreakdown.recalledFacts,
         );
       } finally {
         await close();
@@ -938,10 +952,141 @@ describe("POST /chat", () => {
         const { contextBreakdown } = body.metrics;
         assert.equal(contextBreakdown.conversationHistory, 0);
         assert.equal(contextBreakdown.recalledFacts, 0);
+        assert.equal(contextBreakdown.system, 0);
+        assert.equal(contextBreakdown.summary, 0);
         assert.equal(contextBreakdown.total, contextBreakdown.currentMessage);
         assert.equal(contextBreakdown.currentMessage, estimateTokens("oi"));
       } finally {
         await close();
+      }
+    });
+
+    test("/chat uses the shared builder and reports counts after trimming", async () => {
+      const history = [
+        { role: "user" as const, content: "mensagem antiga longa" },
+        { role: "assistant" as const, content: "resposta recente longa" },
+      ];
+      const fake = fakeStrategy("fake-context-budget", {
+        answer: "ok",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+      });
+      const app = createApp({
+        resolveStrategy: () => fake,
+        conversationStore: fakeConversationStore({ "conv-budget": history }),
+        memoryStore: fakeMemoryStore({
+          gabriel: [
+            { fact: "fato um", score: 0.9 },
+            { fact: "fato dois", score: 0.8 },
+          ],
+        }),
+        contextBudget: { summary: 200, window: 6, memories: 0 },
+      });
+      const { baseUrl, close } = await startServer(app);
+
+      try {
+        const response = await fetch(`${baseUrl}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "atual", conversationId: "conv-budget", userId: "gabriel" }),
+        });
+
+        assert.equal(response.status, 200);
+        const body = (await response.json()) as ChatResponseBody;
+        assert.ok(body.metrics.contextBreakdown.conversationHistory <= 6);
+        assert.equal(body.metrics.contextBreakdown.recalledFacts, 0);
+        assert.equal(body.metrics.contextTrimmed.historyMessages, 1);
+        assert.equal(body.metrics.contextTrimmed.recalledFacts, 2);
+        assert.equal(body.metrics.historyMessages + body.metrics.contextTrimmed.historyMessages, history.length);
+        assert.ok(!fake.lastInput?.includes("mensagem antiga longa"));
+        assert.ok(!fake.lastInput?.includes("fato um"));
+        assert.ok(!fake.lastInput?.includes("fato dois"));
+      } finally {
+        await close();
+      }
+    });
+
+    test("/chat applies the default 1200-token window budget to long histories", async () => {
+      const history: ConversationMessage[] = Array.from({ length: 12 }, (_, index) => ({
+        role: index % 2 === 0 ? "user" : "assistant",
+        content: `historical-${index}: ${"x".repeat(600)}`,
+      }));
+      const fake = fakeStrategy("fake-default-window-budget", {
+        answer: "ok",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+      });
+      const app = createApp({
+        resolveStrategy: () => fake,
+        conversationStore: fakeConversationStore({ "conv-long-budget": history }),
+        memoryStore: fakeMemoryStore(),
+      });
+      const { baseUrl, close } = await startServer(app);
+
+      try {
+        const response = await fetch(`${baseUrl}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "current", conversationId: "conv-long-budget" }),
+        });
+
+        assert.equal(response.status, 200);
+        const body = (await response.json()) as ChatResponseBody;
+        assert.ok(body.metrics.contextBreakdown.conversationHistory <= 1200);
+        assert.ok(body.metrics.contextTrimmed.historyMessages > 0);
+        assert.equal(
+          body.metrics.historyMessages + body.metrics.contextTrimmed.historyMessages,
+          history.length,
+        );
+        assert.ok(!fake.lastInput?.includes("historical-0:"));
+        assert.ok(fake.lastInput?.includes("historical-11:"));
+      } finally {
+        await close();
+      }
+    });
+
+    test("/chat composes the same legacy context for react and plan-and-execute with reflection", async () => {
+      const history = [
+        { role: "user" as const, content: "histórico" },
+        { role: "assistant" as const, content: "resposta" },
+      ];
+      const facts = [
+        { fact: "fato relevante", score: 0.9 },
+        { fact: "outro fato", score: 0.8 },
+      ];
+      const expected = composeWithFacts(facts.map(({ fact }) => fact), composePrompt(history, "mensagem atual"));
+
+      for (const strategy of ["react", "plan-and-execute"]) {
+        const fake = fakeStrategy(`fake-${strategy}`, {
+          answer: "ok",
+          trace: [],
+          metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        });
+        const app = createApp({
+          resolveStrategy: () => fake,
+          conversationStore: fakeConversationStore({ "conv-shared": history }),
+          memoryStore: fakeMemoryStore({ gabriel: facts }),
+        });
+        const { baseUrl, close } = await startServer(app);
+
+        try {
+          const response = await fetch(`${baseUrl}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: "mensagem atual",
+              conversationId: "conv-shared",
+              userId: "gabriel",
+              strategy,
+              reflect: true,
+            }),
+          });
+
+          assert.equal(response.status, 200);
+          assert.equal(fake.lastInput, expected);
+        } finally {
+          await close();
+        }
       }
     });
   });

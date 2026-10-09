@@ -4,6 +4,7 @@ import { createPlanAndExecuteStrategy } from "./agents/plan-and-execute.ts";
 import { createReactStrategy } from "./agents/react.ts";
 import { formatMetrics, formatTrace } from "./agents/trace.ts";
 import type { ReasoningStrategy, RunOptions } from "./agents/types.ts";
+import { buildContext } from "./context/context-builder.ts";
 import { createOpsTools } from "./agents/tools.ts";
 import type { Incident, OpsState } from "./domain/ops-store.ts";
 import { InMemoryOpsStore } from "./services/ops-store.memory.ts";
@@ -261,7 +262,7 @@ async function runOne(scenario: Scenario, strategyName: StrategyName, args: Args
     options.noReplanner = args.noReplanner;
   }
 
-  const result = await STRATEGIES[strategyName].run(scenario.input, options);
+  const result = await STRATEGIES[strategyName].run(buildContext({ message: scenario.input }).prompt, options);
   const after = store.getState();
   const { pass: passed, reason } = scenario.check(before, after, result.answer);
 

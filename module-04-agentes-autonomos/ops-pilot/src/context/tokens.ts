@@ -72,6 +72,8 @@ export class UsageCollector extends BaseCallbackHandler {
 }
 
 export interface ContextBreakdown {
+  system: number;
+  summary: number;
   currentMessage: number;
   conversationHistory: number;
   recalledFacts: number;
@@ -79,24 +81,29 @@ export interface ContextBreakdown {
 }
 
 /**
- * Decompõe o contexto composto pelo controller HTTP (mensagem atual, histórico, fatos
- * lembrados) — `total` é sempre a soma das partes, por construção (FR-006, research.md item 7).
- * Pura: cada parte usa `estimateTokens` sobre o texto bruto (nunca a string final formatada com
- * rótulos que `composePrompt`/`composeWithFacts` adicionam).
+ * Decompõe as seções compostas por `buildContext` (`context-builder.ts`) — `total` é sempre a
+ * soma das partes, por construção. Cada parte usa `estimateTokens` sobre o texto bruto, sem
+ * cabeçalhos de formatação.
  */
 export function buildContextBreakdown(parts: {
+  system?: string;
+  summary?: string;
   currentMessage: string;
   historyTexts: readonly string[];
   factTexts: readonly string[];
 }): ContextBreakdown {
+  const system = estimateTokens(parts.system ?? "");
+  const summary = estimateTokens(parts.summary ?? "");
   const currentMessage = estimateTokens(parts.currentMessage);
   const conversationHistory = estimateTokens(parts.historyTexts.join("\n"));
   const recalledFacts = estimateTokens(parts.factTexts.join("\n"));
 
   return {
+    system,
+    summary,
     currentMessage,
     conversationHistory,
     recalledFacts,
-    total: currentMessage + conversationHistory + recalledFacts,
+    total: system + summary + currentMessage + conversationHistory + recalledFacts,
   };
 }
