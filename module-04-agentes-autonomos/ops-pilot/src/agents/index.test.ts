@@ -7,7 +7,7 @@ import { z } from "zod";
 import { UnknownStrategyError } from "../domain/errors.ts";
 import { planAndExecuteStrategy } from "./plan-and-execute.ts";
 import { reactStrategy } from "./react.ts";
-import { resolveStrategy } from "./index.ts";
+import { resolveStrategy, strategyForRoute } from "./index.ts";
 
 test("resolveStrategy(undefined) retorna a estratégia padrão (react)", () => {
   assert.equal(resolveStrategy(undefined), reactStrategy);
@@ -64,4 +64,16 @@ test("resolveStrategy com extraTools e reflect:true decora a estratégia nova, n
   const strategy = resolveStrategy("plan-and-execute", true, [fakeExtraTool]);
 
   assert.equal(strategy.name, "reflect:plan-and-execute");
+});
+
+test("strategyForRoute mapeia cada rota do grafo para a estratégia correspondente", () => {
+  assert.equal(strategyForRoute("react"), reactStrategy);
+  assert.equal(strategyForRoute("planExecute"), planAndExecuteStrategy);
+  assert.equal(strategyForRoute("reflect").name, "reflect:react");
+});
+
+test("strategyForRoute aplica a flag reflect só fora da rota reflect (sem reflection duplo)", () => {
+  assert.equal(strategyForRoute("reflect", true).name, "reflect:react");
+  assert.equal(strategyForRoute("planExecute", true).name, "reflect:plan-and-execute");
+  assert.equal(strategyForRoute("react", true).name, "reflect:react");
 });

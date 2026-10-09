@@ -6,8 +6,9 @@ import { z } from "zod";
 
 import { UsageCollector } from "../context/tokens.ts";
 import { lastAnswer, messagesToTrace } from "./message-trace.ts";
-import { createModel } from "./model.ts";
 import { buildMetrics, LlmCallCounter, startTimer } from "./metrics.ts";
+import { createModel, loadModelConfig, toolCallingModel, type ModelConfig } from "./model.ts";
+import { ModelUsageTracker, summarizeModelUsage, withModelFallbacks } from "./model-usage.ts";
 import { opsTools } from "./tools.ts";
 import type { ReasoningStrategy, RunOptions, RunResult, TraceEvent } from "./types.ts";
 
@@ -73,17 +74,19 @@ function buildGraph(
   tools: StructuredToolInterface[],
   counter: LlmCallCounter,
   usageCollector: UsageCollector,
+  modelTracker: ModelUsageTracker,
+  modelConfig: ModelConfig,
   stepCap: number,
   noReplanner: boolean,
 ) {
-  const model = createModel();
-  const plannerModel = model.withStructuredOutput(PlanSchema);
-  const replannerModel = model.withStructuredOutput(ReplanSchema);
-  const executorAgent = createReactAgent({ llm: model, tools });
+  const plannerModel = createModel((model) => model.withStructuredOutput<z.infer<typeof PlanSchema>>(PlanSchema), modelConfig);
+  const replannerModel = createModel((model) => model.withStructuredOutput<z.infer<typeof ReplanSchema>>(ReplanSchema), modelConfig);
+  const executorAgent = createReactAgent({ llm: toolCallingModel(tools, modelConfig), tools });
+  const callbacks = [counter, usageCollector, modelTracker];
 
   async function planner(state: PlanExecuteStateType): Promise<Partial<PlanExecuteStateType>> {
     const result = await plannerModel.invoke([{ role: "user", content: state.input }], {
-      callbacks: [counter, usageCollector],
+      callbacks,
     });
 
     if (!result) {
@@ -107,7 +110,7 @@ function buildGraph(
 
     const stream = await executorAgent.stream(
       { messages: [{ role: "user", content: step }] },
-      { callbacks: [counter, usageCollector], streamMode: "values" },
+      { callbacks, streamMode: "values" },
     );
 
     let messages: BaseMessage[] = [];
@@ -129,7 +132,7 @@ function buildGraph(
   async function replanner(state: PlanExecuteStateType): Promise<Partial<PlanExecuteStateType>> {
     const result = await replannerModel.invoke(
       [{ role: "user", content: buildReplanPrompt(state) }],
-      { callbacks: [counter, usageCollector] },
+      { callbacks },
     );
 
     if (!result) {
@@ -227,19 +230,22 @@ export function createPlanAndExecuteStrategy(tools: StructuredToolInterface[]): 
       const elapsed = startTimer();
       const counter = new LlmCallCounter();
       const usageCollector = new UsageCollector();
+      const modelTracker = new ModelUsageTracker();
+      const modelConfig = loadModelConfig(process.env);
       const stepCap = Math.min(options?.maxIterations ?? HARD_STEP_CAP, HARD_STEP_CAP);
       const noReplanner = options?.noReplanner ?? false;
 
-      const graph = buildGraph(tools, counter, usageCollector, stepCap, noReplanner);
+      const graph = buildGraph(tools, counter, usageCollector, modelTracker, modelConfig, stepCap, noReplanner);
       const result = await graph.invoke(
         { input, plan: [], pastSteps: [], trace: [], stepsTaken: 0, response: undefined },
         { recursionLimit: 2 + stepCap * 2 },
       );
 
+      const usage = summarizeModelUsage(modelTracker.log, modelConfig);
       return {
         answer: result.response ?? LIMIT_REACHED_ANSWER,
-        trace: result.trace,
-        metrics: buildMetrics(counter, usageCollector, elapsed()),
+        trace: withModelFallbacks(result.trace, usage.fallbacks),
+        metrics: buildMetrics(counter, usageCollector, elapsed(), usage.modelUsed),
       };
     },
   };

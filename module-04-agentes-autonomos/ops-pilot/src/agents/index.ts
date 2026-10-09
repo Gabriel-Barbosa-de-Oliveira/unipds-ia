@@ -5,13 +5,17 @@ import { createPlanAndExecuteStrategy, planAndExecuteStrategy } from "./plan-and
 import { createReactStrategy, reactStrategy } from "./react.ts";
 import { withReflection } from "./reflection.ts";
 import { opsTools } from "./tools.ts";
-import type { ReasoningStrategy } from "./types.ts";
+import type { ReasoningStrategy, RouteName } from "./types.ts";
 
 export type BaseStrategyName = "react" | "plan-and-execute";
 
+/**
+ * Estratégia usada por `resolveStrategy(undefined)`. Desde a 012 o /chat não depende mais dela: a
+ * rota vem do roteador do grafo de produção (`src/graph/`), que usa `react` como fallback.
+ */
 export const DEFAULT_STRATEGY_NAME: BaseStrategyName = "react";
 
-/** Registro de estratégias base disponíveis ao endpoint HTTP (nome -> estratégia). */
+/** Registro de estratégias base (nome -> estratégia), resolvidas pelo grafo via `strategyForRoute`. */
 export const STRATEGIES: Record<BaseStrategyName, ReasoningStrategy> = {
   react: reactStrategy,
   "plan-and-execute": planAndExecuteStrategy,
@@ -54,4 +58,21 @@ function buildStrategyWithExtraTools(
 ): ReasoningStrategy {
   const tools = [...opsTools, ...extraTools];
   return name === "react" ? createReactStrategy(tools) : createPlanAndExecuteStrategy(tools);
+}
+
+/**
+ * Resolve a rota escolhida pelo grafo de produção (spec 012) para a estratégia executável. `reflect`
+ * é reflection sobre react; a flag `reflect` decora as demais rotas e é ignorada em `reflect` (não
+ * há reflection duplo — research.md item 7). `resolve` é injetável para os fakes do /chat.
+ */
+export function strategyForRoute(
+  route: RouteName,
+  reflect?: boolean,
+  extraTools?: StructuredToolInterface[],
+  resolve: typeof resolveStrategy = resolveStrategy,
+): ReasoningStrategy {
+  if (route === "reflect") {
+    return resolve("react", true, extraTools);
+  }
+  return resolve(route === "planExecute" ? "plan-and-execute" : "react", reflect, extraTools);
 }

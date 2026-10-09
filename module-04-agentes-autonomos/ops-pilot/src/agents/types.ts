@@ -7,7 +7,24 @@ export type ToolName =
   | "list_incidents"
   | "consultar_runbook";
 
-export type TraceEvent =
+/** Rotas que o roteador do grafo de produção pode escolher (spec 012). */
+export const ROUTE_NAMES = ["react", "planExecute", "reflect"] as const;
+export type RouteName = (typeof ROUTE_NAMES)[number];
+
+/** Origem da decisão de rota: modelo, override do cliente ou fallback por falha do roteador. */
+export type RouteSource = "router" | "override" | "fallback";
+
+export interface RouteDecision {
+  route: RouteName;
+  reason: string;
+  source: RouteSource;
+}
+
+/** Nós do grafo de produção (`src/graph/production-graph.ts`); nós de estratégia têm o nome da rota. */
+export type GraphNode = "contexto" | "roteador" | RouteName | "resposta";
+
+/** `node` é opcional porque arena/bench rodam estratégias fora do grafo; no grafo é sempre presente. */
+export type TraceEvent = (
   | { type: "thought"; at: number; content: string }
   | {
       type: "action";
@@ -18,13 +35,28 @@ export type TraceEvent =
   | { type: "observation"; at: number; result: unknown }
   | { type: "plan"; at: number; steps: string[] }
   | { type: "critique"; at: number; content: string }
-  | { type: "answer"; at: number; content: string };
+  | { type: "answer"; at: number; content: string }
+  | { type: "route"; at: number; route: RouteName; reason: string; source: RouteSource }
+  | { type: "fallback"; at: number; from: string; to: string; reason: string }
+) & { node?: GraphNode };
+
+/** Troca do modelo principal para o de reserva numa chamada ao modelo (spec 013). */
+export interface ModelFallback {
+  from: string;
+  to: string;
+  reason: string;
+}
+
+/** Evento de trace produzido pelo grafo de produção — `node` garantido (FR-006). */
+export type ProductionTraceEvent = TraceEvent & { node: GraphNode };
 
 export interface Metrics {
   llmCalls: number;
   latencyMs: number;
   promptTokens: number;
   tokenSource: TokenSource;
+  /** Modelo que produziu a resposta final (spec 013, FR-009). */
+  modelUsed: string;
 }
 
 export interface RunResult {

@@ -2,14 +2,16 @@ import type { StructuredToolInterface } from "@langchain/core/tools";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import { z } from "zod";
 
-import { resolveStrategy as resolveStrategyDefault } from "../agents/index.ts";
+import { resolveStrategy as resolveStrategyDefault, strategyForRoute } from "../agents/index.ts";
 import type { ReasoningStrategy } from "../agents/types.ts";
-import { buildContext, loadContextBudget, type ContextBudget } from "../context/context-builder.ts";
+import { loadContextBudget, type ContextBudget } from "../context/context-builder.ts";
 import { ChatTimeoutError, ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
 import { reflectAndRemember as reflectAndRememberDefault } from "../memory/learning-reflector.ts";
 import { createMemoryTools, SqliteMemoryStore, type MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
-import { runWithTimeout } from "../services/chat.service.ts";
+import { createProductionGraph } from "../graph/production-graph.ts";
+import { createModelRouter, parseRouteName, type DecideRoute } from "../graph/router.ts";
+import { withTimeout } from "../services/chat.service.ts";
 import { SqliteConversationStore } from "../store/sqlite-conversation-store.ts";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -47,6 +49,8 @@ export interface CreateAppOptions {
   reflectAndRemember?: typeof reflectAndRememberDefault;
   /** Sobrescreve os tetos de contexto — usado por testes; padrão `loadContextBudget(process.env)`. */
   contextBudget?: ContextBudget;
+  /** Sobrescreve o roteador do grafo de produção (012) — usado por testes; padrão `createModelRouter()`. */
+  decideRoute?: DecideRoute;
 }
 
 /** Middleware de erro do Express: traduz falhas em status HTTP, nunca o contrário (Principle III). */
@@ -77,6 +81,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
   const memoryStore = options.memoryStore ?? new SqliteMemoryStore();
   const reflectAndRemember = options.reflectAndRemember ?? reflectAndRememberDefault;
   const contextBudget = options.contextBudget ?? loadContextBudget(process.env);
+  const decideRoute = options.decideRoute ?? createModelRouter();
 
   const app = express();
   app.use(express.json());
@@ -89,6 +94,9 @@ export function createApp(options: CreateAppOptions = {}): Express {
     }
 
     try {
+      // Override validado antes de qualquer IO: estratégia desconhecida → 422 sem executar nada (FR-010).
+      const override = parsed.data.strategy !== undefined ? parseRouteName(parsed.data.strategy) : undefined;
+
       const conversationId = parsed.data.conversationId ?? (await conversationStore.create());
       const history = parsed.data.conversationId
         ? await conversationStore.lastMessages(conversationId, HISTORY_LIMIT)
@@ -99,13 +107,21 @@ export function createApp(options: CreateAppOptions = {}): Express {
         ? await memoryStore.recall(userId, parsed.data.message, RECALL_LIMIT)
         : [];
       const extraTools = userId ? createMemoryTools(memoryStore, userId) : undefined;
-      const built = buildContext(
-        { message: parsed.data.message, window: history, memories: recalled },
-        contextBudget,
-      );
 
-      const strategy = resolveStrategy(parsed.data.strategy, parsed.data.reflect, extraTools);
-      const result = await runWithTimeout(strategy, built.prompt, undefined, timeoutMs);
+      const graph = createProductionGraph({
+        decideRoute,
+        strategyFor: (route) => strategyForRoute(route, parsed.data.reflect, extraTools, resolveStrategy),
+      });
+      const result = await withTimeout(
+        () =>
+          graph.run({
+            context: { message: parsed.data.message, window: history, memories: recalled },
+            budget: contextBudget,
+            override,
+          }),
+        timeoutMs,
+      );
+      const { context: built, route, ...runResult } = result;
 
       if (userId) {
         void reflectAndRemember(memoryStore, userId, parsed.data.message).catch(() => {});
@@ -117,10 +133,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
       ]);
 
       res.status(200).json({
-        ...result,
+        ...runResult,
+        route,
         conversationId,
         metrics: {
-          ...result.metrics,
+          ...runResult.metrics,
           historyMessages: built.window.length,
           contextBreakdown: built.breakdown,
           contextTrimmed: built.trimmed,

@@ -14,7 +14,12 @@ import type { RunResult, TraceEvent } from "./types.ts";
 const DEFAULT_ATTEMPT_USAGE: TokenUsage = { promptTokens: 10, source: "real" };
 const DEFAULT_CRITIQUE_USAGE: TokenUsage = { promptTokens: 5, source: "real" };
 
-function fakeAttempt(answer: string, llmCalls = 1, tokenUsage: TokenUsage = DEFAULT_ATTEMPT_USAGE): RunResult {
+function fakeAttempt(
+  answer: string,
+  llmCalls = 1,
+  tokenUsage: TokenUsage = DEFAULT_ATTEMPT_USAGE,
+  modelUsed = "fake-model",
+): RunResult {
   const trace: TraceEvent[] = [
     { type: "action", at: 0, tool: "list_alerts", args: { status: "firing" } },
     { type: "observation", at: 1, result: [{ id: "alert-1", status: "firing" }] },
@@ -23,7 +28,7 @@ function fakeAttempt(answer: string, llmCalls = 1, tokenUsage: TokenUsage = DEFA
   return {
     answer,
     trace,
-    metrics: { llmCalls, latencyMs: 10, promptTokens: tokenUsage.promptTokens, tokenSource: tokenUsage.source },
+    metrics: { llmCalls, latencyMs: 10, promptTokens: tokenUsage.promptTokens, tokenSource: tokenUsage.source, modelUsed },
   };
 }
 
@@ -216,4 +221,43 @@ test("runReflectionLoop: tokenUsage vira mixed quando tentativa e crítica têm 
   const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
 
   assert.deepEqual(result.tokenUsage, { promptTokens: 18, source: "mixed" });
+});
+
+test("runReflectionLoop: fallbacks de modelo do crítico entram imediatamente antes da crítica (013)", async () => {
+  const critique = async () => ({
+    verdict: { approved: true, feedback: "ok" },
+    tokenUsage: DEFAULT_CRITIQUE_USAGE,
+    fallbacks: [{ from: "a", to: "b", reason: "429" }],
+  });
+
+  const result = await runReflectionLoop(async () => fakeAttempt("resposta"), critique, "pedido", undefined, 2);
+
+  assert.deepEqual(
+    result.trace.map((event) => [event.type, event.at]),
+    [
+      ["action", 0],
+      ["observation", 1],
+      ["answer", 2],
+      ["fallback", 3],
+      ["critique", 4],
+    ],
+  );
+  assert.deepEqual(result.trace[3], { type: "fallback", at: 3, from: "a", to: "b", reason: "429" });
+});
+
+test("runReflectionLoop: modelUsed é o da tentativa que produziu a resposta (013)", async () => {
+  let attempt = 0;
+  const runAttempt = async () => {
+    attempt += 1;
+    return fakeAttempt(`resposta ${attempt}`, 1, DEFAULT_ATTEMPT_USAGE, attempt === 1 ? "a" : "b");
+  };
+  const critique = async () => {
+    const approved = attempt > 1;
+    return { verdict: { approved, feedback: approved ? "ok" : "refaça" }, tokenUsage: DEFAULT_CRITIQUE_USAGE };
+  };
+
+  const result = await runReflectionLoop(runAttempt, critique, "pedido", undefined, 2);
+
+  assert.equal(result.answer, "resposta 2");
+  assert.equal(result.modelUsed, "b");
 });

@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 import { mergeTokenUsage, UsageCollector, type TokenUsage } from "../context/tokens.ts";
-import { createModel } from "./model.ts";
 import { startTimer } from "./metrics.ts";
-import type { ReasoningStrategy, RunOptions, RunResult, TraceEvent } from "./types.ts";
+import { createModel, loadModelConfig } from "./model.ts";
+import { ModelUsageTracker, summarizeModelUsage } from "./model-usage.ts";
+import type { ModelFallback, ReasoningStrategy, RunOptions, RunResult, TraceEvent } from "./types.ts";
 
 const DEFAULT_MAX_REFLECTIONS = 2;
 
@@ -30,7 +31,10 @@ export interface ReflectionOptions {
 }
 
 type RunAttempt = (input: string, options?: RunOptions) => Promise<RunResult>;
-type CritiqueFn = (input: string, result: RunResult) => Promise<{ verdict: Verdict; tokenUsage: TokenUsage }>;
+type CritiqueFn = (
+  input: string,
+  result: RunResult,
+) => Promise<{ verdict: Verdict; tokenUsage: TokenUsage; fallbacks?: ModelFallback[] }>;
 
 /** Extrai apenas os resultados das observações de um trace — é contra isso que o crítico avalia a resposta (FR-002). */
 export function observationsOf(trace: readonly TraceEvent[]): unknown[] {
@@ -67,11 +71,17 @@ export function buildRetryInput(
   ].join("\n");
 }
 
-async function critique(input: string, result: RunResult): Promise<{ verdict: Verdict; tokenUsage: TokenUsage }> {
+async function critique(
+  input: string,
+  result: RunResult,
+): Promise<{ verdict: Verdict; tokenUsage: TokenUsage; fallbacks: ModelFallback[] }> {
   const usageCollector = new UsageCollector();
-  const verdict = await createModel()
-    .withStructuredOutput(verdictSchema)
-    .invoke(buildCritiqueMessages(input, result.trace, result.answer), { callbacks: [usageCollector] });
+  const modelTracker = new ModelUsageTracker();
+  const modelConfig = loadModelConfig(process.env);
+  const verdict = await createModel((model) => model.withStructuredOutput<Verdict>(verdictSchema), modelConfig).invoke(
+    buildCritiqueMessages(input, result.trace, result.answer),
+    { callbacks: [usageCollector, modelTracker] },
+  );
 
   if (!verdict) {
     throw new Error(
@@ -79,7 +89,8 @@ async function critique(input: string, result: RunResult): Promise<{ verdict: Ve
     );
   }
 
-  return { verdict, tokenUsage: usageCollector.tokenUsage };
+  const { fallbacks } = summarizeModelUsage(modelTracker.log, modelConfig);
+  return { verdict, tokenUsage: usageCollector.tokenUsage, fallbacks };
 }
 
 interface ReflectionResult {
@@ -87,6 +98,8 @@ interface ReflectionResult {
   trace: TraceEvent[];
   llmCalls: number;
   tokenUsage: TokenUsage;
+  /** `modelUsed` da tentativa que produziu a resposta (spec 013). */
+  modelUsed: string;
 }
 
 /**
@@ -114,14 +127,19 @@ export async function runReflectionLoop(
     llmCalls += attempt.metrics.llmCalls;
     const attemptUsage: TokenUsage = { promptTokens: attempt.metrics.promptTokens, source: attempt.metrics.tokenSource };
 
-    const { verdict, tokenUsage: critiqueUsage } = await critiqueFn(input, attempt);
+    const { verdict, tokenUsage: critiqueUsage, fallbacks = [] } = await critiqueFn(input, attempt);
     llmCalls += 1;
     const iterationUsage = mergeTokenUsage(attemptUsage, critiqueUsage);
     tokenUsage = tokenUsage ? mergeTokenUsage(tokenUsage, iterationUsage) : iterationUsage;
-    trace = trace.concat([{ type: "critique", at: trace.length, content: verdict.feedback }]);
+    // Fallbacks de modelo do crítico entram imediatamente antes da crítica da rodada (spec 013).
+    const critiqueEvents: TraceEvent[] = [
+      ...fallbacks.map((fallback): TraceEvent => ({ type: "fallback", at: 0, ...fallback })),
+      { type: "critique", at: 0, content: verdict.feedback },
+    ];
+    trace = trace.concat(critiqueEvents.map((event, index) => ({ ...event, at: trace.length + index })));
 
     if (verdict.approved || regenerationsDone >= maxReflections) {
-      return { answer: attempt.answer, trace, llmCalls, tokenUsage };
+      return { answer: attempt.answer, trace, llmCalls, tokenUsage, modelUsed: attempt.metrics.modelUsed };
     }
 
     regenerationsDone += 1;
@@ -160,6 +178,7 @@ export function withReflection(
           latencyMs: elapsed(),
           promptTokens: result.tokenUsage.promptTokens,
           tokenSource: result.tokenUsage.source,
+          modelUsed: result.modelUsed,
         },
       };
     },

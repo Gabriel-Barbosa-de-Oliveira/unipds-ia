@@ -84,3 +84,23 @@ Causas mais comuns, por status:
 - **500** — falha não classificada; o `internal_error` da resposta não traz detalhe por design (ver contrato), mas a causa completa é sempre logada no servidor (`console.error("Erro inesperado no /chat:", ...)` em `src/http/server.ts`) — confira o terminal onde `npm run dev` está rodando. Causa frequente: `OPENROUTER_API_KEY`/`OPENROUTER_MODEL` ausente no processo do servidor (`src/agents/model.ts`).
 - **422** — `strategy` informado não corresponde a nenhum nome registrado.
 - **400** — corpo da requisição inválido (`message` ausente/vazio).
+
+## Nota: grafo unificado (012)
+
+A partir de `012-unified-graph`, o `/chat` roda o grafo de produção (`src/graph/production-graph.ts`):
+
+- `strategy` continua opcional. Quando é omitido, um roteador escolhe a rota (`react`, `planExecute` ou `reflect`). Quando é informado, vira override e o roteador não é chamado.
+- Valores aceitos em `strategy`: `react`, `plan-and-execute`/`planExecute` e `reflection`/`reflect`. Qualquer outro valor continua dando `422`.
+- A resposta ganha o campo `route` (`{ route, reason, source }`), e todo evento do `trace` traz `node`. O primeiro evento é sempre `{ type: "route", node: "roteador", ... }`.
+- Se o roteador falhar, a resposta continua sendo `200`, executada via `react` e com `route.source: "fallback"`.
+
+Contrato completo: [specs/012-unified-graph/contracts/post-chat.md](../012-unified-graph/contracts/post-chat.md).
+
+## Nota: resiliência de modelo (013)
+
+Toda chamada ao modelo passa a usar uma nova tentativa e, se `OPENROUTER_MODEL_FALLBACK` estiver definida, um modelo de reserva. A resposta do `/chat` ganha:
+
+- o campo `metrics.modelUsed`, com o modelo que produziu a resposta final;
+- eventos `{ "type": "fallback", "from", "to", "reason", "node" }` no `trace`, um para cada troca do modelo principal para a reserva.
+
+Se o principal e a reserva falharem, o erro continua sendo `500`. Contrato completo: [specs/013-model-resilience/contracts/post-chat.md](../013-model-resilience/contracts/post-chat.md).

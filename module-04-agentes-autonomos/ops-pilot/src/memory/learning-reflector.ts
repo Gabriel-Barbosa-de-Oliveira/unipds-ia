@@ -31,9 +31,7 @@ export type LearningVerdict = z.infer<typeof learningSchema>;
  * padrão de `src/agents/reflection.ts#critique`.
  */
 export async function distillLearning(message: string): Promise<LearningVerdict> {
-  const verdict = await createModel()
-    .withStructuredOutput(learningSchema)
-    .invoke([
+  const verdict = await createModel((model) => model.withStructuredOutput<LearningVerdict>(learningSchema)).invoke([
       ["system", DISTILL_PROMPT],
       ["user", message],
     ]);

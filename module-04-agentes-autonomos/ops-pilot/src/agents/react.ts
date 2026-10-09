@@ -5,8 +5,9 @@ import type { StructuredToolInterface } from "@langchain/core/tools";
 
 import { UsageCollector } from "../context/tokens.ts";
 import { lastAnswer, messagesToTrace } from "./message-trace.ts";
-import { createModel } from "./model.ts";
 import { buildMetrics, LlmCallCounter, startTimer } from "./metrics.ts";
+import { loadModelConfig, toolCallingModel } from "./model.ts";
+import { ModelUsageTracker, summarizeModelUsage, withModelFallbacks } from "./model-usage.ts";
 import { opsTools } from "./tools.ts";
 import type { ReasoningStrategy, RunOptions, RunResult } from "./types.ts";
 
@@ -27,10 +28,12 @@ export function createReactStrategy(tools: StructuredToolInterface[]): Reasoning
       const elapsed = startTimer();
       const counter = new LlmCallCounter();
       const usageCollector = new UsageCollector();
+      const modelTracker = new ModelUsageTracker();
+      const modelConfig = loadModelConfig(process.env);
       const maxIterations = options?.maxIterations ?? DEFAULT_MAX_ITERATIONS;
 
       const agent = createReactAgent({
-        llm: createModel(),
+        llm: toolCallingModel(tools, modelConfig),
         tools,
       });
 
@@ -39,27 +42,34 @@ export function createReactStrategy(tools: StructuredToolInterface[]): Reasoning
       try {
         const stream = await agent.stream(
           { messages: [{ role: "user", content: input }] },
-          { recursionLimit: maxIterations, callbacks: [counter, usageCollector], streamMode: "values" },
+          { recursionLimit: maxIterations, callbacks: [counter, usageCollector, modelTracker], streamMode: "values" },
         );
 
         for await (const chunk of stream) {
           lastMessages = chunk.messages;
         }
 
-        const trace = messagesToTrace(lastMessages);
+        const usage = summarizeModelUsage(modelTracker.log, modelConfig);
+        const trace = withModelFallbacks(messagesToTrace(lastMessages), usage.fallbacks);
         return {
           answer: lastAnswer(trace) ?? LIMIT_REACHED_ANSWER,
           trace,
-          metrics: buildMetrics(counter, usageCollector, elapsed()),
+          metrics: buildMetrics(counter, usageCollector, elapsed(), usage.modelUsed),
         };
       } catch (error) {
         if (error instanceof GraphRecursionError) {
           // Guardrail: limite de passos atingido sem resposta final — encerra de forma
           // controlada com o trace parcial acumulado até aqui, conforme o contrato de
           // ReasoningStrategy (FR-006).
-          const trace = messagesToTrace(lastMessages);
-          trace.push({ type: "answer", at: trace.length, content: LIMIT_REACHED_ANSWER });
-          return { answer: LIMIT_REACHED_ANSWER, trace, metrics: buildMetrics(counter, usageCollector, elapsed()) };
+          const usage = summarizeModelUsage(modelTracker.log, modelConfig);
+          const partial = messagesToTrace(lastMessages);
+          partial.push({ type: "answer", at: partial.length, content: LIMIT_REACHED_ANSWER });
+          const trace = withModelFallbacks(partial, usage.fallbacks);
+          return {
+            answer: LIMIT_REACHED_ANSWER,
+            trace,
+            metrics: buildMetrics(counter, usageCollector, elapsed(), usage.modelUsed),
+          };
         }
         throw error;
       }

@@ -22,7 +22,12 @@ export function startTimer(): () => number {
   return () => Date.now() - startedAt;
 }
 
-export function buildMetrics(counter: LlmCallCounter, usageCollector: UsageCollector, latencyMs: number): Metrics {
+export function buildMetrics(
+  counter: LlmCallCounter,
+  usageCollector: UsageCollector,
+  latencyMs: number,
+  modelUsed: string,
+): Metrics {
   const { promptTokens, source } = usageCollector.tokenUsage;
-  return { llmCalls: counter.calls, latencyMs, promptTokens, tokenSource: source };
+  return { llmCalls: counter.calls, latencyMs, promptTokens, tokenSource: source, modelUsed };
 }

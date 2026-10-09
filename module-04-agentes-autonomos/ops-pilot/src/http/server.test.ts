@@ -4,24 +4,43 @@ import { after, before, describe, test } from "node:test";
 
 import type { Express } from "express";
 
-import type { RunOptions, RunResult, ReasoningStrategy } from "../agents/types.ts";
+import type { RouteDecision, RouteName, RunOptions, RunResult, ReasoningStrategy } from "../agents/types.ts";
 import { estimateTokens, type ContextBreakdown } from "../context/tokens.ts";
 import { composePrompt, type ConversationMessage } from "../domain/conversation.ts";
 import { ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
 import { composeWithFacts } from "../domain/memory.ts";
 import type { RecallMatch, MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
-import { createApp } from "./server.ts";
+import type { DecideRoute } from "../graph/router.ts";
+import { createApp, type CreateAppOptions } from "./server.ts";
 
 /** Corpo de resposta real do endpoint após 009 — `RunResult` com `conversationId` e `metrics.historyMessages`/`metrics.contextBreakdown`. */
 type ChatResponseBody = Omit<RunResult, "metrics"> & {
   conversationId: string;
+  route: RouteDecision;
   metrics: RunResult["metrics"] & {
     historyMessages: number;
     contextBreakdown: ContextBreakdown;
     contextTrimmed: { historyMessages: number; recalledFacts: number };
   };
 };
+
+/** Roteador fake (012): sempre escolhe `route`, sem rede; conta as chamadas. */
+function fixedRouter(route: RouteName = "react"): DecideRoute & { calls: number } {
+  const router = Object.assign(
+    async () => {
+      router.calls += 1;
+      return { decided: { route, reason: "fake" }, tokenUsage: { promptTokens: 0, source: "real" as const }, fallbacks: [] };
+    },
+    { calls: 0 },
+  );
+  return router;
+}
+
+/** `createApp` com roteador fake por padrão — nenhum teste chama o OpenRouter. */
+function createTestApp(options: CreateAppOptions = {}): Express {
+  return createApp({ decideRoute: fixedRouter(), ...options });
+}
 
 function fakeStrategy(name: string, result: RunResult): ReasoningStrategy & { calls: number; lastInput?: string } {
   const strategy = {
@@ -115,9 +134,9 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-default", {
         answer: "há 3 alertas firing",
         trace: [{ type: "answer", at: 0, content: "há 3 alertas firing" }],
-        metrics: { llmCalls: 1, latencyMs: 5, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 5, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -137,10 +156,17 @@ describe("POST /chat", () => {
       assert.equal(response.status, 200);
       const body = (await response.json()) as ChatResponseBody;
       assert.equal(body.answer, "há 3 alertas firing");
-      assert.deepEqual(body.trace, [{ type: "answer", at: 0, content: "há 3 alertas firing" }]);
-      assert.deepEqual(body.metrics, {
-        llmCalls: 1,
-        latencyMs: 5,
+      assert.deepEqual(body.trace, [
+        { type: "route", at: 0, node: "roteador", route: "react", reason: "fake", source: "router" },
+        { type: "answer", at: 1, node: "react", content: "há 3 alertas firing" },
+      ]);
+      assert.deepEqual(body.route, { route: "react", reason: "fake", source: "router" });
+      // latencyMs passa a medir o grafo inteiro (012), então não é mais o valor fixo da fake.
+      const { latencyMs, ...metrics } = body.metrics;
+      assert.equal(typeof latencyMs, "number");
+      assert.deepEqual(metrics, {
+        llmCalls: 1 + 1, // roteador + estratégia (012)
+        modelUsed: "fake-model", // modelo da estratégia (013)
         promptTokens: 0,
         tokenSource: "real",
         historyMessages: 0,
@@ -198,15 +224,15 @@ describe("POST /chat", () => {
       reactFake = fakeStrategy("fake-react", {
         answer: "resposta react",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
       planFake = fakeStrategy("fake-plan-and-execute", {
         answer: "resposta plan-and-execute",
         trace: [],
-        metrics: { llmCalls: 2, latencyMs: 2, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 2, latencyMs: 2, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: (name) => {
           if (name === undefined || name === "react") return reactFake;
           if (name === "plan-and-execute") return planFake;
@@ -263,15 +289,15 @@ describe("POST /chat", () => {
       baseFake = fakeStrategy("fake-base", {
         answer: "resposta sem reflection",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
       reflectedFake = fakeStrategy("reflect:fake-base", {
         answer: "resposta com reflection",
         trace: [{ type: "critique", at: 0, content: "aprovado" }],
-        metrics: { llmCalls: 2, latencyMs: 3, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 2, latencyMs: 3, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: (_name, reflect) => (reflect ? reflectedFake : baseFake),
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -319,7 +345,7 @@ describe("POST /chat", () => {
         run: () => new Promise(() => {}),
       };
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => neverResolvingFake,
         timeoutMs: 20,
         conversationStore: fakeConversationStore(),
@@ -349,20 +375,20 @@ describe("POST /chat", () => {
     let close: () => Promise<void>;
 
     before(async () => {
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: (name) => {
-          if (name === "slow") {
+          if (name === "plan-and-execute") {
             return {
               name: "fake-slow",
               run: async () => {
                 await new Promise((resolve) => setTimeout(resolve, 30));
-                return { answer: "resposta lenta", trace: [], metrics: { llmCalls: 1, latencyMs: 30, promptTokens: 0, tokenSource: "real" } };
+                return { answer: "resposta lenta", trace: [], metrics: { llmCalls: 1, latencyMs: 30, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" } };
               },
             };
           }
           return {
             name: "fake-fast",
-            run: async () => ({ answer: "resposta rápida", trace: [], metrics: { llmCalls: 1, latencyMs: 0, promptTokens: 0, tokenSource: "real" } }),
+            run: async () => ({ answer: "resposta rápida", trace: [], metrics: { llmCalls: 1, latencyMs: 0, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" } }),
           };
         },
         conversationStore: fakeConversationStore(),
@@ -378,12 +404,12 @@ describe("POST /chat", () => {
         fetch(`${baseUrl}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "pergunta lenta", strategy: "slow" }),
+          body: JSON.stringify({ message: "pergunta lenta", strategy: "planExecute" }),
         }),
         fetch(`${baseUrl}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "pergunta rápida", strategy: "fast" }),
+          body: JSON.stringify({ message: "pergunta rápida", strategy: "react" }),
         }),
       ]);
 
@@ -409,7 +435,7 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-conversation", {
         answer: "Gabriel, entendido!",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
       conversationStore = fakeConversationStore({
         "conv-existente": [
@@ -417,7 +443,7 @@ describe("POST /chat", () => {
           { role: "assistant", content: "Combinado, Gabriel!" },
         ],
       });
-      const app = createApp({ resolveStrategy: () => fake, conversationStore, memoryStore: fakeMemoryStore() });
+      const app = createTestApp({ resolveStrategy: () => fake, conversationStore, memoryStore: fakeMemoryStore() });
       ({ baseUrl, close } = await startServer(app));
     });
 
@@ -498,7 +524,7 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-long-conversation", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
 
       const longHistory: ConversationMessage[] = Array.from({ length: 15 }, (_, index) => ({
@@ -506,7 +532,7 @@ describe("POST /chat", () => {
         content: `mensagem antiga ${index}`,
       }));
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore({ "conv-longa": longHistory }),
         memoryStore: fakeMemoryStore(),
@@ -541,10 +567,10 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-audit", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore({
           "conv-poucas": [
@@ -593,13 +619,13 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-memory", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
       memoryStore = fakeMemoryStore({
         gabriel: [{ fact: "Gabriel cuida de pagamentos", score: 1 }],
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: (_name, _reflect, extraTools) => {
           lastExtraTools = extraTools
             ? { length: extraTools.length, names: extraTools.map((t) => t.name) }
@@ -661,12 +687,12 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-reflector", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
       memoryStore = fakeMemoryStore();
       reflectCalls = [];
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore,
@@ -716,10 +742,10 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-reflector-lento", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -752,10 +778,10 @@ describe("POST /chat", () => {
       fake = fakeStrategy("fake-reflector-falho", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -789,10 +815,10 @@ describe("POST /chat", () => {
       const fake = fakeStrategy("fake-tokens-real", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 2, latencyMs: 4, promptTokens: 187, tokenSource: "real" },
+        metrics: { llmCalls: 2, latencyMs: 4, promptTokens: 187, tokenSource: "real", modelUsed: "fake-model" },
       });
 
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -816,14 +842,15 @@ describe("POST /chat", () => {
     });
   });
 
+  // Com `strategy` informado (override, 012) o roteador não roda, então as métricas são só as da estratégia.
   describe("User Story 2 (009) — tokenSource estimated/mixed repassados sem reinterpretação", () => {
     test("[US2] tokenSource estimated é repassado sem virar real", async () => {
       const fake = fakeStrategy("fake-tokens-estimated", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 4, promptTokens: 50, tokenSource: "estimated" },
+        metrics: { llmCalls: 1, latencyMs: 4, promptTokens: 50, tokenSource: "estimated", modelUsed: "fake-model" },
       });
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -834,7 +861,7 @@ describe("POST /chat", () => {
         const response = await fetch(`${baseUrl}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "oi" }),
+          body: JSON.stringify({ message: "oi", strategy: "react" }),
         });
 
         assert.equal(response.status, 200);
@@ -850,9 +877,9 @@ describe("POST /chat", () => {
       const fake = fakeStrategy("fake-tokens-mixed", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 2, latencyMs: 4, promptTokens: 73, tokenSource: "mixed" },
+        metrics: { llmCalls: 2, latencyMs: 4, promptTokens: 73, tokenSource: "mixed", modelUsed: "fake-model" },
       });
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -863,7 +890,7 @@ describe("POST /chat", () => {
         const response = await fetch(`${baseUrl}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "oi" }),
+          body: JSON.stringify({ message: "oi", strategy: "react" }),
         });
 
         assert.equal(response.status, 200);
@@ -881,7 +908,7 @@ describe("POST /chat", () => {
       const fake = fakeStrategy("fake-breakdown-full", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
       const conversationStore = fakeConversationStore({
         "conv-breakdown": [
@@ -892,7 +919,7 @@ describe("POST /chat", () => {
       const memoryStore = fakeMemoryStore({
         gabriel: [{ fact: "Gabriel cuida de pagamentos", score: 1 }],
       });
-      const app = createApp({ resolveStrategy: () => fake, conversationStore, memoryStore });
+      const app = createTestApp({ resolveStrategy: () => fake, conversationStore, memoryStore });
       const { baseUrl, close } = await startServer(app);
 
       try {
@@ -931,9 +958,9 @@ describe("POST /chat", () => {
       const fake = fakeStrategy("fake-breakdown-empty", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore(),
         memoryStore: fakeMemoryStore(),
@@ -969,9 +996,9 @@ describe("POST /chat", () => {
       const fake = fakeStrategy("fake-context-budget", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore({ "conv-budget": history }),
         memoryStore: fakeMemoryStore({
@@ -1014,9 +1041,9 @@ describe("POST /chat", () => {
       const fake = fakeStrategy("fake-default-window-budget", {
         answer: "ok",
         trace: [],
-        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
       });
-      const app = createApp({
+      const app = createTestApp({
         resolveStrategy: () => fake,
         conversationStore: fakeConversationStore({ "conv-long-budget": history }),
         memoryStore: fakeMemoryStore(),
@@ -1060,9 +1087,9 @@ describe("POST /chat", () => {
         const fake = fakeStrategy(`fake-${strategy}`, {
           answer: "ok",
           trace: [],
-          metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real" },
+          metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
         });
-        const app = createApp({
+        const app = createTestApp({
           resolveStrategy: () => fake,
           conversationStore: fakeConversationStore({ "conv-shared": history }),
           memoryStore: fakeMemoryStore({ gabriel: facts }),
@@ -1088,6 +1115,195 @@ describe("POST /chat", () => {
           await close();
         }
       }
+    });
+  });
+});
+
+describe("POST /chat — grafo unificado (012)", () => {
+  async function postChat(app: Express, body: Record<string, unknown>): Promise<{ status: number; body: ChatResponseBody }> {
+    const { baseUrl, close } = await startServer(app);
+    try {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return { status: response.status, body: (await response.json()) as ChatResponseBody };
+    } finally {
+      await close();
+    }
+  }
+
+  function strategiesByName() {
+    const result = (answer: string, llmCalls: number): RunResult => ({
+      answer,
+      trace: [
+        { type: "thought", at: 0, content: `pensando: ${answer}` },
+        { type: "answer", at: 1, content: answer },
+      ],
+      metrics: { llmCalls, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
+    });
+    const fakes = {
+      react: fakeStrategy("fake-react", result("resposta react", 1)),
+      plan: fakeStrategy("fake-plan", result("resposta plan", 3)),
+      reflected: fakeStrategy("fake-reflect", result("resposta reflect", 2)),
+    };
+    const resolveCalls: { name: string | undefined; reflect: boolean | undefined }[] = [];
+    const resolveStrategy: NonNullable<CreateAppOptions["resolveStrategy"]> = (name, reflect) => {
+      resolveCalls.push({ name, reflect });
+      if (reflect) return fakes.reflected;
+      if (name === "plan-and-execute") return fakes.plan;
+      return fakes.react;
+    };
+    return { fakes, resolveCalls, resolveStrategy };
+  }
+
+  describe("User Story 1 (012) — roteamento automático", () => {
+    test("sem strategy, executa só a estratégia escolhida pelo roteador", async () => {
+      const { fakes, resolveStrategy } = strategiesByName();
+      const router = fixedRouter("planExecute");
+      const app = createTestApp({
+        resolveStrategy,
+        decideRoute: router,
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+      });
+
+      const { status, body } = await postChat(app, { message: "triar todos os alertas críticos" });
+
+      assert.equal(status, 200);
+      assert.equal(body.answer, "resposta plan");
+      assert.equal(router.calls, 1);
+      assert.equal(fakes.plan.calls, 1);
+      assert.equal(fakes.react.calls, 0);
+      assert.equal(fakes.reflected.calls, 0);
+      assert.equal(body.metrics.llmCalls, 1 + 3);
+    });
+
+    test("roteador que falha responde 200 via react com source fallback", async () => {
+      const { fakes, resolveStrategy } = strategiesByName();
+      const app = createTestApp({
+        resolveStrategy,
+        decideRoute: async () => {
+          throw new Error("openrouter fora do ar");
+        },
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+      });
+
+      const { status, body } = await postChat(app, { message: "oi" });
+
+      assert.equal(status, 200);
+      assert.equal(body.answer, "resposta react");
+      assert.equal(fakes.react.calls, 1);
+      assert.equal(body.route.route, "react");
+      assert.equal(body.route.source, "fallback");
+    });
+  });
+
+  describe("User Story 2 (012) — route na resposta e node em todo evento", () => {
+    test("body.route espelha o evento route e todo evento traz node", async () => {
+      const { resolveStrategy } = strategiesByName();
+      const app = createTestApp({
+        resolveStrategy,
+        decideRoute: fixedRouter("reflect"),
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+      });
+
+      const { body } = await postChat(app, { message: "resumo do incidente para o pós-mortem" });
+
+      const routeEvent = body.trace[0];
+      assert.equal(routeEvent?.type, "route");
+      if (routeEvent?.type !== "route") return;
+      const { type: _type, at: _at, node, ...decision } = routeEvent;
+      assert.equal(node, "roteador");
+      assert.deepEqual(body.route, decision);
+      assert.deepEqual(body.route, { route: "reflect", reason: "fake", source: "router" });
+      assert.ok(body.trace.every((event) => event.node !== undefined));
+      assert.deepEqual(
+        body.trace.slice(1).map((event) => event.node),
+        ["reflect", "reflect"],
+      );
+    });
+  });
+
+  describe("User Story 3 (012) — override", () => {
+    test("strategy plan-and-execute vira override: roteador não é chamado", async () => {
+      const { fakes, resolveStrategy } = strategiesByName();
+      const router = fixedRouter("react");
+      const app = createTestApp({
+        resolveStrategy,
+        decideRoute: router,
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+      });
+
+      const { status, body } = await postChat(app, { message: "oi", strategy: "plan-and-execute" });
+
+      assert.equal(status, 200);
+      assert.equal(router.calls, 0);
+      assert.equal(fakes.plan.calls, 1);
+      assert.deepEqual(body.route, {
+        route: "planExecute",
+        reason: "Estratégia informada pelo cliente",
+        source: "override",
+      });
+      assert.equal(body.metrics.llmCalls, 3);
+    });
+
+    test("strategy reflection (ou reflect) resolve reflection sobre react", async () => {
+      for (const strategy of ["reflection", "reflect"]) {
+        const { fakes, resolveCalls, resolveStrategy } = strategiesByName();
+        const app = createTestApp({
+          resolveStrategy,
+          conversationStore: fakeConversationStore(),
+          memoryStore: fakeMemoryStore(),
+        });
+
+        const { status, body } = await postChat(app, { message: "oi", strategy });
+
+        assert.equal(status, 200);
+        assert.deepEqual(resolveCalls, [{ name: "react", reflect: true }]);
+        assert.equal(fakes.reflected.calls, 1);
+        assert.equal(body.route.route, "reflect");
+        assert.equal(body.route.source, "override");
+      }
+    });
+
+    test("strategy react com reflect: true decora a rota react", async () => {
+      const { resolveCalls, resolveStrategy } = strategiesByName();
+      const app = createTestApp({
+        resolveStrategy,
+        conversationStore: fakeConversationStore(),
+        memoryStore: fakeMemoryStore(),
+      });
+
+      const { status } = await postChat(app, { message: "oi", strategy: "react", reflect: true });
+
+      assert.equal(status, 200);
+      assert.deepEqual(resolveCalls, [{ name: "react", reflect: true }]);
+    });
+
+    test("strategy desconhecida → 422 sem chamar roteador, estratégia nem conversationStore", async () => {
+      const { fakes, resolveCalls, resolveStrategy } = strategiesByName();
+      const router = fixedRouter("react");
+      const conversationStore = fakeConversationStore();
+      const app = createTestApp({
+        resolveStrategy,
+        decideRoute: router,
+        conversationStore,
+        memoryStore: fakeMemoryStore(),
+      });
+
+      const response = await postChat(app, { message: "oi", strategy: "nao-existe" });
+
+      assert.equal(response.status, 422);
+      assert.deepEqual(response.body as unknown, { error: "unknown_strategy", strategy: "nao-existe" });
+      assert.equal(router.calls, 0);
+      assert.deepEqual(resolveCalls, []);
+      assert.equal(fakes.react.calls + fakes.plan.calls + fakes.reflected.calls, 0);
+      assert.equal(conversationStore.conversations.size, 0);
     });
   });
 });
