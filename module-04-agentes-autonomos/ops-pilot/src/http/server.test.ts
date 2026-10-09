@@ -12,6 +12,7 @@ import { composeWithFacts } from "../domain/memory.ts";
 import type { RecallMatch, MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
 import type { DecideRoute } from "../graph/router.ts";
+import { buildRequestRecord } from "../domain/request-record.ts";
 import { createLogger } from "../obs/logger.ts";
 import { SqliteRequestStore } from "../store/sqlite-request-store.ts";
 import { createApp, type CreateAppOptions } from "./server.ts";
@@ -1529,6 +1530,7 @@ describe("Trace persistido e logs JSON (014)", () => {
         requestStore: {
           save: () => Promise.reject(new RangeError("disco cheio")),
           find: async () => undefined,
+          listSince: async () => [],
         },
       });
       await withServer(app, async (baseUrl) => {
@@ -1627,5 +1629,98 @@ describe("Trace persistido e logs JSON (014)", () => {
         assert.ok(!line.includes(MARKER), `vazou: ${line}`);
       }
     });
+  });
+});
+
+describe("GET /stats", () => {
+  const NOW = new Date("2026-10-09T12:00:00.000Z");
+
+  async function seededApp() {
+    const requestStore = new SqliteRequestStore(":memory:");
+    const record = (id: string, startedAt: string, extra: Partial<Parameters<typeof buildRequestRecord>[0]>) =>
+      buildRequestRecord({ requestId: id, conversationId: "c", startedAt: new Date(startedAt), durationMs: 100, outcome: "ok", ...extra });
+    const metrics = (modelUsed: string, promptTokens: number) => ({
+      llmCalls: 1,
+      latencyMs: 1,
+      promptTokens,
+      tokenSource: "real" as const,
+      modelUsed,
+      historyMessages: 0,
+      contextBreakdown: { system: 0, summary: 0, currentMessage: 1, conversationHistory: 0, recalledFacts: 0, total: 1 },
+      contextTrimmed: { historyMessages: 0, recalledFacts: 0 },
+    });
+    const react = { route: "react" as const, reason: "x", source: "router" as const };
+
+    await requestStore.save(record("velha", "2026-10-07T12:00:00.000Z", { route: react, metrics: metrics("pago", 1_000_000) }), []);
+    await requestStore.save(record("a", "2026-10-09T11:00:00.000Z", { durationMs: 200, route: react, metrics: metrics("pago", 2_000_000) }), []);
+    await requestStore.save(record("b", "2026-10-09T11:30:00.000Z", { durationMs: 400, route: react, metrics: metrics("gratis:free", 10) }), []);
+    await requestStore.save(record("c", "2026-10-09T11:50:00.000Z", { durationMs: 9_000, outcome: "timeout", errorType: "ChatTimeoutError" }), []);
+
+    return createTestApp({ requestStore, now: () => NOW, modelPrices: { pago: 0.5 } });
+  }
+
+  async function getStats(app: Express, query = ""): Promise<{ status: number; body: Record<string, unknown> }> {
+    const { baseUrl, close } = await startServer(app);
+    try {
+      const response = await fetch(`${baseUrl}/stats${query}`);
+      return { status: response.status, body: (await response.json()) as Record<string, unknown> };
+    } finally {
+      await close();
+    }
+  }
+
+  test("padrão 24h: só registros da janela, com total, erros, tokens, custo e p50/p95", async () => {
+    const { status, body } = await getStats(await seededApp());
+
+    assert.equal(status, 200);
+    assert.equal(body.since, "24h");
+    assert.equal(body.from, "2026-10-08T12:00:00.000Z");
+    assert.equal(body.to, "2026-10-09T12:00:00.000Z");
+    assert.equal(body.total, 3);
+    assert.equal(body.errors, 1);
+    assert.equal(body.timeouts, 1);
+    assert.equal(body.tokens, 2_000_010);
+    assert.equal(body.costUsd, 1); // 2M × 0.5 + :free (0)
+    assert.deepEqual(body.unpricedModels, []);
+    assert.deepEqual(body.latencyMs, { p50: 400, p95: 9_000 });
+    assert.deepEqual(Object.keys(body.byRoute as object), ["desconhecido", "react"]);
+    assert.deepEqual(Object.keys(body.byModel as object), ["desconhecido", "gratis:free", "pago"]);
+    assert.equal((body.byModel as Record<string, { costUsd: number }>)["gratis:free"]!.costUsd, 0);
+  });
+
+  test("since maior inclui registros mais antigos", async () => {
+    const { body } = await getStats(await seededApp(), "?since=7d");
+    assert.equal(body.total, 4);
+  });
+
+  test("since inválido → 400 invalid_since", async () => {
+    for (const since of ["abc", "0h", "24", "100d"]) {
+      const { status, body } = await getStats(await seededApp(), `?since=${since}`);
+      assert.equal(status, 400, since);
+      assert.equal(body.error, "invalid_since");
+    }
+  });
+
+  test("execuções do /chat aparecem nas stats", async () => {
+    const app = createTestApp({
+      resolveStrategy: () => fakeStrategy("fake", {
+        answer: "ok",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 30, tokenSource: "real", modelUsed: "fake-model" },
+      }),
+      conversationStore: fakeConversationStore(),
+      memoryStore: fakeMemoryStore(),
+    });
+    const { baseUrl, close } = await startServer(app);
+    try {
+      await fetch(`${baseUrl}/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "oi" }) });
+      const stats = (await (await fetch(`${baseUrl}/stats`)).json()) as Record<string, unknown>;
+      assert.equal(stats.total, 1);
+      assert.equal(stats.tokens, 30);
+      assert.deepEqual(stats.unpricedModels, ["fake-model"]);
+      assert.equal(stats.costUsd, null);
+    } finally {
+      await close();
+    }
   });
 });

@@ -48,6 +48,7 @@ const DDL = `
   );
 
   CREATE INDEX IF NOT EXISTS idx_requests_conversation ON requests(conversation_id);
+  CREATE INDEX IF NOT EXISTS idx_requests_started_at ON requests(started_at);
 `;
 
 interface RequestRow {
@@ -169,5 +170,13 @@ export class SqliteRequestStore implements RequestStore {
       .all(requestId) as unknown as TraceRow[];
 
     return { request: toRecord(row), trace: restoreTrace(traceRows.map(toStored)) };
+  }
+
+  async listSince(since: Date): Promise<RequestRecord[]> {
+    // `started_at` é ISO-8601 UTC com milissegundos (toISOString), então a ordem lexicográfica é a cronológica.
+    const rows = this.db
+      .prepare("SELECT * FROM requests WHERE started_at >= ? ORDER BY started_at, id")
+      .all(since.toISOString()) as unknown as RequestRow[];
+    return rows.map(toRecord);
   }
 }

@@ -9,6 +9,13 @@ import type { ReasoningStrategy, RouteName } from "../agents/types.ts";
 import { loadContextBudget, type ContextBudget } from "../context/context-builder.ts";
 import { ChatTimeoutError, ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
 import { buildRequestRecord, chatMetricsOf } from "../domain/request-record.ts";
+import {
+  computeStats,
+  DEFAULT_STATS_WINDOW,
+  loadModelPrices,
+  parseStatsWindow,
+  type ModelPrices,
+} from "../domain/request-stats.ts";
 import { reflectAndRemember as reflectAndRememberDefault } from "../memory/learning-reflector.ts";
 import { createMemoryTools, SqliteMemoryStore, type MemoryStore } from "../memory/memory-store.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
@@ -63,6 +70,8 @@ export interface CreateAppOptions {
   logger?: Logger;
   /** Relógio — injetável para testes; padrão `() => new Date()`. */
   now?: () => Date;
+  /** Preço de prompt por modelo para `GET /stats` — padrão `loadModelPrices(process.env)`. */
+  modelPrices?: ModelPrices;
 }
 
 const RequestIdParamSchema = z.string().uuid();
@@ -131,6 +140,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
   const requestStore = options.requestStore ?? new SqliteRequestStore();
   const logger = options.logger ?? createLogger();
   const now = options.now ?? (() => new Date());
+  const modelPrices = options.modelPrices ?? loadModelPrices(process.env);
 
   const app = express();
   app.use(express.json());
@@ -247,6 +257,25 @@ export function createApp(options: CreateAppOptions = {}): Express {
       logger.log({ event: "persistence.failed", requestId, errorType: errorTypeOf(saveError) });
     }
   }
+
+  /** Agregados das execuções gravadas na janela `?since=` (padrão 24h): total, erros, tokens, custo, p50/p95. */
+  app.get("/stats", async (req: Request, res: Response, next: NextFunction) => {
+    const since = typeof req.query.since === "string" ? req.query.since : DEFAULT_STATS_WINDOW;
+    const windowMs = parseStatsWindow(since);
+    if (windowMs === undefined) {
+      res.status(400).json({ error: "invalid_since", since, hint: "use <n>m, <n>h ou <n>d (máx. 90d), ex.: 24h" });
+      return;
+    }
+
+    try {
+      const to = now();
+      const from = new Date(to.getTime() - windowMs);
+      const records = await requestStore.listSince(from);
+      res.status(200).json({ since, from: from.toISOString(), to: to.toISOString(), ...computeStats(records, modelPrices) });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.get("/requests/:id", async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id ?? "";

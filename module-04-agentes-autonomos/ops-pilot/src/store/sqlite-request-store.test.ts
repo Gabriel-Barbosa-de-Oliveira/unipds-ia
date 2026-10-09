@@ -103,3 +103,17 @@ test("CHECK da coluna requests.outcome rejeita valor fora do domínio, mesmo via
     ).run();
   });
 });
+
+test("listSince devolve só os registros a partir do instante, em ordem cronológica", async () => {
+  const store = new SqliteRequestStore(":memory:");
+  const at = (iso: string, id: string) =>
+    buildRequestRecord({ requestId: id, conversationId: "c", startedAt: new Date(iso), durationMs: 1, outcome: "error" });
+
+  await store.save(at("2026-10-08T23:59:59.999Z", "antes"), []);
+  await store.save(at("2026-10-09T10:00:00.000Z", "depois"), []);
+  await store.save(at("2026-10-09T00:00:00.000Z", "no-limite"), []);
+
+  const records = await store.listSince(new Date("2026-10-09T00:00:00.000Z"));
+
+  assert.deepEqual(records.map((record) => record.requestId), ["no-limite", "depois"]);
+});

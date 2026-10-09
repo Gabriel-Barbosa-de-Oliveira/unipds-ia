@@ -11,4 +11,7 @@ export interface RequestStore {
 
   /** Registro + trace ordenado pela posição original; `undefined` quando o id não existe. */
   find(requestId: string): Promise<{ request: RequestRecord; trace: TraceEvent[] } | undefined>;
+
+  /** Registros iniciados a partir de `since` (inclusive), do mais antigo para o mais recente — sem trace. */
+  listSince(since: Date): Promise<RequestRecord[]>;
 }
