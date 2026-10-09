@@ -31,12 +31,14 @@ function isBaseStrategyName(name: string): name is BaseStrategyName {
  * nova por requisição sobre `[...opsTools, ...extraTools]` (mesmas fábricas já usadas por
  * `bench.ts`) em vez do singleton — usado por `007-semantic-memory` para disponibilizar
  * `remember_fact`/`forget_fact` escopadas a um `userId` específico (research.md item 7). Quando
- * omitido, comportamento idêntico ao de antes: mesmo singleton, nenhuma IO extra.
+ * omitido, comportamento idêntico ao de antes: mesmo singleton, nenhuma IO extra. `baseTools`
+ * substitui `opsTools` — o /chat passa as ferramentas com porta de aprovação (015).
  */
 export function resolveStrategy(
   name?: string,
   reflect?: boolean,
   extraTools?: StructuredToolInterface[],
+  baseTools: StructuredToolInterface[] = opsTools,
 ): ReasoningStrategy {
   const resolvedName = name ?? DEFAULT_STRATEGY_NAME;
 
@@ -44,19 +46,15 @@ export function resolveStrategy(
     throw new UnknownStrategyError(resolvedName);
   }
 
-  const strategy =
-    extraTools && extraTools.length > 0
-      ? buildStrategyWithExtraTools(resolvedName, extraTools)
-      : STRATEGIES[resolvedName];
+  const customTools = baseTools !== opsTools || (extraTools !== undefined && extraTools.length > 0);
+  const strategy = customTools
+    ? buildStrategyWithTools(resolvedName, [...baseTools, ...(extraTools ?? [])])
+    : STRATEGIES[resolvedName];
 
   return reflect ? withReflection(strategy) : strategy;
 }
 
-function buildStrategyWithExtraTools(
-  name: BaseStrategyName,
-  extraTools: StructuredToolInterface[],
-): ReasoningStrategy {
-  const tools = [...opsTools, ...extraTools];
+function buildStrategyWithTools(name: BaseStrategyName, tools: StructuredToolInterface[]): ReasoningStrategy {
   return name === "react" ? createReactStrategy(tools) : createPlanAndExecuteStrategy(tools);
 }
 
@@ -70,9 +68,10 @@ export function strategyForRoute(
   reflect?: boolean,
   extraTools?: StructuredToolInterface[],
   resolve: typeof resolveStrategy = resolveStrategy,
+  baseTools: StructuredToolInterface[] = opsTools,
 ): ReasoningStrategy {
   if (route === "reflect") {
-    return resolve("react", true, extraTools);
+    return resolve("react", true, extraTools, baseTools);
   }
-  return resolve(route === "planExecute" ? "plan-and-execute" : "react", reflect, extraTools);
+  return resolve(route === "planExecute" ? "plan-and-execute" : "react", reflect, extraTools, baseTools);
 }

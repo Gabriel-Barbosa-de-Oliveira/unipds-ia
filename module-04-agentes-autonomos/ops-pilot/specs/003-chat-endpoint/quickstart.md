@@ -113,3 +113,5 @@ Se o principal e a reserva falharem, o erro continua sendo `500`. Contrato compl
 - **Investigar um 500**: em vez do antigo `console.error`, procure no stdout a linha `request.failed` com o `requestId` da resposta, que traz o tipo do erro, e consulte `GET /requests/<requestId>`.
 
 Contrato completo: [specs/014-persisted-trace/contracts/http.md](../014-persisted-trace/contracts/http.md).
+
+> **Nota 015 (war room).** O `/chat` passa a responder **202** quando o agente tenta `open_incident`/`resolve_incident`: nada é executado até `POST /approvals/:id` com `{"decision":"approve"|"deny"}` (detalhes em `specs/015-war-room-web/contracts/http.md`). Variáveis novas: `OPSPILOT_CORS_ORIGINS` (origens do navegador autorizadas, separadas por vírgula; padrão `http://localhost:5173`) e `OPSPILOT_APPROVAL_TTL_MS` (validade de uma ação pendente; padrão `900000`, 15 min). A war room fica em `web/` (`npm --prefix web run dev` → `http://localhost:5173/opspilot/`).

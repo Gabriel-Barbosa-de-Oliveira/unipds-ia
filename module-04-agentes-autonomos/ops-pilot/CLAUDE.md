@@ -10,6 +10,7 @@ Copiloto de plantão que gerencia alertas e incidentes de produção. A API é u
 - Testes com `node:test` via `tsx`
 - Express como servidor HTTP
 - SQLite via `node:sqlite` (`DatabaseSync`) como banco — arquivo local (caminho via env `OPSPILOT_DB`), `:memory:` em testes
+- Frontend em `web/` (Vite + React + TS), pacote npm separado — design em `.github/instructions/design.instructions.md`
 
 ## Comandos
 
@@ -19,6 +20,14 @@ Copiloto de plantão que gerencia alertas e incidentes de produção. A API é u
 - `npm run bench` — roda `src/bench.ts`
 - `npm test` — roda os testes (`node --import tsx --test`)
 - `npm run typecheck` — `tsc --noEmit`
+- `npm --prefix web run dev|build|preview|test|typecheck` — war room em `http://localhost:5173/opspilot/`
+- Publicação: push em `master` que toca `web/` publica no GitHub Pages via `.github/workflows/ops-pilot-web-pages.yml` (na raiz do repositório `unipds-ia`); PR só checa
+
+## Env da API
+
+- `OPSPILOT_CORS_ORIGINS` — origens do navegador autorizadas, separadas por vírgula (padrão `http://localhost:5173`)
+- `OPSPILOT_APPROVAL_TTL_MS` — validade de uma ação aguardando aprovação (padrão 900000 = 15 min)
+- `OPSPILOT_WEB_BASE` — caminho base do build do `web/` (padrão `/opspilot/`; o Pages usa `/<repo>/opspilot/`)
 
 ## Convenções
 

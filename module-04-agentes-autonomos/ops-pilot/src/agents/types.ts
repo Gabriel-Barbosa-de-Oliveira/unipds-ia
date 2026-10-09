@@ -20,8 +20,8 @@ export interface RouteDecision {
   source: RouteSource;
 }
 
-/** Nós do grafo de produção (`src/graph/production-graph.ts`); nós de estratégia têm o nome da rota. */
-export type GraphNode = "contexto" | "roteador" | RouteName | "resposta";
+/** Nós do grafo de produção (`src/graph/production-graph.ts`); nós de estratégia têm o nome da rota. `aprovacao` marca o trace de uma decisão humana (015), fora do grafo. */
+export type GraphNode = "contexto" | "roteador" | RouteName | "resposta" | "aprovacao";
 
 /** `node` é opcional porque arena/bench rodam estratégias fora do grafo; no grafo é sempre presente. */
 export type TraceEvent = (

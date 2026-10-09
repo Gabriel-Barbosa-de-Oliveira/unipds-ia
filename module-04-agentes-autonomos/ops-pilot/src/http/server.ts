@@ -4,10 +4,28 @@ import type { StructuredToolInterface } from "@langchain/core/tools";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import { z } from "zod";
 
+import { createApprovalGate, createGatedOpsTools, executeGatedAction } from "../agents/approval-gate.ts";
 import { resolveStrategy as resolveStrategyDefault, strategyForRoute } from "../agents/index.ts";
 import type { ReasoningStrategy, RouteName } from "../agents/types.ts";
 import { loadContextBudget, type ContextBudget } from "../context/context-builder.ts";
-import { ChatTimeoutError, ConversationNotFoundError, UnknownStrategyError } from "../domain/errors.ts";
+import {
+  approvalAnswer,
+  approvalTrace,
+  buildPendingAction,
+  decisionSucceeded,
+  reasonFromTrace,
+  summarizeAction,
+  type ApprovalDecision,
+} from "../domain/approval.ts";
+import { corsHeadersFor, parseAllowedOrigins } from "../domain/cors.ts";
+import {
+  ApprovalAlreadyDecidedError,
+  ApprovalExpiredError,
+  ApprovalNotFoundError,
+  ChatTimeoutError,
+  ConversationNotFoundError,
+  UnknownStrategyError,
+} from "../domain/errors.ts";
 import { buildRequestRecord, chatMetricsOf } from "../domain/request-record.ts";
 import {
   computeStats,
@@ -18,16 +36,23 @@ import {
 } from "../domain/request-stats.ts";
 import { reflectAndRemember as reflectAndRememberDefault } from "../memory/learning-reflector.ts";
 import { createMemoryTools, SqliteMemoryStore, type MemoryStore } from "../memory/memory-store.ts";
+import type { ApprovalStore } from "../services/approval-store.repository.ts";
 import type { ConversationStore } from "../services/conversation-store.repository.ts";
+import type { OpsStoreRepository } from "../services/ops-store.repository.ts";
 import { createProductionGraph } from "../graph/production-graph.ts";
 import { createModelRouter, parseRouteName, type DecideRoute } from "../graph/router.ts";
 import { createLogger, errorTypeOf, type Logger } from "../obs/logger.ts";
 import { withTimeout } from "../services/chat.service.ts";
 import type { RequestStore } from "../services/request-store.repository.ts";
+import { SqliteApprovalStore } from "../store/sqlite-approval-store.ts";
 import { SqliteConversationStore } from "../store/sqlite-conversation-store.ts";
+import { SqliteOpsStore } from "../store/sqlite-ops-store.ts";
 import { SqliteRequestStore } from "../store/sqlite-request-store.ts";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
+
+/** Validade de uma ação aguardando aprovação (015): 15 minutos. */
+const DEFAULT_APPROVAL_TTL_MS = 15 * 60_000;
 
 /** Quantidade máxima de mensagens de histórico consideradas na composição do prompt (FR-004). */
 const HISTORY_LIMIT = 12;
@@ -45,12 +70,17 @@ export const ChatRequestSchema = z.object({
 
 export type ChatRequestBody = z.infer<typeof ChatRequestSchema>;
 
+export const ApprovalDecisionSchema = z.object({
+  decision: z.enum(["approve", "deny"]),
+});
+
 export interface CreateAppOptions {
   /** Sobrescreve a resolução nome->estratégia — usado por testes para injetar fakes, sem rede. */
   resolveStrategy?: (
     name: string | undefined,
     reflect: boolean | undefined,
     extraTools?: StructuredToolInterface[],
+    baseTools?: StructuredToolInterface[],
   ) => ReasoningStrategy;
   /** Teto de tempo por requisição, em ms. Padrão 180000 (FR-008); overridable para testes rápidos. */
   timeoutMs?: number;
@@ -72,6 +102,14 @@ export interface CreateAppOptions {
   now?: () => Date;
   /** Preço de prompt por modelo para `GET /stats` — padrão `loadModelPrices(process.env)`. */
   modelPrices?: ModelPrices;
+  /** Origens do navegador autorizadas (015) — padrão `parseAllowedOrigins(OPSPILOT_CORS_ORIGINS)`. */
+  corsOrigins?: string[];
+  /** Store operacional das ferramentas e da execução aprovada (015) — padrão `SqliteOpsStore`. */
+  opsStore?: OpsStoreRepository;
+  /** Ações aguardando aprovação (015) — testes usam `:memory:`; padrão `SqliteApprovalStore`. */
+  approvalStore?: ApprovalStore;
+  /** Validade de uma ação pendente, em ms — padrão `OPSPILOT_APPROVAL_TTL_MS` ou 15 min. */
+  approvalTtlMs?: number;
 }
 
 const RequestIdParamSchema = z.string().uuid();
@@ -82,6 +120,23 @@ function assignRequestId(_req: Request, res: Response, next: NextFunction): void
   res.locals.requestId = requestId;
   res.setHeader("X-Request-Id", requestId);
   next();
+}
+
+/**
+ * CORS com allowlist exata (spec 015, research.md item 6). Preflight com `Origin` termina aqui com
+ * 204 — com cabeçalhos só se a origem for permitida; sem `Origin` (curl, testes) nada muda.
+ */
+function createCorsMiddleware(allowlist: readonly string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const origin = req.headers.origin;
+    const preflight = req.method === "OPTIONS" && origin !== undefined;
+    res.set(corsHeadersFor(origin, allowlist, { preflight }));
+    if (preflight) {
+      res.status(204).end();
+      return;
+    }
+    next();
+  };
 }
 
 /** Nome da rota do override, ou `null` quando ausente/inválido — só para o log de entrada. */
@@ -118,6 +173,24 @@ function createErrorMiddleware(logger: Logger, now: () => Date) {
       return;
     }
 
+    if (error instanceof ApprovalNotFoundError) {
+      logger.log({ event: "request.rejected", requestId, status: 404, errorCode: "approval_not_found" });
+      res.status(404).json({ requestId, error: "approval_not_found", approvalId: error.id });
+      return;
+    }
+
+    if (error instanceof ApprovalAlreadyDecidedError) {
+      logger.log({ event: "request.rejected", requestId, status: 409, errorCode: "approval_already_decided" });
+      res.status(409).json({ requestId, error: "approval_already_decided", approvalId: error.id, status: error.status });
+      return;
+    }
+
+    if (error instanceof ApprovalExpiredError) {
+      logger.log({ event: "request.rejected", requestId, status: 410, errorCode: "approval_expired" });
+      res.status(410).json({ requestId, error: "approval_expired", approvalId: error.id, expiresAt: error.expiresAt });
+      return;
+    }
+
     if (error instanceof ChatTimeoutError) {
       logger.log({ event: "request.failed", requestId, status: 504, errorType: errorTypeOf(error), durationMs });
       res.status(504).json({ requestId, error: "timeout", timeoutMs: error.timeoutMs });
@@ -141,8 +214,13 @@ export function createApp(options: CreateAppOptions = {}): Express {
   const logger = options.logger ?? createLogger();
   const now = options.now ?? (() => new Date());
   const modelPrices = options.modelPrices ?? loadModelPrices(process.env);
+  const corsOrigins = options.corsOrigins ?? parseAllowedOrigins(process.env.OPSPILOT_CORS_ORIGINS);
+  const opsStore = options.opsStore ?? new SqliteOpsStore();
+  const approvalStore = options.approvalStore ?? new SqliteApprovalStore();
+  const approvalTtlMs = options.approvalTtlMs ?? (Number(process.env.OPSPILOT_APPROVAL_TTL_MS) || DEFAULT_APPROVAL_TTL_MS);
 
   const app = express();
+  app.use(createCorsMiddleware(corsOrigins));
   app.use(express.json());
 
   app.post("/chat", assignRequestId, async (req: Request, res: Response, next: NextFunction) => {
@@ -187,10 +265,13 @@ export function createApp(options: CreateAppOptions = {}): Express {
         ? await memoryStore.recall(userId, parsed.data.message, RECALL_LIMIT)
         : [];
       const extraTools = userId ? createMemoryTools(memoryStore, userId) : undefined;
+      // Ações que mudam a produção só ficam registradas aqui; nada executa sem decisão (015).
+      const gate = createApprovalGate();
+      const baseTools = createGatedOpsTools(opsStore, gate);
 
       const graph = createProductionGraph({
         decideRoute,
-        strategyFor: (route) => strategyForRoute(route, parsed.data.reflect, extraTools, resolveStrategy),
+        strategyFor: (route) => strategyForRoute(route, parsed.data.reflect, extraTools, resolveStrategy, baseTools),
         requestStore,
         logger,
         now,
@@ -211,6 +292,46 @@ export function createApp(options: CreateAppOptions = {}): Express {
 
       if (userId) {
         void reflectAndRemember(memoryStore, userId, parsed.data.message).catch(() => {});
+      }
+
+      if (gate.proposed) {
+        // 202: a resposta do modelo é descartada — ela poderia afirmar que a ação aconteceu.
+        const action = buildPendingAction({
+          id: randomUUID(),
+          requestId,
+          conversationId,
+          userId,
+          tool: gate.proposed.tool,
+          args: gate.proposed.args,
+          reason: reasonFromTrace(result.trace),
+          now: now(),
+          ttlMs: approvalTtlMs,
+        });
+        await approvalStore.create(action);
+        const summary = summarizeAction(action.tool, action.args);
+        await conversationStore.append(conversationId, [
+          { role: "user", content: parsed.data.message },
+          { role: "assistant", content: `Aguardando aprovação: ${summary}` },
+        ]);
+        logger.log({ event: "approval.requested", requestId, approvalId: action.id, tool: action.tool });
+
+        res.status(202).json({
+          requestId,
+          status: "awaiting_approval",
+          approval: {
+            id: action.id,
+            tool: action.tool,
+            args: action.args,
+            summary,
+            reason: action.reason,
+            expiresAt: action.expiresAt,
+          },
+          trace: runResult.trace,
+          route,
+          conversationId,
+          metrics: chatMetricsOf(runResult.metrics, built),
+        });
+        return;
       }
 
       await conversationStore.append(conversationId, [
@@ -257,6 +378,84 @@ export function createApp(options: CreateAppOptions = {}): Express {
       logger.log({ event: "persistence.failed", requestId, errorType: errorTypeOf(saveError) });
     }
   }
+
+  /**
+   * Decisão humana sobre uma ação pendente (015, contracts/http.md). Determinística: aprovada executa
+   * exatamente os args guardados, sem chamar o modelo; negada não executa nada. A gravação da decisão
+   * é atômica no store — no máximo uma decisão por ação.
+   */
+  app.post("/approvals/:id", assignRequestId, async (req: Request, res: Response, next: NextFunction) => {
+    const requestId = res.locals.requestId as string;
+    const startedAt = now();
+    res.locals.startedAt = startedAt;
+    const approvalId = req.params.id ?? "";
+
+    try {
+      if (!RequestIdParamSchema.safeParse(approvalId).success) {
+        throw new ApprovalNotFoundError(approvalId);
+      }
+      const parsed = ApprovalDecisionSchema.safeParse(req.body);
+      if (!parsed.success) {
+        logger.log({ event: "request.rejected", requestId, status: 400, errorCode: "invalid_body" });
+        res.status(400).json({ requestId, error: "invalid_body", issues: parsed.error.issues });
+        return;
+      }
+
+      const decision: ApprovalDecision = parsed.data.decision === "approve" ? "approved" : "denied";
+      const decided = await approvalStore.decide(approvalId, decision, startedAt, requestId);
+      if (!decided.ok) {
+        if (decided.reason === "not_found") {
+          throw new ApprovalNotFoundError(approvalId);
+        }
+        if (decided.reason === "expired") {
+          throw new ApprovalExpiredError(approvalId, decided.action.expiresAt);
+        }
+        throw new ApprovalAlreadyDecidedError(approvalId, decided.action.status === "denied" ? "denied" : "approved");
+      }
+
+      const { action } = decided;
+      const result = decision === "approved" ? await executeGatedAction(opsStore, action.tool, action.args) : undefined;
+      const outcome = { tool: action.tool, args: action.args, decision, result };
+      const answer = approvalAnswer(outcome);
+      const trace = approvalTrace(outcome);
+
+      try {
+        await requestStore.save(
+          buildRequestRecord({
+            requestId,
+            conversationId: action.conversationId,
+            userId: action.userId,
+            startedAt,
+            durationMs: now().getTime() - startedAt.getTime(),
+            outcome: "ok",
+          }),
+          trace,
+        );
+      } catch (saveError) {
+        logger.log({ event: "persistence.failed", requestId, errorType: errorTypeOf(saveError) });
+      }
+      await conversationStore.append(action.conversationId, [{ role: "assistant", content: answer }]);
+      logger.log({
+        event: "approval.decided",
+        requestId,
+        approvalId,
+        decision,
+        outcome: decision === "denied" ? "cancelled" : decisionSucceeded(outcome) ? "executed" : "failed",
+      });
+
+      res.status(200).json({
+        requestId,
+        answer,
+        trace,
+        route: null,
+        metrics: null,
+        conversationId: action.conversationId,
+        approval: { id: approvalId, status: decision },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   /** Agregados das execuções gravadas na janela `?since=` (padrão 24h): total, erros, tokens, custo, p50/p95. */
   app.get("/stats", async (req: Request, res: Response, next: NextFunction) => {

@@ -57,3 +57,37 @@ export class ChatTimeoutError extends Error {
     this.timeoutMs = timeoutMs;
   }
 }
+
+export class ApprovalNotFoundError extends Error {
+  readonly id: string;
+
+  constructor(id: string) {
+    super(`Approval not found: ${id}`);
+    this.name = "ApprovalNotFoundError";
+    this.id = id;
+  }
+}
+
+export class ApprovalAlreadyDecidedError extends Error {
+  readonly id: string;
+  readonly status: "approved" | "denied";
+
+  constructor(id: string, status: "approved" | "denied") {
+    super(`Approval already decided: ${id} (${status})`);
+    this.name = "ApprovalAlreadyDecidedError";
+    this.id = id;
+    this.status = status;
+  }
+}
+
+export class ApprovalExpiredError extends Error {
+  readonly id: string;
+  readonly expiresAt: string;
+
+  constructor(id: string, expiresAt: string) {
+    super(`Approval expired: ${id} at ${expiresAt}`);
+    this.name = "ApprovalExpiredError";
+    this.id = id;
+    this.expiresAt = expiresAt;
+  }
+}

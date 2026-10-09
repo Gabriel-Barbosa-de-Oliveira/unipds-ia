@@ -1,0 +1,138 @@
+/*
+ * Tokens da war room — .github/instructions/design.instructions.md e contracts/web-ui.md.
+ * Componentes usam só estes tokens: nenhum valor mágico nem hex fora deste arquivo.
+ */
+
+:root {
+  /* Espaçamento: escala base 4px */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Tipografia */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --leading-body: 1.5;
+  --leading-tight: 1.25;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 650;
+
+  /* Forma e dimensões */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --border-width: 1px;
+  --accent-width: 4px;
+  --focus-width: 2px;
+  --target-min: 44px;
+  --content-max: 760px;
+  --drawer-width: 480px;
+  --metric-min: 128px;
+  --disabled-opacity: 0.55;
+  --composer-max-height: 192px;
+
+  /* Movimento */
+  --duration-fast: 120ms;
+  --duration-slow: 1200ms;
+}
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #eef1f4;
+  --color-text: #1b1f24;
+  --color-text-muted: #57606a;
+  --color-border: #d0d7de;
+  --color-border-strong: #6e7781;
+  --color-primary: #0b5cad;
+  --color-primary-hover: #094a8c;
+  --color-primary-text: #ffffff;
+  --color-user-bubble: #e3eefa;
+  --color-focus: #0b5cad;
+  --color-danger: #b42318;
+  --color-danger-surface: #fdecea;
+  --color-warning: #8a5300;
+  --color-warning-surface: #fff4e0;
+  --color-success: #17732f;
+  --color-success-surface: #e7f5ea;
+  --color-info: #0b5cad;
+  --color-overlay: rgb(27 31 36 / 0.45);
+  --shadow-drawer: 0 8px 32px rgb(27 31 36 / 0.18);
+
+  --trace-route: #7340c9;
+  --trace-thought: #0b5cad;
+  --trace-plan: #17732f;
+  --trace-action: #a84300;
+  --trace-observation: #57606a;
+  --trace-critique: #865a00;
+  --trace-fallback: #b42318;
+  --trace-answer: #116329;
+  --trace-unknown: #555d66;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #12151a;
+  --color-surface: #1a1e24;
+  --color-surface-raised: #222730;
+  --color-surface-sunken: #161a1f;
+  --color-text: #e6e8eb;
+  --color-text-muted: #a3abb5;
+  --color-border: #2e343d;
+  --color-border-strong: #7d8590;
+  --color-primary: #6cb0ff;
+  --color-primary-hover: #8cc4ff;
+  --color-primary-text: #0f1722;
+  --color-user-bubble: #1f3247;
+  --color-focus: #8cc4ff;
+  --color-danger: #ff7b72;
+  --color-danger-surface: #3a1d1c;
+  --color-warning: #e3b341;
+  --color-warning-surface: #33270f;
+  --color-success: #56d364;
+  --color-success-surface: #15301c;
+  --color-info: #6cb0ff;
+  --color-overlay: rgb(5 7 10 / 0.6);
+  /* Tema escuro: elevação por clareamento de superfície, não por sombra (design.instructions.md). */
+  --shadow-drawer: none;
+
+  --trace-route: #c297ff;
+  --trace-thought: #6cb0ff;
+  --trace-plan: #56d364;
+  --trace-action: #ffa657;
+  --trace-observation: #a3abb5;
+  --trace-critique: #e3b341;
+  --trace-fallback: #ff7b72;
+  --trace-answer: #7ee787;
+  --trace-unknown: #9aa2ac;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

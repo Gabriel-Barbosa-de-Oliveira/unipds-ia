@@ -1,5 +1,6 @@
 import type { GraphNode, RouteName, RouteSource, TraceEvent } from "../agents/types.ts";
 import type { TokenSource } from "../context/tokens.ts";
+import type { ApprovalDecision, GatedToolName } from "../domain/approval.ts";
 
 /**
  * Eventos de log do OpsPilot (spec 014). União FECHADA e só com metadados: não há campo livre
@@ -20,7 +21,13 @@ export type LogEvent =
       event: "request.rejected";
       requestId: string;
       status: number;
-      errorCode: "invalid_body" | "unknown_strategy" | "conversation_not_found";
+      errorCode:
+        | "invalid_body"
+        | "unknown_strategy"
+        | "conversation_not_found"
+        | "approval_not_found"
+        | "approval_already_decided"
+        | "approval_expired";
     }
   | { event: "route.chosen"; requestId: string; node: GraphNode | null; position: number; route: RouteName; source: RouteSource }
   | { event: "model.fallback"; requestId: string; node: GraphNode | null; position: number; from: string; to: string }
@@ -39,7 +46,16 @@ export type LogEvent =
     }
   | { event: "request.failed"; requestId: string; status: number; errorType: string; durationMs: number }
   | { event: "persistence.failed"; requestId: string; errorType: string }
-  | { event: "request.lookup"; requestId: string; found: boolean };
+  | { event: "request.lookup"; requestId: string; found: boolean }
+  // 015: só metadados — nunca `args` nem `reason` da ação.
+  | { event: "approval.requested"; requestId: string; approvalId: string; tool: GatedToolName }
+  | {
+      event: "approval.decided";
+      requestId: string;
+      approvalId: string;
+      decision: ApprovalDecision;
+      outcome: "executed" | "cancelled" | "failed";
+    };
 
 export type LogLevel = "info" | "warn" | "error";
 
@@ -53,6 +69,8 @@ const LEVELS: Record<LogEvent["event"], LogLevel> = {
   "request.failed": "error",
   "persistence.failed": "error",
   "request.lookup": "info",
+  "approval.requested": "info",
+  "approval.decided": "info",
 };
 
 /** Uma linha JSON autocontida: `ts`, `level`, `event` e os metadados do evento. Pura. */

@@ -68,3 +68,19 @@ test("createLogger escreve uma linha formatada por evento", () => {
   assert.equal(lines.length, 2);
   assert.deepEqual(JSON.parse(lines[1]!), { ts: NOW.toISOString(), level: "info", event: "request.lookup", requestId: "r2", found: true });
 });
+
+test("eventos de aprovação (015) só levam metadados", () => {
+  const requested = JSON.parse(
+    formatLogLine({ event: "approval.requested", requestId: "r1", approvalId: "a1", tool: "resolve_incident" }, NOW),
+  );
+  assert.deepEqual(Object.keys(requested).sort(), ["approvalId", "event", "level", "requestId", "tool", "ts"]);
+
+  const decided = JSON.parse(
+    formatLogLine(
+      { event: "approval.decided", requestId: "r2", approvalId: "a1", decision: "approved", outcome: "executed" },
+      NOW,
+    ),
+  );
+  assert.equal(decided.level, "info");
+  assert.equal("args" in decided || "reason" in decided, false);
+});

@@ -1,18 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles: n/a (nenhum princípio I-VIII foi removido ou redefinido)
+- Version change: 1.1.0 → 1.2.0
+- Modified principles: n/a
 - Modified sections:
-  - Stack Tecnológica Obrigatória: "Sequelize + MySQL como banco" → "SQLite via `node:sqlite`
-    (`DatabaseSync`) como banco". MySQL deixa de ser um serviço externo tradicional; a
-    persistência passa a ser um arquivo local gerenciado pela própria aplicação (com suporte a
-    `:memory:` em testes).
-- Added sections: n/a
+  - Stack Tecnológica Obrigatória: nova subseção "Frontend (`web/`)" (Vite + React + TypeScript
+    `strict` em pacote npm separado, zod na fronteira com a API, lógica pura testada com
+    `node:test` via `tsx`, CSS com tokens conforme `.github/instructions/design.instructions.md`).
+  - Fluxo de Desenvolvimento & Quality Gates: `npm --prefix web run typecheck` e
+    `npm --prefix web test` passam a ser gates.
+- Added sections: n/a (subseção dentro de seção existente)
 - Removed sections: n/a
-- Templates requiring updates: no dependent templates modified by this command (read constitution
-  at runtime per Scope Guard); CLAUDE.md ainda referencia Sequelize/MySQL e precisa de amendment
-  manual para permanecer consistente com esta constitution (ver Next Actions da conversa).
+- Templates requiring updates: nenhum; CLAUDE.md atualizado com a stack e os comandos do `web/`.
 - Follow-up TODOs: n/a
+- Racional: a spec 015 (war room) introduz uma interface web; a Governance exige amendment para
+  qualquer mudança de stack. É uma adição (MINOR), nenhuma regra existente muda.
 -->
 
 # OpsPilot Constitution
@@ -84,6 +85,17 @@ Rationale: reduz o raio de impacto de um erro e facilita review, bisect e rollba
   env, ex.: `OPSPILOT_DB`), sem servidor externo; `:memory:` é o modo padrão em testes
 - LangChain/LangGraph sobre OpenRouter para o agente
 
+### Frontend (`web/`)
+
+- Vite + React + TypeScript `strict`, como pacote npm separado em `web/` (dependências isoladas
+  da API)
+- zod valida toda resposta da API antes de virar estado (a API é entrada externa para o
+  navegador)
+- Lógica em funções puras em `web/src/lib/`, testadas com `node:test` via `tsx`; componentes
+  ficam finos
+- CSS com tokens (espaçamento em escala, cores semânticas, dark mode) conforme
+  `.github/instructions/design.instructions.md`
+
 Mudar qualquer item desta stack é uma decisão arquitetural e exige amendment desta constitution.
 
 ## Fluxo de Desenvolvimento & Quality Gates
@@ -92,6 +104,8 @@ Mudar qualquer item desta stack é uma decisão arquitetural e exige amendment d
   scripts de avaliação do agente (`src/arena.ts`, `src/bench.ts`).
 - `npm test` (`node --import tsx --test`) e `npm run typecheck` (`tsc --noEmit`) DEVEM passar
   antes de qualquer commit; o pre-commit hook automatiza essa checagem.
+- Quando `web/` muda, `npm --prefix web run typecheck` e `npm --prefix web test` também DEVEM
+  passar.
 - Specs, planos e tarefas geradas pelo Spec Kit vivem em `specs/` e são versionadas como
   qualquer outro artefato do repositório.
 
@@ -112,4 +126,4 @@ princípio (ex.: IO dentro do domínio, entrada não validada, ausência de test
 justificada explicitamente na PR ou corrigida antes do merge. Uso diário do dia a dia é guiado
 por `CLAUDE.md`, que deve permanecer consistente com esta constitution.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-01 | **Last Amended**: 2026-09-10
+**Version**: 1.2.0 | **Ratified**: 2026-09-01 | **Last Amended**: 2026-10-09

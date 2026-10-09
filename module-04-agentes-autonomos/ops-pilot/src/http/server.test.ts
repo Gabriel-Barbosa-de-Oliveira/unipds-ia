@@ -15,6 +15,9 @@ import type { DecideRoute } from "../graph/router.ts";
 import { buildRequestRecord } from "../domain/request-record.ts";
 import { createLogger } from "../obs/logger.ts";
 import { SqliteRequestStore } from "../store/sqlite-request-store.ts";
+import { SqliteApprovalStore } from "../store/sqlite-approval-store.ts";
+import { InMemoryOpsStore } from "../services/ops-store.memory.ts";
+import type { LogEvent } from "../obs/logger.ts";
 import { createApp, type CreateAppOptions } from "./server.ts";
 
 /** Corpo de resposta real do endpoint após 009 — `RunResult` com `conversationId` e `metrics.historyMessages`/`metrics.contextBreakdown`. */
@@ -1721,6 +1724,288 @@ describe("GET /stats", () => {
       assert.equal(stats.costUsd, null);
     } finally {
       await close();
+    }
+  });
+});
+
+describe("CORS (015)", () => {
+  const allowed = "http://localhost:5173";
+  let baseUrl: string;
+  let close: () => Promise<void>;
+
+  before(async () => {
+    const fake = fakeStrategy("fake-cors", {
+      answer: "ok",
+      trace: [{ type: "answer", at: 0, content: "ok" }],
+      metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
+    });
+    const app = createTestApp({
+      resolveStrategy: () => fake,
+      conversationStore: fakeConversationStore(),
+      memoryStore: fakeMemoryStore(),
+      corsOrigins: [allowed],
+    });
+    ({ baseUrl, close } = await startServer(app));
+  });
+
+  after(() => close());
+
+  test("preflight de origem permitida → 204 com os cabeçalhos CORS", async () => {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "OPTIONS",
+      headers: { Origin: allowed, "Access-Control-Request-Method": "POST" },
+    });
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get("access-control-allow-origin"), allowed);
+    assert.equal(response.headers.get("access-control-allow-methods"), "GET, POST, OPTIONS");
+    assert.equal(response.headers.get("access-control-allow-headers"), "Content-Type");
+  });
+
+  test("preflight de origem não permitida → 204 sem allow-origin", async () => {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "OPTIONS",
+      headers: { Origin: "https://malicioso.example", "Access-Control-Request-Method": "POST" },
+    });
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get("access-control-allow-origin"), null);
+  });
+
+  test("POST /chat de origem permitida expõe X-Request-Id ao navegador", async () => {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: allowed },
+      body: JSON.stringify({ message: "oi" }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("access-control-allow-origin"), allowed);
+    assert.match(response.headers.get("access-control-expose-headers") ?? "", /X-Request-Id/);
+  });
+
+  test("sem Origin nenhum cabeçalho CORS é enviado", async () => {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "oi" }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("access-control-allow-origin"), null);
+  });
+});
+
+describe("aprovação humana (015)", () => {
+  const T0 = new Date("2026-10-09T12:00:00.000Z");
+
+  interface Harness {
+    baseUrl: string;
+    close: () => Promise<void>;
+    opsStore: InMemoryOpsStore;
+    conversations: ReturnType<typeof fakeConversationStore>;
+    logs: LogEvent[];
+    clock: { now: Date };
+  }
+
+  /** Estratégia fake que chama `resolve_incident` pelas ferramentas que o /chat entregou (com porta). */
+  async function start(options: { ttlMs?: number; incidentId?: string } = {}): Promise<Harness & { incidentId: string }> {
+    const opsStore = new InMemoryOpsStore();
+    const [open] = await opsStore.listIncidents("open");
+    const incidentId = options.incidentId ?? open?.id ?? (await opsStore.openIncident({ title: "t", service: "checkout-api", severity: "high" })).id;
+    const conversations = fakeConversationStore();
+    const logs: LogEvent[] = [];
+    const clock = { now: T0 };
+
+    const app = createTestApp({
+      resolveStrategy: (_name, _reflect, _extra, baseTools) => ({
+        name: "fake-gated",
+        async run(): Promise<RunResult> {
+          const resolve = baseTools?.find((candidate) => candidate.name === "resolve_incident");
+          assert.ok(resolve, "baseTools com porta deve chegar à estratégia");
+          const observation = (await resolve.invoke({ id: incidentId })) as string;
+          return {
+            answer: "Pronto, incidente resolvido!",
+            trace: [
+              { type: "thought", at: 0, content: "o rollback resolveu" },
+              { type: "action", at: 1, tool: "resolve_incident", args: { id: incidentId } },
+              { type: "observation", at: 2, result: observation },
+              { type: "answer", at: 3, content: "Pronto, incidente resolvido!" },
+            ],
+            metrics: { llmCalls: 1, latencyMs: 1, promptTokens: 0, tokenSource: "real", modelUsed: "fake-model" },
+          };
+        },
+      }),
+      conversationStore: conversations,
+      memoryStore: fakeMemoryStore(),
+      opsStore,
+      approvalStore: new SqliteApprovalStore(":memory:"),
+      approvalTtlMs: options.ttlMs ?? 15 * 60_000,
+      logger: { log: (event) => logs.push(event) },
+      now: () => clock.now,
+    });
+    const server = await startServer(app);
+    return { ...server, opsStore, conversations, logs, clock, incidentId };
+  }
+
+  async function chat(baseUrl: string) {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "resolva o incidente" }),
+    });
+    return { response, body: (await response.json()) as Record<string, any> };
+  }
+
+  async function decide(baseUrl: string, id: string, decision: unknown) {
+    const response = await fetch(`${baseUrl}/approvals/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision }),
+    });
+    return { response, body: (await response.json()) as Record<string, any> };
+  }
+
+  async function isOpen(opsStore: InMemoryOpsStore, id: string): Promise<boolean> {
+    return (await opsStore.listIncidents("open")).some((incident) => incident.id === id);
+  }
+
+  test("/chat responde 202 com a ação pendente, sem answer, e nada é executado", async () => {
+    const h = await start();
+    try {
+      const { response, body } = await chat(h.baseUrl);
+      assert.equal(response.status, 202);
+      assert.equal(response.headers.get("x-request-id"), body.requestId);
+      assert.equal(body.status, "awaiting_approval");
+      assert.equal("answer" in body, false);
+      assert.equal(body.approval.tool, "resolve_incident");
+      assert.deepEqual(body.approval.args, { id: h.incidentId });
+      assert.equal(body.approval.summary, `Resolver o incidente ${h.incidentId}`);
+      assert.equal(body.approval.reason, "o rollback resolveu");
+      assert.equal(body.approval.expiresAt, "2026-10-09T12:15:00.000Z");
+      assert.equal(await isOpen(h.opsStore, h.incidentId), true);
+
+      const history = h.conversations.conversations.get(body.conversationId);
+      assert.deepEqual(history?.map((message) => message.content), [
+        "resolva o incidente",
+        `Aguardando aprovação: Resolver o incidente ${h.incidentId}`,
+      ]);
+      assert.ok(h.logs.some((event) => event.event === "approval.requested"));
+    } finally {
+      await h.close();
+    }
+  });
+
+  test("aprovar executa exatamente a ação guardada e responde no formato do /chat", async () => {
+    const h = await start();
+    try {
+      const { body: pending } = await chat(h.baseUrl);
+      const { response, body } = await decide(h.baseUrl, pending.approval.id, "approve");
+
+      assert.equal(response.status, 200);
+      assert.equal(body.answer, `Incidente ${h.incidentId} resolvido.`);
+      assert.equal(body.route, null);
+      assert.equal(body.metrics, null);
+      assert.equal(body.conversationId, pending.conversationId);
+      assert.deepEqual(body.approval, { id: pending.approval.id, status: "approved" });
+      assert.deepEqual(
+        body.trace.map((event: { type: string; node: string }) => [event.type, event.node]),
+        [
+          ["action", "aprovacao"],
+          ["observation", "aprovacao"],
+          ["answer", "aprovacao"],
+        ],
+      );
+      assert.equal(await isOpen(h.opsStore, h.incidentId), false);
+
+      const stored = await fetch(`${h.baseUrl}/requests/${body.requestId}`);
+      assert.equal(stored.status, 200);
+      const record = (await stored.json()) as { request: { outcome: string }; trace: unknown[] };
+      assert.equal(record.request.outcome, "ok");
+      assert.equal(record.trace.length, 3);
+
+      const history = h.conversations.conversations.get(pending.conversationId);
+      assert.equal(history?.at(-1)?.content, `Incidente ${h.incidentId} resolvido.`);
+    } finally {
+      await h.close();
+    }
+  });
+
+  test("negar não executa nada", async () => {
+    const h = await start();
+    try {
+      const { body: pending } = await chat(h.baseUrl);
+      const { response, body } = await decide(h.baseUrl, pending.approval.id, "deny");
+      assert.equal(response.status, 200);
+      assert.equal(body.approval.status, "denied");
+      assert.match(body.answer, /^Ação cancelada/);
+      assert.equal(await isOpen(h.opsStore, h.incidentId), true);
+    } finally {
+      await h.close();
+    }
+  });
+
+  test("segunda decisão → 409; nada executa de novo", async () => {
+    const h = await start();
+    try {
+      const { body: pending } = await chat(h.baseUrl);
+      await decide(h.baseUrl, pending.approval.id, "deny");
+      const { response, body } = await decide(h.baseUrl, pending.approval.id, "approve");
+      assert.equal(response.status, 409);
+      assert.equal(body.error, "approval_already_decided");
+      assert.equal(body.status, "denied");
+      assert.equal(await isOpen(h.opsStore, h.incidentId), true);
+    } finally {
+      await h.close();
+    }
+  });
+
+  test("decisão depois do prazo → 410 e nada executa", async () => {
+    const h = await start({ ttlMs: 1000 });
+    try {
+      const { body: pending } = await chat(h.baseUrl);
+      h.clock.now = new Date(T0.getTime() + 2000);
+      const { response, body } = await decide(h.baseUrl, pending.approval.id, "approve");
+      assert.equal(response.status, 410);
+      assert.equal(body.error, "approval_expired");
+      assert.equal(await isOpen(h.opsStore, h.incidentId), true);
+    } finally {
+      await h.close();
+    }
+  });
+
+  test("id inexistente ou inválido → 404; decisão inválida → 400", async () => {
+    const h = await start();
+    try {
+      const missing = await decide(h.baseUrl, "00000000-0000-4000-8000-000000000000", "approve");
+      assert.equal(missing.response.status, 404);
+      assert.equal(missing.body.error, "approval_not_found");
+      assert.equal((await decide(h.baseUrl, "nao-e-uuid", "approve")).response.status, 404);
+
+      const { body: pending } = await chat(h.baseUrl);
+      const invalid = await decide(h.baseUrl, pending.approval.id, "talvez");
+      assert.equal(invalid.response.status, 400);
+      assert.equal(invalid.body.error, "invalid_body");
+      assert.equal(await isOpen(h.opsStore, h.incidentId), true);
+    } finally {
+      await h.close();
+    }
+  });
+
+  test("logs de aprovação nunca levam args nem motivo", async () => {
+    const h = await start();
+    try {
+      const { body: pending } = await chat(h.baseUrl);
+      await decide(h.baseUrl, pending.approval.id, "approve");
+      const approvalLogs = h.logs.filter((event) => event.event.startsWith("approval."));
+      assert.equal(approvalLogs.length, 2);
+      for (const event of approvalLogs) {
+        const serialized = JSON.stringify(event);
+        assert.equal(serialized.includes(h.incidentId), false);
+        assert.equal(serialized.includes("rollback"), false);
+      }
+      assert.deepEqual(
+        approvalLogs.map((event) => (event.event === "approval.decided" ? event.outcome : event.event)),
+        ["approval.requested", "executed"],
+      );
+    } finally {
+      await h.close();
     }
   });
 });
