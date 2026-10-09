@@ -108,3 +108,40 @@ describe("summarizeRun", () => {
     assert.equal(formatDuration(12_000), "12 s");
   });
 });
+
+describe("modo equipe (017)", () => {
+  test("handoff vira Passagem com origem, destino e instrução traduzidos", () => {
+    const view = toTraceView(
+      event({ type: "handoff", at: 2, node: "team", role: "supervisor", from: "supervisor", to: "analista", brief: "levante" }),
+    );
+    assert.equal(view.label, "Passagem");
+    assert.equal(view.icon, "handoff");
+    assert.equal(view.role, "Supervisor");
+    assert.deepEqual(view.body, { kind: "handoff", from: "Supervisor", to: "Analista", brief: "levante" });
+
+    const end = toTraceView(event({ type: "handoff", at: 3, from: "supervisor", to: "done", brief: "fim" }));
+    assert.equal(end.body.kind === "handoff" && end.body.to, "Fim");
+  });
+
+  test("papel aparece em qualquer evento da equipe; fora dela é null", () => {
+    assert.equal(toTraceView(event({ type: "thought", at: 0, role: "executor", content: "x" })).role, "Executor");
+    assert.equal(toTraceView(event({ type: "thought", at: 0, content: "x" })).role, null);
+  });
+
+  test("os 9 tipos conhecidos têm ícones distintos", () => {
+    const kinds = ["route", "thought", "plan", "action", "observation", "critique", "fallback", "answer", "handoff"];
+    const raw: Record<string, unknown> = {
+      route: { route: "team", reason: "r", source: "router" },
+      thought: { content: "x" },
+      plan: { steps: ["a"] },
+      action: { tool: "t", args: {} },
+      observation: { result: 1 },
+      critique: { content: "x" },
+      fallback: { from: "a", to: "b", reason: "r" },
+      answer: { content: "x" },
+      handoff: { from: "supervisor", to: "done", brief: "b" },
+    };
+    const icons = kinds.map((type) => toTraceView(event({ type, at: 0, ...(raw[type] as object) })).icon);
+    assert.equal(new Set(icons).size, 9);
+  });
+});

@@ -27,7 +27,7 @@ const DDL = `
     duration_ms INTEGER NOT NULL CHECK (duration_ms >= 0),
     outcome TEXT NOT NULL CHECK (outcome IN ('ok', 'timeout', 'error')),
     error_type TEXT,
-    route TEXT CHECK (route IS NULL OR route IN ('react', 'planExecute', 'reflect')),
+    route TEXT CHECK (route IS NULL OR route IN ('react', 'planExecute', 'reflect', 'team')),
     route_source TEXT CHECK (route_source IS NULL OR route_source IN ('router', 'override', 'fallback')),
     llm_calls INTEGER,
     prompt_tokens INTEGER,
@@ -50,6 +50,50 @@ const DDL = `
   CREATE INDEX IF NOT EXISTS idx_requests_conversation ON requests(conversation_id);
   CREATE INDEX IF NOT EXISTS idx_requests_started_at ON requests(started_at);
 `;
+
+/**
+ * Bancos criados antes da 017 têm `requests.route` sem `'team'` no CHECK, e `CREATE TABLE IF NOT
+ * EXISTS` não altera tabela existente. SQLite não muda CHECK com ALTER: reconstrói a tabela pelo
+ * procedimento oficial (research.md item 9). Idempotente — não faz nada se o CHECK já aceita `team`.
+ */
+export function migrateRouteCheck(db: DatabaseSync): void {
+  const row = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'requests'").get() as
+    | { sql: string }
+    | undefined;
+  if (!row || row.sql.includes("'team'")) {
+    return;
+  }
+
+  const createRequests = DDL.slice(DDL.indexOf("CREATE TABLE IF NOT EXISTS requests"), DDL.indexOf(");") + 2).replace(
+    "CREATE TABLE IF NOT EXISTS requests",
+    "CREATE TABLE requests_new",
+  );
+
+  // `trace_events` referencia `requests`: com chaves estrangeiras ligadas (padrão do node:sqlite), o
+  // DROP falharia. O PRAGMA não tem efeito dentro de transação, por isso fica fora.
+  db.exec("PRAGMA foreign_keys = OFF");
+  try {
+    db.exec("BEGIN");
+    try {
+      db.exec(createRequests);
+      db.exec("INSERT INTO requests_new SELECT * FROM requests");
+      db.exec("DROP TABLE requests");
+      db.exec("ALTER TABLE requests_new RENAME TO requests");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_requests_conversation ON requests(conversation_id)");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_requests_started_at ON requests(started_at)");
+      const violations = db.prepare("PRAGMA foreign_key_check").all();
+      if (violations.length > 0) {
+        throw new Error(`Migração de requests.route violaria ${violations.length} chave(s) estrangeira(s)`);
+      }
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+  } finally {
+    db.exec("PRAGMA foreign_keys = ON");
+  }
+}
 
 interface RequestRow {
   id: string;
@@ -113,6 +157,7 @@ export class SqliteRequestStore implements RequestStore {
     if (!this.connection) {
       this.connection = new DatabaseSync(this.path);
       this.connection.exec(DDL);
+      migrateRouteCheck(this.connection);
     }
     return this.connection;
   }

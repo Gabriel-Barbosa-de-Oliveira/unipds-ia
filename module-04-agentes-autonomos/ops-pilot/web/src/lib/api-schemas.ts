@@ -25,7 +25,8 @@ export const MetricsSchema = z
   })
   .passthrough();
 
-const base = { at: z.number(), node: GraphNodeSchema.optional() };
+// `role` só existe em eventos da equipe (spec 017).
+const base = { at: z.number(), node: GraphNodeSchema.optional(), role: z.string().optional() };
 
 const KnownTraceEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("thought"), content: z.string(), ...base }),
@@ -36,6 +37,7 @@ const KnownTraceEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("answer"), content: z.string(), ...base }),
   z.object({ type: z.literal("route"), route: z.string(), reason: z.string(), source: z.string(), ...base }),
   z.object({ type: z.literal("fallback"), from: z.string(), to: z.string(), reason: z.string(), ...base }),
+  z.object({ type: z.literal("handoff"), from: z.string(), to: z.string(), brief: z.string(), ...base }),
 ]);
 
 /** Evento de um tipo que a war room não conhece: aparece de forma genérica (FR-011). */

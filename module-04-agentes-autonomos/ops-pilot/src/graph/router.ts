@@ -34,6 +34,15 @@ export const ROUTE_TABLE: readonly { route: RouteName; whenToUse: string; exampl
       "confirme, cruzando os dados, se o alerta de latência já foi tratado",
     ],
   },
+  {
+    route: "team",
+    whenToUse:
+      "Investigar e agir de forma coordenada: levantar fatos, planejar e executar (com aprovação humana).",
+    examples: [
+      "o checkout está lento: investigue e abra um incidente se for o caso",
+      "descubra o que está acontecendo com payments e proponha o que fazer",
+    ],
+  },
 ];
 
 export const routeSchema = z.object({
@@ -48,6 +57,8 @@ const ROUTE_ALIASES: Readonly<Record<string, RouteName>> = {
   "plan-and-execute": "planExecute",
   reflect: "reflect",
   reflection: "reflect",
+  team: "team",
+  equipe: "team",
 };
 
 /** Converte o `strategy` do /chat numa rota; lança `UnknownStrategyError` para nomes desconhecidos (FR-010). */

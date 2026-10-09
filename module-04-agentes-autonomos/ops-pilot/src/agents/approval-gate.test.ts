@@ -6,6 +6,7 @@ import {
   createApprovalGate,
   createGatedOpsTools,
   executeGatedAction,
+  isApprovalGated,
   parseGatedArgs,
 } from "./approval-gate.ts";
 import { createOpsTools } from "./tools.ts";
@@ -96,4 +97,15 @@ test("executeGatedAction executa a ação aprovada e converte erro de domínio",
 
   const missing = await executeGatedAction(store, "resolve_incident", { id: "INC-404" });
   assert.deepEqual(missing, { error: "IncidentNotFoundError", id: "INC-404" });
+});
+
+test("isApprovalGated reconhece só as instâncias com porta (017)", () => {
+  const store = new InMemoryOpsStore();
+  const gated = createGatedOpsTools(store, createApprovalGate());
+  const plain = createOpsTools(store);
+  for (const name of ["open_incident", "resolve_incident"]) {
+    assert.equal(isApprovalGated(gated.find((candidate) => candidate.name === name)!), true, name);
+    assert.equal(isApprovalGated(plain.find((candidate) => candidate.name === name)!), false, name);
+  }
+  assert.equal(isApprovalGated(gated.find((candidate) => candidate.name === "list_alerts")!), false);
 });

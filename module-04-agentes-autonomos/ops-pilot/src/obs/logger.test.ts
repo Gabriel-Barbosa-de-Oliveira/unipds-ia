@@ -84,3 +84,13 @@ test("eventos de aprovação (015) só levam metadados", () => {
   assert.equal(decided.level, "info");
   assert.equal("args" in decided || "reason" in decided, false);
 });
+
+test("handoff da equipe (017) vira team.handoff sem a instrução", () => {
+  const brief = "MARCADOR-SECRETO levante os alertas do checkout";
+  const trace: TraceEvent[] = [
+    { type: "handoff", at: 3, node: "react", role: "supervisor", from: "supervisor", to: "analista", brief },
+  ];
+  const [event] = traceToLogEvents("r1", trace);
+  assert.deepEqual(event, { event: "team.handoff", requestId: "r1", node: "react", position: 3, from: "supervisor", to: "analista" });
+  assert.equal(formatLogLine(event!, NOW).includes("MARCADOR-SECRETO"), false);
+});

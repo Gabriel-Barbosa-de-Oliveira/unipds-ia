@@ -96,3 +96,11 @@ describe("respostas da API", () => {
     assert.equal(ApiErrorSchema.parse({ error: "internal_error" }).requestId, undefined);
   });
 });
+
+describe("modo equipe (017)", () => {
+  test("handoff e role são tipos conhecidos, não caem no ramo genérico", () => {
+    const parsed = TraceEventSchema.parse({ type: "handoff", at: 1, node: "team", role: "supervisor", from: "supervisor", to: "analista", brief: "b" });
+    assert.equal("unknown" in parsed, false);
+    assert.equal(TraceEventSchema.parse({ type: "plan", at: 2, role: "planejador", steps: ["a"] }).role, "planejador");
+  });
+});

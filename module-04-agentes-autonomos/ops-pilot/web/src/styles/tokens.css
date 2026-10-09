@@ -82,6 +82,7 @@
   --trace-critique: #865a00;
   --trace-fallback: #b42318;
   --trace-answer: #116329;
+  --trace-handoff: #0b6464;
   --trace-unknown: #555d66;
 }
 
@@ -119,6 +120,7 @@
   --trace-critique: #e3b341;
   --trace-fallback: #ff7b72;
   --trace-answer: #7ee787;
+  --trace-handoff: #5ad1c8;
   --trace-unknown: #9aa2ac;
 }
 

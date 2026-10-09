@@ -607,6 +607,7 @@ details > summary {
 .trace-critique { --trace-color: var(--trace-critique); }
 .trace-fallback { --trace-color: var(--trace-fallback); }
 .trace-answer { --trace-color: var(--trace-answer); }
+.trace-handoff { --trace-color: var(--trace-handoff); }
 .trace-unknown { --trace-color: var(--trace-unknown); }
 
 /* ---------- Configurações ---------- */

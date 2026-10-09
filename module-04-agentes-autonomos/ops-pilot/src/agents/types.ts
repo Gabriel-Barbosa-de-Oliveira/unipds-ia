@@ -8,7 +8,7 @@ export type ToolName =
   | "consultar_runbook";
 
 /** Rotas que o roteador do grafo de produção pode escolher (spec 012). */
-export const ROUTE_NAMES = ["react", "planExecute", "reflect"] as const;
+export const ROUTE_NAMES = ["react", "planExecute", "reflect", "team"] as const;
 export type RouteName = (typeof ROUTE_NAMES)[number];
 
 /** Origem da decisão de rota: modelo, override do cliente ou fallback por falha do roteador. */
@@ -23,7 +23,17 @@ export interface RouteDecision {
 /** Nós do grafo de produção (`src/graph/production-graph.ts`); nós de estratégia têm o nome da rota. `aprovacao` marca o trace de uma decisão humana (015), fora do grafo. */
 export type GraphNode = "contexto" | "roteador" | RouteName | "resposta" | "aprovacao";
 
-/** `node` é opcional porque arena/bench rodam estratégias fora do grafo; no grafo é sempre presente. */
+/** Papéis do modo equipe (spec 017). O supervisor só aparece em `role` e como origem de `handoff`. */
+export const TEAM_ROLES = ["analista", "planejador", "executor"] as const;
+export type TeamRole = (typeof TEAM_ROLES)[number];
+
+/** Destino de uma passagem: um papel ou `done` (encerramento pelo supervisor). */
+export type HandoffTarget = TeamRole | "done";
+
+/**
+ * `node` é opcional porque arena/bench rodam estratégias fora do grafo; no grafo é sempre presente.
+ * `role` só existe em eventos produzidos dentro da equipe (017).
+ */
 export type TraceEvent = (
   | { type: "thought"; at: number; content: string }
   | {
@@ -38,7 +48,8 @@ export type TraceEvent = (
   | { type: "answer"; at: number; content: string }
   | { type: "route"; at: number; route: RouteName; reason: string; source: RouteSource }
   | { type: "fallback"; at: number; from: string; to: string; reason: string }
-) & { node?: GraphNode };
+  | { type: "handoff"; at: number; from: "supervisor"; to: HandoffTarget; brief: string }
+) & { node?: GraphNode; role?: TeamRole | "supervisor" };
 
 /** Troca do modelo principal para o de reserva numa chamada ao modelo (spec 013). */
 export interface ModelFallback {

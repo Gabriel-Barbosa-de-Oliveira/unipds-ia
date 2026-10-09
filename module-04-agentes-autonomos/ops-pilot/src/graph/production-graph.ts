@@ -224,6 +224,7 @@ export function createProductionGraph(deps: ProductionGraphDeps) {
         .addNode("react", strategyNode("react"))
         .addNode("planExecute", strategyNode("planExecute"))
         .addNode("reflect", strategyNode("reflect"))
+        .addNode("team", strategyNode("team"))
         .addNode("resposta", answerNode(elapsed))
         .addEdge(START, "contexto")
         .addEdge("contexto", "roteador")
@@ -231,10 +232,12 @@ export function createProductionGraph(deps: ProductionGraphDeps) {
           react: "react",
           planExecute: "planExecute",
           reflect: "reflect",
+          team: "team",
         })
         .addEdge("react", "resposta")
         .addEdge("planExecute", "resposta")
         .addEdge("reflect", "resposta")
+        .addEdge("team", "resposta")
         .addEdge("resposta", END)
         .compile();
 

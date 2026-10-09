@@ -1,4 +1,4 @@
-import type { GraphNode, RouteName, RouteSource, TraceEvent } from "../agents/types.ts";
+import type { GraphNode, HandoffTarget, RouteName, RouteSource, TraceEvent } from "../agents/types.ts";
 import type { TokenSource } from "../context/tokens.ts";
 import type { ApprovalDecision, GatedToolName } from "../domain/approval.ts";
 
@@ -32,6 +32,8 @@ export type LogEvent =
   | { event: "route.chosen"; requestId: string; node: GraphNode | null; position: number; route: RouteName; source: RouteSource }
   | { event: "model.fallback"; requestId: string; node: GraphNode | null; position: number; from: string; to: string }
   | { event: "tool.called"; requestId: string; node: GraphNode | null; position: number; tool: string }
+  // 017: só origem/destino da passagem — nunca a instrução (brief).
+  | { event: "team.handoff"; requestId: string; node: GraphNode | null; position: number; from: "supervisor"; to: HandoffTarget }
   | {
       event: "request.completed";
       requestId: string;
@@ -65,6 +67,7 @@ const LEVELS: Record<LogEvent["event"], LogLevel> = {
   "route.chosen": "info",
   "model.fallback": "warn",
   "tool.called": "info",
+  "team.handoff": "info",
   "request.completed": "info",
   "request.failed": "error",
   "persistence.failed": "error",
@@ -98,6 +101,9 @@ export function traceToLogEvents(requestId: string, trace: readonly TraceEvent[]
         break;
       case "action":
         events.push({ event: "tool.called", ...base, tool: item.tool });
+        break;
+      case "handoff":
+        events.push({ event: "team.handoff", ...base, from: item.from, to: item.to });
         break;
       default:
         break;

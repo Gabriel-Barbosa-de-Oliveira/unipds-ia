@@ -13,6 +13,7 @@ export type TraceKind =
   | "critique"
   | "fallback"
   | "answer"
+  | "handoff"
   | "unknown";
 
 export type TraceBody =
@@ -20,13 +21,16 @@ export type TraceBody =
   | { kind: "steps"; steps: string[] }
   | { kind: "code"; title?: string; text: string; long: boolean }
   | { kind: "route"; route: string; reason: string; source: string }
-  | { kind: "fallback"; from: string; to: string; reason: string };
+  | { kind: "fallback"; from: string; to: string; reason: string }
+  | { kind: "handoff"; from: string; to: string; brief: string };
 
 export interface TraceView {
   kind: TraceKind;
   label: string;
   icon: TraceKind;
   node: string | null;
+  /** Papel da equipe que produziu o evento (017), já traduzido; `null` fora da equipe. */
+  role: string | null;
   at: number;
   body: TraceBody;
 }
@@ -40,7 +44,20 @@ const LABELS: Record<Exclude<TraceKind, "unknown">, string> = {
   critique: "Crítica",
   fallback: "Troca de modelo",
   answer: "Resposta",
+  handoff: "Passagem",
 };
+
+const ROLE_LABELS: Record<string, string> = {
+  analista: "Analista",
+  planejador: "Planejador",
+  executor: "Executor",
+  supervisor: "Supervisor",
+  done: "Fim",
+};
+
+export function roleLabel(role: string): string {
+  return ROLE_LABELS[role] ?? role;
+}
 
 const SOURCE_LABELS: Record<string, string> = {
   router: "decidida pelo roteador",
@@ -69,7 +86,7 @@ function code(text: string, title?: string): TraceBody {
 
 function bodyOf(event: TraceEvent): { kind: TraceKind; body: TraceBody } {
   if ("unknown" in event) {
-    const { unknown: _marker, at: _at, node: _node, ...rest } = event;
+    const { unknown: _marker, at: _at, node: _node, role: _role, ...rest } = event;
     return { kind: "unknown", body: code(prettyValue(rest)) };
   }
   switch (event.type) {
@@ -89,6 +106,8 @@ function bodyOf(event: TraceEvent): { kind: TraceKind; body: TraceBody } {
       return { kind: "fallback", body: { kind: "fallback", from: event.from, to: event.to, reason: event.reason } };
     case "answer":
       return { kind: "answer", body: { kind: "text", text: event.content } };
+    case "handoff":
+      return { kind: "handoff", body: { kind: "handoff", from: roleLabel(event.from), to: roleLabel(event.to), brief: event.brief } };
   }
 }
 
@@ -96,7 +115,8 @@ function bodyOf(event: TraceEvent): { kind: TraceKind; body: TraceBody } {
 export function toTraceView(event: TraceEvent): TraceView {
   const { kind, body } = bodyOf(event);
   const label = kind === "unknown" ? `Evento: ${event.type}` : LABELS[kind];
-  return { kind, label, icon: kind, node: event.node ?? null, at: event.at, body };
+  const role = typeof event.role === "string" ? roleLabel(event.role) : null;
+  return { kind, label, icon: kind, node: event.node ?? null, role, at: event.at, body };
 }
 
 export function sourceLabel(source: string): string {

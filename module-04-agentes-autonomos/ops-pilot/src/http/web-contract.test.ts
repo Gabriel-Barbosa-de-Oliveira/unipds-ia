@@ -15,6 +15,7 @@ import {
   ChatOkSchema,
   DecisionOkSchema,
 } from "../../web/src/lib/api-schemas.ts";
+import { createTeamStrategy } from "../team/index.ts";
 import { createApp, type CreateAppOptions } from "./server.ts";
 
 /**
@@ -115,6 +116,26 @@ describe("contrato API ↔ war room", () => {
       const again = await post(`${baseUrl}/approvals/${parsed.approval.id}`, { decision: "approve" });
       assert.equal(again.status, 409);
       assert.equal(ApiErrorSchema.parse(again.body).error, "approval_already_decided");
+    });
+  });
+
+  test("200 da rota team (handoff + role) passa no ChatOkSchema sem cair no ramo genérico (017)", async () => {
+    const decisions = [{ next: "analista", brief: "levante" }, { next: "planejador", brief: "planeje" }, { next: "done", brief: "ok" }];
+    let step = 0;
+    const team = app((_name, _reflect, _extra, baseTools) =>
+      createTeamStrategy(baseTools ?? [], {
+        decide: async () => decisions[step++],
+        runAnalyst: async () => ({ trace: [{ type: "action", at: 0, tool: "list_alerts", args: {} }], facts: [] }),
+        runPlanner: async () => ({ trace: [{ type: "plan", at: 0, steps: ["a"] }], steps: ["a"] }),
+        runExecutor: async () => ({ trace: [], summary: "" }),
+      }),
+    );
+    await withServer(team, async (baseUrl) => {
+      const { status, body } = await post(`${baseUrl}/chat`, { message: "investigue", strategy: "team" });
+      assert.equal(status, 200);
+      const parsed = ChatOkSchema.parse(body);
+      assert.equal(parsed.trace.some((event) => "unknown" in event), false);
+      assert.ok(parsed.trace.some((event) => event.type === "handoff" && event.role === "supervisor"));
     });
   });
 });

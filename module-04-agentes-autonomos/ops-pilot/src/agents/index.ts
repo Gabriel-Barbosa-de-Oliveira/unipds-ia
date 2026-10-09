@@ -4,6 +4,7 @@ import { UnknownStrategyError } from "../domain/errors.ts";
 import { createPlanAndExecuteStrategy, planAndExecuteStrategy } from "./plan-and-execute.ts";
 import { createReactStrategy, reactStrategy } from "./react.ts";
 import { withReflection } from "./reflection.ts";
+import { createTeamStrategy } from "../team/index.ts";
 import { opsTools } from "./tools.ts";
 import type { ReasoningStrategy, RouteName } from "./types.ts";
 
@@ -42,6 +43,12 @@ export function resolveStrategy(
 ): ReasoningStrategy {
   const resolvedName = name ?? DEFAULT_STRATEGY_NAME;
 
+  // Equipe (017): sempre por requisição, sobre as ferramentas recebidas — que precisam ter a porta
+  // de aprovação (a montagem falha se não tiverem). Memória do usuário fica fora dos papéis.
+  if (resolvedName === "team") {
+    return createTeamStrategy(baseTools);
+  }
+
   if (!isBaseStrategyName(resolvedName)) {
     throw new UnknownStrategyError(resolvedName);
   }
@@ -72,6 +79,9 @@ export function strategyForRoute(
 ): ReasoningStrategy {
   if (route === "reflect") {
     return resolve("react", true, extraTools, baseTools);
+  }
+  if (route === "team") {
+    return resolve("team", false, extraTools, baseTools);
   }
   return resolve(route === "planExecute" ? "plan-and-execute" : "react", reflect, extraTools, baseTools);
 }

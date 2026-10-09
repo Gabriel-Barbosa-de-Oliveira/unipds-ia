@@ -19,6 +19,25 @@ npm --prefix web run dev    # war room em http://localhost:5173/opspilot/
 - **`npm run seed`** cria o dataset canônico no SQLite: 5 serviços, 6 alertas e 3 runbooks. Sem ele o banco fica vazio, e toda ação falha com "o serviço não existe". O seed só reescreve serviços, alertas, incidentes e runbooks. Conversas e o histórico de requisições são mantidos.
 - O modelo é configurado por variáveis de ambiente (`OPENROUTER_API_KEY`, `OPENROUTER_MODEL` e, opcionalmente, `OPENROUTER_MODEL_FALLBACK` e `OPENROUTER_BASE_URL`). O `npm run dev` carrega um `.env` local, se existir. **Nunca commite o `.env` nem segredos.**
 
+## Rotas de raciocínio
+
+O roteador escolhe uma rota por pedido. O cliente também pode forçar a rota com `"strategy"` no `POST /chat`.
+
+| Rota | Quando |
+|---|---|
+| `react` | Consulta direta ou ação única |
+| `planExecute` | Várias etapas dependentes ou em lote |
+| `reflect` | Precisão crítica (a resposta é revisada antes de sair) |
+| `team` (ou `equipe`) | Investigar e agir de forma coordenada |
+
+**Modo equipe (`team`).** Um supervisor decide, a cada passo, quem trabalha em seguida e com qual instrução. Ele lê um quadro compartilhado e encerra com a resposta final. Os papéis têm limites fixos no código:
+
+- **analista**: só consulta alertas, incidentes e runbooks, e registra no quadro só fatos com origem, sem propostas;
+- **planejador**: não tem ferramentas e escreve o plano a partir dos fatos;
+- **executor**: só abre e resolve incidentes, sempre pela aprovação humana (resposta 202). A equipe nem monta se essas ferramentas não tiverem a aprovação.
+
+Cada passagem aparece como "Passagem" no "ver raciocínio" da war room. A equipe tem no máximo 6 passagens por pedido. O código está em [`src/team/`](src/team/) e a spec em [`specs/017-team-mode/`](specs/017-team-mode/).
+
 ## Variáveis da API
 
 | Variável | Para quê | Padrão |

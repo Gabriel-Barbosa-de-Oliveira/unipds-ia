@@ -18,6 +18,8 @@ import { SqliteRequestStore } from "../store/sqlite-request-store.ts";
 import { SqliteApprovalStore } from "../store/sqlite-approval-store.ts";
 import { InMemoryOpsStore } from "../services/ops-store.memory.ts";
 import type { LogEvent } from "../obs/logger.ts";
+import { createTeamStrategy } from "../team/index.ts";
+import type { TeamDeps } from "../team/team-graph.ts";
 import { createApp, type CreateAppOptions } from "./server.ts";
 
 /** Corpo de resposta real do endpoint após 009 — `RunResult` com `conversationId` e `metrics.historyMessages`/`metrics.contextBreakdown`. */
@@ -2006,6 +2008,102 @@ describe("aprovação humana (015)", () => {
       );
     } finally {
       await h.close();
+    }
+  });
+});
+
+describe("rota team (017)", () => {
+  /** Equipe fake: analista → (executor que chama resolve_incident com porta, se `act`) → done. */
+  function teamApp(act: boolean, opsStore = new InMemoryOpsStore(), incidentId = "INC-1") {
+    const app = createTestApp({
+      resolveStrategy: (name, _reflect, _extra, baseTools) => {
+        assert.equal(name, "team");
+        assert.ok(baseTools);
+        const decisions = act
+          ? [{ next: "analista", brief: "levante" }, { next: "executor", brief: "resolva" }]
+          : [{ next: "analista", brief: "levante" }, { next: "done", brief: "Nada disparando no checkout." }];
+        let step = 0;
+        const deps: TeamDeps = {
+          decide: async () => decisions[step++] ?? { next: "done", brief: "fim" },
+          runAnalyst: async () => ({
+            trace: [{ type: "action", at: 0, tool: "list_alerts", args: {} }],
+            facts: [{ statement: "nenhum alerta firing", source: "list_alerts" }],
+          }),
+          runPlanner: async () => ({ trace: [], steps: [] }),
+          runExecutor: async () => {
+            const resolve = baseTools.find((candidate) => candidate.name === "resolve_incident")!;
+            const observation = (await resolve.invoke({ id: incidentId })) as string;
+            return {
+              trace: [
+                { type: "action", at: 0, tool: "resolve_incident", args: { id: incidentId } },
+                { type: "observation", at: 1, result: observation },
+              ],
+              summary: "",
+            };
+          },
+        };
+        return createTeamStrategy(baseTools, deps);
+      },
+      conversationStore: fakeConversationStore(),
+      memoryStore: fakeMemoryStore(),
+      opsStore,
+      approvalStore: new SqliteApprovalStore(":memory:"),
+    });
+    return app;
+  }
+
+  async function post(baseUrl: string, body: unknown) {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { status: response.status, body: (await response.json()) as Record<string, any> };
+  }
+
+  test("strategy team → 200 com rota team, passagens e papéis no trace", async () => {
+    const { baseUrl, close } = await startServer(teamApp(false));
+    try {
+      const { status, body } = await post(baseUrl, { message: "quais alertas no checkout?", strategy: "team" });
+      assert.equal(status, 200);
+      assert.deepEqual(body.route, { route: "team", reason: "Estratégia informada pelo cliente", source: "override" });
+      assert.equal(body.answer, "Nada disparando no checkout.");
+      const teamEvents = body.trace.filter((event: { node: string }) => event.node === "team");
+      assert.ok(teamEvents.length > 0);
+      assert.ok(teamEvents.every((event: { role?: string }) => typeof event.role === "string"));
+      assert.deepEqual(
+        teamEvents.filter((event: { type: string }) => event.type === "handoff").map((event: { to: string }) => event.to),
+        ["analista", "done"],
+      );
+    } finally {
+      await close();
+    }
+  });
+
+  test("alias equipe funciona; executor que propõe → 202 com o incidente ainda aberto", async () => {
+    const opsStore = new InMemoryOpsStore();
+    const [open] = await opsStore.listIncidents("open");
+    const incidentId = open?.id ?? (await opsStore.openIncident({ title: "t", service: "checkout-api", severity: "high" })).id;
+    const { baseUrl, close } = await startServer(teamApp(true, opsStore, incidentId));
+    try {
+      const { status, body } = await post(baseUrl, { message: "investigue e resolva", strategy: "equipe" });
+      assert.equal(status, 202);
+      assert.equal(body.approval.tool, "resolve_incident");
+      assert.equal(body.route.route, "team");
+      assert.ok((await opsStore.listIncidents("open")).some((incident) => incident.id === incidentId));
+    } finally {
+      await close();
+    }
+  });
+
+  test("nome de rota desconhecido continua 422", async () => {
+    const { baseUrl, close } = await startServer(teamApp(false));
+    try {
+      const { status, body } = await post(baseUrl, { message: "x", strategy: "time" });
+      assert.equal(status, 422);
+      assert.equal(body.error, "unknown_strategy");
+    } finally {
+      await close();
     }
   });
 });

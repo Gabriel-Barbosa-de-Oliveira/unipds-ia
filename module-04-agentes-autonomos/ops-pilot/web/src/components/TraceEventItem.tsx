@@ -49,6 +49,17 @@ function Body({ view }: { view: TraceView }) {
           <code>{body.from}</code> → <code>{body.to}</code> — {body.reason}
         </p>
       );
+    case "handoff":
+      return (
+        <>
+          <p>
+            <strong>
+              {body.from} → {body.to}
+            </strong>
+          </p>
+          <p className="trace-body">{body.brief}</p>
+        </>
+      );
   }
 }
 
@@ -64,6 +75,11 @@ export function TraceEventItem({ view, position }: { view: TraceView; position: 
         {view.node && (
           <span className="badge" title="Etapa do fluxo">
             {view.node}
+          </span>
+        )}
+        {view.role && (
+          <span className="badge" title="Papel da equipe">
+            {view.role}
           </span>
         )}
         <span className="trace-index">#{position}</span>

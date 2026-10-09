@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { DatabaseSync } from "node:sqlite";
+import { DatabaseSync } from "node:sqlite";
 import { after, test } from "node:test";
 
 import type { TraceEvent } from "../agents/types.ts";
@@ -116,4 +116,86 @@ test("listSince devolve só os registros a partir do instante, em ordem cronoló
   const records = await store.listSince(new Date("2026-10-09T00:00:00.000Z"));
 
   assert.deepEqual(records.map((record) => record.requestId), ["no-limite", "depois"]);
+});
+
+test("trace da equipe (017) com handoff e role volta idêntico", async () => {
+  const store = new SqliteRequestStore(":memory:");
+  const trace: TraceEvent[] = [
+    { type: "handoff", at: 0, node: "react", role: "supervisor", from: "supervisor", to: "analista", brief: "levante" },
+    { type: "action", at: 1, node: "react", role: "analista", tool: "list_alerts", args: {} },
+    { type: "handoff", at: 2, node: "react", role: "supervisor", from: "supervisor", to: "done", brief: "fim" },
+    { type: "answer", at: 3, node: "react", role: "supervisor", content: "fim" },
+  ];
+  await store.save(okRecord("req-team"), trace);
+  assert.deepEqual((await store.find("req-team"))?.trace, trace);
+});
+
+/** DDL de `requests` antes da 017 — sem 'team' no CHECK de `route`. */
+const LEGACY_DDL = `
+  CREATE TABLE requests (
+    id TEXT PRIMARY KEY, conversation_id TEXT, user_id TEXT, started_at TEXT NOT NULL,
+    duration_ms INTEGER NOT NULL CHECK (duration_ms >= 0),
+    outcome TEXT NOT NULL CHECK (outcome IN ('ok', 'timeout', 'error')), error_type TEXT,
+    route TEXT CHECK (route IS NULL OR route IN ('react', 'planExecute', 'reflect')),
+    route_source TEXT CHECK (route_source IS NULL OR route_source IN ('router', 'override', 'fallback')),
+    llm_calls INTEGER, prompt_tokens INTEGER,
+    token_source TEXT CHECK (token_source IS NULL OR token_source IN ('real', 'estimated', 'mixed')),
+    model_used TEXT, history_messages INTEGER, context_json TEXT
+  );
+  CREATE TABLE trace_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, request_id TEXT NOT NULL REFERENCES requests(id),
+    position INTEGER NOT NULL, type TEXT NOT NULL, node TEXT, payload_json TEXT NOT NULL,
+    UNIQUE (request_id, position)
+  );
+  CREATE INDEX idx_requests_conversation ON requests(conversation_id);
+  CREATE INDEX idx_requests_started_at ON requests(started_at);
+`;
+
+test("banco antigo é migrado para aceitar a rota team, sem perder registros (017)", async () => {
+  const legacyFile = join(tmpdir(), `opspilot-legacy-${process.pid}-${Date.now()}.db`);
+  after(() => rmSync(legacyFile, { force: true }));
+
+  // Banco criado com o DDL antigo e um registro gravado direto, antes de qualquer store novo abrir o arquivo.
+  const legacy = new DatabaseSync(legacyFile);
+  legacy.exec(LEGACY_DDL);
+  legacy
+    .prepare(`INSERT INTO requests (id, conversation_id, started_at, duration_ms, outcome, route, route_source)
+              VALUES ('req-antigo', 'conv-1', '2026-10-09T14:00:00.000Z', 5, 'ok', 'react', 'router')`)
+    .run();
+  legacy
+    .prepare("INSERT INTO trace_events (request_id, position, type, node, payload_json) VALUES ('req-antigo', 0, ?, ?, ?)")
+    .run(TRACE[0]!.type, TRACE[0]!.node ?? null, JSON.stringify(TRACE[0]));
+  legacy.close();
+
+  const store = new SqliteRequestStore(legacyFile);
+  const teamRecord = buildRequestRecord({
+    requestId: "req-team-route",
+    conversationId: "conv-1",
+    startedAt: new Date("2026-10-09T15:00:00.000Z"),
+    durationMs: 10,
+    outcome: "ok",
+    route: { route: "team", reason: "investigar e agir", source: "router" },
+  });
+  await store.save(teamRecord, []);
+
+  assert.equal((await store.find("req-team-route"))?.request.route, "team");
+  const old = await store.find("req-antigo");
+  assert.equal(old?.request.route, "react");
+  assert.deepEqual(old?.trace, [TRACE[0]]);
+
+  const db = rawDb(store);
+  const indexes = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'requests'").all() as { name: string }[])
+    .map((row) => row.name)
+    .filter((name) => name.startsWith("idx_"));
+  assert.deepEqual(indexes.sort(), ["idx_requests_conversation", "idx_requests_started_at"]);
+  assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
+
+  // Reabrir não migra de novo e continua aceitando 'team'.
+  const reopened = new SqliteRequestStore(legacyFile);
+  assert.equal((await reopened.find("req-team-route"))?.request.route, "team");
+  assert.throws(() =>
+    rawDb(reopened)
+      .prepare(`INSERT INTO requests (id, started_at, duration_ms, outcome, route) VALUES ('x', '2026-01-01', 1, 'ok', 'outra')`)
+      .run(),
+  );
 });

@@ -36,6 +36,16 @@ export const REJECTED_OBSERVATION = {
   message: "Já existe uma ação aguardando aprovação nesta requisição; só uma por vez. Nada foi executado.",
 } as const;
 
+/**
+ * Instâncias com porta criadas por `createGatedOpsTools`. A equipe (017) confere por identidade que o
+ * executor só recebe estas — nenhuma composição entrega a ele uma ferramenta que executa direto.
+ */
+const GATED_INSTANCES = new WeakSet<StructuredToolInterface>();
+
+export function isApprovalGated(candidate: StructuredToolInterface): boolean {
+  return GATED_INSTANCES.has(candidate);
+}
+
 /** Revalida os args guardados antes de executar (Princípio II) — mesmos schemas das ferramentas. */
 export function parseGatedArgs(toolName: GatedToolName, args: unknown): Record<string, unknown> {
   return GATED_SCHEMAS[toolName].parse(args) as Record<string, unknown>;
@@ -51,7 +61,7 @@ export function createGatedOpsTools(store: OpsStoreRepository, gate: ApprovalGat
     if (!isGatedTool(name)) {
       return original;
     }
-    return tool(
+    const gated = tool(
       async (args: Record<string, unknown>) => {
         if (gate.proposed) {
           return JSON.stringify(REJECTED_OBSERVATION);
@@ -61,6 +71,8 @@ export function createGatedOpsTools(store: OpsStoreRepository, gate: ApprovalGat
       },
       { name, description: original.description, schema: GATED_SCHEMAS[name] },
     );
+    GATED_INSTANCES.add(gated);
+    return gated;
   });
 }
 

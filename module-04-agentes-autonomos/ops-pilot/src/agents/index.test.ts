@@ -5,6 +5,8 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
 import { UnknownStrategyError } from "../domain/errors.ts";
+import { InMemoryOpsStore } from "../services/ops-store.memory.ts";
+import { createApprovalGate, createGatedOpsTools } from "./approval-gate.ts";
 import { planAndExecuteStrategy } from "./plan-and-execute.ts";
 import { reactStrategy } from "./react.ts";
 import { resolveStrategy, strategyForRoute } from "./index.ts";
@@ -76,4 +78,13 @@ test("strategyForRoute aplica a flag reflect só fora da rota reflect (sem refle
   assert.equal(strategyForRoute("reflect", true).name, "reflect:react");
   assert.equal(strategyForRoute("planExecute", true).name, "reflect:plan-and-execute");
   assert.equal(strategyForRoute("react", true).name, "reflect:react");
+});
+
+test("strategyForRoute('team') monta a equipe sobre as ferramentas com porta (017)", () => {
+  const gated = createGatedOpsTools(new InMemoryOpsStore(), createApprovalGate());
+  assert.equal(strategyForRoute("team", true, undefined, resolveStrategy, gated).name, "team");
+});
+
+test("rota team sem porta de aprovação falha na montagem (017)", () => {
+  assert.throws(() => strategyForRoute("team"), /approval-gated/);
 });

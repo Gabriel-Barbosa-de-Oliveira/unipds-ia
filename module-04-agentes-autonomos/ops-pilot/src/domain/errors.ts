@@ -91,3 +91,14 @@ export class ApprovalExpiredError extends Error {
     this.expiresAt = expiresAt;
   }
 }
+
+/** A equipe (017) recebeu ferramentas de incidente sem a porta de aprovação — erro de composição. */
+export class TeamToolsNotGatedError extends Error {
+  readonly toolNames: string[];
+
+  constructor(toolNames: string[]) {
+    super(`Team executor tools must be approval-gated: ${toolNames.join(", ")}`);
+    this.name = "TeamToolsNotGatedError";
+    this.toolNames = toolNames;
+  }
+}

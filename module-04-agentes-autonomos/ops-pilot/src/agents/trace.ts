@@ -5,7 +5,7 @@ import type { GraphNode, Metrics, ProductionTraceEvent, TraceEvent } from "./typ
  * vindos do grafo de produção (com `node`) ganham o nó como prefixo.
  */
 export function formatTraceEvent(event: TraceEvent): string {
-  const line = formatEventBody(event);
+  const line = event.role ? `${event.role} │ ${formatEventBody(event)}` : formatEventBody(event);
   return event.node ? `${event.node} │ ${line}` : line;
 }
 
@@ -27,6 +27,8 @@ function formatEventBody(event: TraceEvent): string {
       return `[route] ${event.route} (${event.source}): ${event.reason}`;
     case "fallback":
       return `[fallback] ${event.from} → ${event.to}: ${event.reason}`;
+    case "handoff":
+      return `[handoff] ${event.from} → ${event.to}: ${event.brief}`;
   }
 }
 

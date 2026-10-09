@@ -58,6 +58,7 @@ function setup(decideRoute: DecideRoute) {
     react: fakeStrategy("react", 2),
     planExecute: fakeStrategy("planExecute", 4),
     reflect: fakeStrategy("reflect", 3),
+    team: fakeStrategy("team", 5),
   };
   const strategyForCalls: RouteName[] = [];
   const graph = createProductionGraph({

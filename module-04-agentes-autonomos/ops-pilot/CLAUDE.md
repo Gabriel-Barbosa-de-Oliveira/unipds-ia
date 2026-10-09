@@ -29,6 +29,10 @@ Copiloto de plantão que gerencia alertas e incidentes de produção. A API é u
 - `OPSPILOT_APPROVAL_TTL_MS` — validade de uma ação aguardando aprovação (padrão 900000 = 15 min)
 - `OPSPILOT_WEB_BASE` — caminho base do build do `web/` (padrão `/opspilot/`; o Pages usa `/<repo>/opspilot/`)
 
+## Rotas
+
+- `react`, `planExecute`, `reflect` e `team` (modo equipe, `src/team/`: supervisor `{ next, brief }` + analista/planejador/executor sobre um blackboard; executor só com ferramentas com porta de aprovação)
+
 ## Convenções
 
 - Camadas padrão MVC (Model, Service, Controller)

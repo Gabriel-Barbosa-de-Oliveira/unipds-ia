@@ -85,3 +85,14 @@ test("formatTraceEvent formata o evento fallback de modelo, com e sem node (013)
     "react │ [fallback] a → b: 429",
   );
 });
+
+test("formatTraceEvent formata handoff e prefixa o papel da equipe (017)", () => {
+  assert.equal(
+    formatTraceEvent({ type: "handoff", at: 0, from: "supervisor", to: "analista", brief: "levante os alertas" }),
+    "[handoff] supervisor → analista: levante os alertas",
+  );
+  assert.equal(
+    formatTraceEvent({ type: "thought", at: 1, node: "react", role: "analista", content: "x" }),
+    "react │ analista │ [thought] x",
+  );
+});

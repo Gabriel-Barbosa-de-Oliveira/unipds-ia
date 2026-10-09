@@ -3,7 +3,7 @@ import { describe, test } from "node:test";
 
 import { ROUTE_NAMES } from "../agents/types.ts";
 import { UnknownStrategyError } from "../domain/errors.ts";
-import { buildRouterMessages, parseRouteName, resolveRouteDecision } from "./router.ts";
+import { buildRouterMessages, parseRouteName, resolveRouteDecision, ROUTE_TABLE } from "./router.ts";
 
 describe("parseRouteName", () => {
   test("aceita as rotas e os nomes legados das estratégias", () => {
@@ -73,5 +73,23 @@ describe("resolveRouteDecision", () => {
       assert.equal(decision.source, "fallback");
       assert.ok(decision.reason.length > 0);
     }
+  });
+});
+
+describe("rota team (017)", () => {
+  test("team e equipe resolvem para a rota da equipe", () => {
+    assert.equal(parseRouteName("team"), "team");
+    assert.equal(parseRouteName("equipe"), "team");
+    assert.throws(() => parseRouteName("time"), UnknownStrategyError);
+  });
+
+  test("a tabela do roteador oferece a rota team, e o roteador pode escolhê-la", () => {
+    assert.ok(ROUTE_TABLE.some((entry) => entry.route === "team"));
+    assert.match(buildRouterMessages("x")[0]![1], /\| team \|/);
+    assert.deepEqual(resolveRouteDecision({ decided: { route: "team", reason: "investigar e agir" } }), {
+      route: "team",
+      reason: "investigar e agir",
+      source: "router",
+    });
   });
 });
