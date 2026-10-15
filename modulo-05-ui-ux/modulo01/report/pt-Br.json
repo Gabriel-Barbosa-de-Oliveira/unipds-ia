@@ -1,0 +1,117 @@
+{
+  "VALIDATION_AMOUNT_INVALID": {
+    "title": "Valor inválido",
+    "message": "Informe um valor maior que R$ 0,00 para continuar.",
+    "action_label": "Corrigir valor"
+  },
+  "VALIDATION_DATE_TODAY_OR_PAST": {
+    "title": "Data não disponível",
+    "message": "Para hoje, faça uma transferência Pix normal. Escolha uma data futura para agendar.",
+    "action_label": "Escolher outra data"
+  },
+  "VALIDATION_DATE_OUT_OF_RANGE": {
+    "title": "Data fora do período",
+    "message": "Escolha uma data dentro do período permitido para agendamento.",
+    "action_label": "Escolher outra data"
+  },
+  "LIMIT_DAILY_EXCEEDED": {
+    "title": "Limite diário atingido",
+    "message": "Este valor ultrapassa o limite diário de R$ 5.000,00. Informe um valor menor para continuar.",
+    "action_label": "Alterar valor"
+  },
+  "FUNDS_INSUFFICIENT": {
+    "title": "Saldo insuficiente",
+    "message": "Seu saldo não cobre este agendamento. Ajuste o valor ou adicione saldo à conta.",
+    "action_label": "Alterar valor"
+  },
+  "CONTACT_UNAVAILABLE": {
+    "title": "Contato indisponível",
+    "message": "Não foi possível agendar para este contato. Escolha outro contato ou digite uma chave Pix.",
+    "action_label": "Escolher outro contato"
+  },
+  "CONTACTS_LOAD_FAILED": {
+    "title": "Falha ao carregar contatos",
+    "message": "Não foi possível carregar seus contatos. Verifique sua conexão e tente novamente.",
+    "action_label": "Tentar novamente"
+  },
+  "AUTH_FAILED": {
+    "title": "Confirmação não realizada",
+    "message": "Não foi possível confirmar sua identidade. Tente novamente para concluir o agendamento.",
+    "action_label": "Tentar novamente"
+  },
+  "FRAUD_REVIEW": {
+    "title": "Agendamento em análise",
+    "message": "Por segurança, esta operação está em análise. Entre em contato com a central se precisar de ajuda.",
+    "action_label": "Falar com a central"
+  },
+  "SERVICE_UNAVAILABLE": {
+    "title": "Serviço indisponível",
+    "message": "Não foi possível concluir o agendamento agora. Nenhum valor foi cobrado. Tente novamente em instantes.",
+    "action_label": "Tentar novamente"
+  },
+  "TIMEOUT_STATUS_CHECKING": {
+    "title": "Verificando agendamento",
+    "message": "A confirmação demorou mais que o esperado. Estamos verificando se o agendamento foi criado.",
+    "action_label": "Aguardar verificação"
+  },
+  "TIMEOUT_NOT_CREATED": {
+    "title": "Agendamento não criado",
+    "message": "Não encontramos o agendamento e nenhum valor foi cobrado. Tente novamente.",
+    "action_label": "Tentar novamente"
+  },
+  "SCHEDULE_REJECTED_GENERIC": {
+    "title": "Agendamento não realizado",
+    "message": "Não foi possível agendar este Pix agora. Nenhum valor foi cobrado. Tente novamente mais tarde.",
+    "action_label": "Voltar ao início"
+  },
+  "CANCEL_NOT_ALLOWED": {
+    "title": "Cancelamento indisponível",
+    "message": "Este Pix já foi processado e não pode mais ser cancelado.",
+    "action_label": "Ver detalhes"
+  },
+  "CANCEL_FAILED": {
+    "title": "Falha no cancelamento",
+    "message": "Não foi possível cancelar agora. Seu agendamento foi mantido. Tente novamente.",
+    "action_label": "Tentar novamente"
+  },
+  "EXEC_FAILED_FUNDS": {
+    "title": "Pix agendado não realizado",
+    "message": "Seu saldo era insuficiente na data agendada. Nenhum valor foi debitado. Agende novamente.",
+    "action_label": "Agendar novamente"
+  },
+  "EXEC_FAILED_LIMIT": {
+    "title": "Pix agendado não realizado",
+    "message": "O limite diário foi atingido na data agendada. Nenhum valor foi debitado. Agende para outra data.",
+    "action_label": "Agendar novamente"
+  },
+  "EXEC_FAILED_KEY": {
+    "title": "Pix agendado não realizado",
+    "message": "A chave Pix deste contato não está mais válida. Nenhum valor foi debitado. Atualize o contato.",
+    "action_label": "Atualizar contato"
+  },
+  "EMPTY_CONTACTS": {
+    "title": "Nenhum contato salvo",
+    "message": "Você ainda não tem contatos salvos. Digite uma chave Pix para agendar.",
+    "action_label": "Digitar chave Pix"
+  },
+  "EMPTY_SCHEDULED_LIST": {
+    "title": "Nenhum Pix agendado",
+    "message": "Quando você agendar um Pix, ele aparecerá aqui para acompanhamento.",
+    "action_label": "Agendar Pix"
+  },
+  "SUCCESS_SCHEDULE_CREATED": {
+    "title": "Pix agendado",
+    "message": "Seu Pix foi agendado para a data escolhida. Acompanhe o status na lista de agendamentos.",
+    "action_label": "Ver agendamentos"
+  },
+  "SUCCESS_CANCEL_COMPLETED": {
+    "title": "Agendamento cancelado",
+    "message": "O agendamento foi cancelado com sucesso. Nenhum valor será debitado.",
+    "action_label": "Voltar à lista"
+  },
+  "SUCCESS_EXEC_COMPLETED": {
+    "title": "Pix realizado",
+    "message": "Seu Pix agendado foi realizado com sucesso na data escolhida.",
+    "action_label": "Ver comprovante"
+  }
+}
