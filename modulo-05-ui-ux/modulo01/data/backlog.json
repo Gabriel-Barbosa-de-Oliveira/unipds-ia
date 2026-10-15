@@ -1,0 +1,26 @@
+[
+    {
+        "ticket_id": "TKT-101",
+        "original_ref": "tkt_01",
+        "category": "BUG_CRITICO",
+        "severity": "ALTA",
+        "user_pain": "A tela fica branca durante o fluxo de Pix e o usuário precisa fechar e reabrir o app.",
+        "proposed_action": "Investigar a causa da tela branca no fluxo de Pix (exceção não tratada, falha de renderização ou componente sem estado de erro). Adicionar Error Boundary na tela e um estado de erro com botão de tentar novamente. Incluir monitoramento de crash para reproduzir o caso."
+    },
+    {
+        "ticket_id": "TKT-102",
+        "original_ref": "tkt_05",
+        "category": "BUG_CRITICO",
+        "severity": "ALTA",
+        "user_pain": "O app crasha ao agendar Pix para o dia 31 em meses com 30 dias, no iPhone 13.",
+        "proposed_action": "Corrigir a lógica de seleção de data: ao trocar de mês, limitar o dia ao último dia válido do mês (ex: 30 em abril) ou desabilitar datas inválidas no seletor. Adicionar testes unitários para meses de 28, 29, 30 e 31 dias, incluindo ano bissexto, e testar em iOS 13."
+    },
+    {
+        "ticket_id": "TKT-103",
+        "original_ref": "tkt_06",
+        "category": "UX_UI_IMPROVEMENT",
+        "severity": "MEDIA",
+        "user_pain": "O comprovante de transferência não está visível e exige três cliques para ser encontrado.",
+        "proposed_action": "Avaliar a arquitetura de navegação para tornar o comprovante acessível em no máximo dois toques, por exemplo com acesso direto na lista de transações ou na tela de confirmação. Validar a mudança com teste de usabilidade e medir o número de toques até o comprovante."
+    }
+]
