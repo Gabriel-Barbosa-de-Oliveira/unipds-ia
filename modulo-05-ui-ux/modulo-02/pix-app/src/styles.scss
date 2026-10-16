@@ -45,3 +45,10 @@
 :root[data-theme='light'] {
   color-scheme: light;
 }
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-body);
+}

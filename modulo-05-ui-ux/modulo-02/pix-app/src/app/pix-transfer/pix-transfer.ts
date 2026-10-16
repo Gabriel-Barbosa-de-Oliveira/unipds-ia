@@ -11,6 +11,7 @@ interface PixTransfer {
   selector: 'app-pix-transfer',
   imports: [FormField],
   templateUrl: './pix-transfer.html',
+  styleUrl: './pix-transfer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PixTransferComponent {
