@@ -1,1 +1,47 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+  color-scheme: light dark;
+
+  /* Cores de marca */
+  --color-primary: #0a192f;
+  --color-accent: #64ffda;
+  --color-error: #ff6b6b;
+
+  /* Cores de superfície e texto (tema claro como padrão) */
+  --color-background-light: #f8f9fa;
+  --color-background-dark: #112240;
+  --color-text-on-light: #112240;
+  --color-text-on-dark: #ffffff;
+
+  --color-background: var(--color-background-light);
+  --color-text: var(--color-text-on-light);
+
+  /* Tipografia */
+  --font-family-heading: 'Montserrat', system-ui, sans-serif;
+  --font-family-body: 'Inter', system-ui, sans-serif;
+
+  /* Espaçamento (base 4px) */
+  --spacing-unit: 4px;
+  --spacing-sm: calc(var(--spacing-unit) * 2);
+  --spacing-md: calc(var(--spacing-unit) * 4);
+  --spacing-lg: calc(var(--spacing-unit) * 6);
+  --spacing-xl: calc(var(--spacing-unit) * 8);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-background: var(--color-background-dark);
+    --color-text: var(--color-text-on-dark);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: var(--color-background-dark);
+  --color-text: var(--color-text-on-dark);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
