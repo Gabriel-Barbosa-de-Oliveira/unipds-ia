@@ -40,3 +40,11 @@
 @if (confirmado(); as pix) {
   <p>Pix de {{ pix.valor }} para {{ pix.chavePix }} agendado para {{ pix.dataAgendamento }}.</p>
 }
+
+@if (limiteExcedido()) {
+  <app-error-modal
+    title="Limite Excedido"
+    message="Para sua segurança, transferências Pix acima de R$ 5.000,00 precisam ser aprovadas pelo gerente."
+    (closed)="limiteExcedido.set(false)"
+  />
+}

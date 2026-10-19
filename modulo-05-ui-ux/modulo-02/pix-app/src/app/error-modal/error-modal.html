@@ -1,0 +1,18 @@
+<dialog
+  #dialog
+  role="alertdialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="titleId"
+  [attr.aria-describedby]="messageId"
+  (cancel)="onCancel($event)"
+  (close)="onClose()"
+>
+  <header>
+    <span aria-hidden="true">!</span>
+    <h2 [id]="titleId">{{ title() }}</h2>
+  </header>
+
+  <p [id]="messageId">{{ message() }}</p>
+
+  <button type="button" autofocus (click)="close()">Fechar</button>
+</dialog>
