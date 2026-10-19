@@ -6,8 +6,8 @@ Refatorar o código HTML/CSS bruto de uma interface web desktop exportada do Goo
 
 # DIRETRIZES TÉCNICAS
 1. **Componentização Angular 21:** Crie um Standalone Component chamado `PixReceiptComponent`. Use `@Input` Signals para receber os dados dinâmicos (valor, nome).
-2. **Estilização Restrita (Design Tokens):** Você está PROIBIDO de usar cores hexadecimais absolutas. Leia o @src/styles.css e substitua os estilos do Stitch por nossas variáveis nativas (ex: `var(--color-primary)`).
+2. **Estilização Restrita (Design Tokens):** Você está PROIBIDO de usar cores hexadecimais absolutas. Leia o @src/styles.scss e substitua os estilos do Stitch por nossas variáveis nativas (ex: `var(--color-primary)`).
 3. **Layout Desktop:** Mantenha o card centralizado na tela web.
 
 # FORMATO DE SAÍDA
-Gere os arquivos `.ts`, `.html` e `.css` do componente.
+Gere os arquivos `.ts`, `.html` e `.scss` do componente (padrão de estilos do projeto, referenciado via `styleUrl`).

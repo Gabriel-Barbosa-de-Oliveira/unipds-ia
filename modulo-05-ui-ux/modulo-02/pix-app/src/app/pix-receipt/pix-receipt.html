@@ -1,0 +1,124 @@
+<div class="orb orb--top" aria-hidden="true"></div>
+<div class="orb orb--bottom" aria-hidden="true"></div>
+
+<article class="card" aria-labelledby="receipt-title">
+  <header class="summary">
+    <div class="check" aria-hidden="true">
+      <span class="check__inner">
+        <span class="material-symbols-outlined icon--filled">check</span>
+      </span>
+    </div>
+
+    <h1 id="receipt-title" tabindex="-1" #titulo>Transferência realizada com sucesso!</h1>
+    <p class="summary__subtitle">O valor já foi creditado na conta de destino via Pix.</p>
+
+    <div class="amount">
+      <span class="eyebrow">Valor transferido</span>
+      <div class="amount__row">
+        <strong class="amount__value">{{ valorFormatado() }}</strong>
+        <span class="badge">
+          <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+          Pix Instantâneo
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <hr />
+
+  <section aria-labelledby="details-title">
+    <h2 id="details-title" class="eyebrow">Dados da transação</h2>
+
+    <dl class="details">
+      <div>
+        <dt>Destinatário</dt>
+        <dd>
+          <strong>{{ nome() }}</strong>
+          @if (tipoConta(); as conta) {
+            <small>{{ conta }}</small>
+          }
+        </dd>
+      </div>
+
+      @if (cpf(); as cpfMascarado) {
+        <div>
+          <dt>CPF do recebedor</dt>
+          <dd class="mono">{{ cpfMascarado }}</dd>
+        </div>
+      }
+
+      @if (instituicao(); as banco) {
+        <div>
+          <dt>Instituição de destino</dt>
+          <dd class="with-dot">{{ banco }}</dd>
+        </div>
+      }
+
+      @if (tipoChave(); as chave) {
+        <div>
+          <dt>Tipo de chave Pix</dt>
+          <dd>{{ chave }}</dd>
+        </div>
+      }
+
+      <div>
+        <dt>Data e horário</dt>
+        <dd><time [attr.datetime]="dataHoraIso()">{{ dataHoraFormatada() }}</time></dd>
+      </div>
+
+      <div>
+        <dt>Tarifa bancária</dt>
+        <dd class="positive">Gratuito (R$ 0,00)</dd>
+      </div>
+    </dl>
+
+    @if (idTransacao(); as id) {
+      <div class="e2e">
+        <div class="e2e__info">
+          <span>Identificador (ID E2E)</span>
+          <code>{{ id }}</code>
+        </div>
+
+        <button
+          type="button"
+          class="copy"
+          [class.copy--done]="copiado()"
+          aria-label="Copiar identificador da transação"
+          (click)="copiarId()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">
+            {{ copiado() ? 'check' : 'content_copy' }}
+          </span>
+          <span aria-hidden="true">{{ copiado() ? 'Copiado!' : 'Copiar' }}</span>
+        </button>
+
+        <span class="visually-hidden" role="status">
+          @if (copiado()) {
+            Identificador copiado para a área de transferência.
+          }
+        </span>
+      </div>
+    }
+  </section>
+
+  <div class="actions">
+    <button type="button" class="action" (click)="compartilhar.emit()">
+      <span class="material-symbols-outlined" aria-hidden="true">share</span>
+      Compartilhar
+    </button>
+    <button type="button" class="action action--accent" (click)="baixarPdf.emit()">
+      <span class="material-symbols-outlined" aria-hidden="true">download</span>
+      Baixar PDF
+    </button>
+  </div>
+
+  <button type="button" class="primary" (click)="voltar.emit()">
+    <span class="material-symbols-outlined" aria-hidden="true">home</span>
+    Voltar ao início
+  </button>
+
+  <p class="trust">
+    <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+    Autenticação Bancária Registrada no Banco Central do Brasil
+  </p>
+</article>

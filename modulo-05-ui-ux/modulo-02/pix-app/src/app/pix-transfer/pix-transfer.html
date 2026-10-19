@@ -1,44 +1,49 @@
-<h1>Transferência Pix</h1>
-
-<form (submit)="confirmar($event)" novalidate>
-  <p>
-    <label for="chavePix">Chave Pix</label>
-    <input id="chavePix" type="text" [formField]="pixForm.chavePix"
-      [attr.aria-invalid]="pixForm.chavePix().touched() && pixForm.chavePix().invalid()" />
-    @if (pixForm.chavePix().touched() && pixForm.chavePix().invalid()) {
-      @for (error of pixForm.chavePix().errors(); track error.kind) {
-        <small>{{ error.message }}</small>
-      }
-    }
-  </p>
-
-  <p>
-    <label for="valor">Valor</label>
-    <input id="valor" type="number" step="0.01" [formField]="pixForm.valor"
-      [attr.aria-invalid]="pixForm.valor().touched() && pixForm.valor().invalid()" />
-    @if (pixForm.valor().touched() && pixForm.valor().invalid()) {
-      @for (error of pixForm.valor().errors(); track error.kind) {
-        <small>{{ error.message }}</small>
-      }
-    }
-  </p>
-
-  <p>
-    <label for="dataAgendamento">Data de Agendamento</label>
-    <input id="dataAgendamento" type="date" [formField]="pixForm.dataAgendamento"
-      [attr.aria-invalid]="pixForm.dataAgendamento().touched() && pixForm.dataAgendamento().invalid()" />
-    @if (pixForm.dataAgendamento().touched() && pixForm.dataAgendamento().invalid()) {
-      @for (error of pixForm.dataAgendamento().errors(); track error.kind) {
-        <small>{{ error.message }}</small>
-      }
-    }
-  </p>
-
-  <button type="submit">Confirmar</button>
-</form>
-
 @if (confirmado(); as pix) {
-  <p>Pix de {{ pix.valor }} para {{ pix.chavePix }} agendado para {{ pix.dataAgendamento }}.</p>
+  <app-pix-receipt
+    [valor]="pix.valor"
+    [nome]="pix.chavePix"
+    [dataHora]="pix.confirmadoEm"
+    (voltar)="novaTransferencia()"
+  />
+} @else {
+  <h1>Transferência Pix</h1>
+
+  <form (submit)="confirmar($event)" novalidate>
+    <p>
+      <label for="chavePix">Chave Pix</label>
+      <input id="chavePix" type="text" [formField]="pixForm.chavePix"
+        [attr.aria-invalid]="pixForm.chavePix().touched() && pixForm.chavePix().invalid()" />
+      @if (pixForm.chavePix().touched() && pixForm.chavePix().invalid()) {
+        @for (error of pixForm.chavePix().errors(); track error.kind) {
+          <small>{{ error.message }}</small>
+        }
+      }
+    </p>
+
+    <p>
+      <label for="valor">Valor</label>
+      <input id="valor" type="number" step="0.01" [formField]="pixForm.valor"
+        [attr.aria-invalid]="pixForm.valor().touched() && pixForm.valor().invalid()" />
+      @if (pixForm.valor().touched() && pixForm.valor().invalid()) {
+        @for (error of pixForm.valor().errors(); track error.kind) {
+          <small>{{ error.message }}</small>
+        }
+      }
+    </p>
+
+    <p>
+      <label for="dataAgendamento">Data de Agendamento</label>
+      <input id="dataAgendamento" type="date" [formField]="pixForm.dataAgendamento"
+        [attr.aria-invalid]="pixForm.dataAgendamento().touched() && pixForm.dataAgendamento().invalid()" />
+      @if (pixForm.dataAgendamento().touched() && pixForm.dataAgendamento().invalid()) {
+        @for (error of pixForm.dataAgendamento().errors(); track error.kind) {
+          <small>{{ error.message }}</small>
+        }
+      }
+    </p>
+
+    <button type="submit">Confirmar</button>
+  </form>
 }
 
 @if (limiteExcedido()) {

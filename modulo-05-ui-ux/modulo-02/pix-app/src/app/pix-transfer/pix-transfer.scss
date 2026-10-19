@@ -1,6 +1,5 @@
 :host {
   display: block;
-  max-width: 480px;
 }
 
 h1 {
@@ -11,6 +10,7 @@ h1 {
 }
 
 form {
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
@@ -85,13 +85,4 @@ button {
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
   }
-}
-
-form + p {
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-md);
-  border-left: 4px solid var(--color-accent);
-  border-radius: var(--spacing-sm);
-  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-background));
-  color: var(--color-text);
 }
