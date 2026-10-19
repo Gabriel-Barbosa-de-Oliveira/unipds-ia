@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Comprovante de Transferência Pix - Pix Bank</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-variant": "#d3e4fe",
+            "outline": "#74777d",
+            "surface-tint": "#525f71",
+            "on-surface-variant": "#44474c",
+            "surface-container-highest": "#d3e4fe",
+            "on-primary-fixed-variant": "#3a4859",
+            "error": "#ba1a1a",
+            "inverse-primary": "#bac8dc",
+            "error-container": "#ffdad6",
+            "background": "#f8f9ff",
+            "primary-fixed-dim": "#bac8dc",
+            "tertiary-container": "#101b30",
+            "on-secondary-fixed-variant": "#005226",
+            "secondary-container": "#3fff8b",
+            "outline-variant": "#c4c6cc",
+            "on-primary-fixed": "#0f1c2c",
+            "surface-container": "#e5eeff",
+            "surface-bright": "#f8f9ff",
+            "surface-container-low": "#eff4ff",
+            "secondary-fixed-dim": "#00e475",
+            "primary-fixed": "#d6e4f9",
+            "tertiary-fixed": "#d7e2ff",
+            "on-error": "#ffffff",
+            "inverse-surface": "#213145",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-container": "#007237",
+            "on-surface": "#0b1c30",
+            "tertiary": "#000000",
+            "on-tertiary-fixed": "#101b30",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed-variant": "#3c475d",
+            "on-primary-container": "#778598",
+            "secondary-fixed": "#62ff96",
+            "on-secondary-fixed": "#00210b",
+            "tertiary-fixed-dim": "#bbc6e2",
+            "primary-container": "#0f1c2c",
+            "surface": "#f8f9ff",
+            "secondary": "#006d35",
+            "surface-dim": "#cbdbf5",
+            "surface-container-high": "#dce9ff",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#79849d",
+            "primary": "#000000",
+            "on-primary": "#ffffff",
+            "on-error-container": "#93000a",
+            "on-background": "#0b1c30",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-desktop": "auto",
+            "margin": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "space-sm": "0.5rem",
+            "gutter-desktop": "2rem",
+            "space-xs": "0.25rem",
+            "margin-tablet": "2rem",
+            "space-md": "1rem",
+            "gutter": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "body-lg-bold": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-md-medium": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+            "display-lg-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg-bold": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-md-medium": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .mint-glow {
+      box-shadow: 0 0 32px -4px rgba(63, 255, 139, 0.45);
+    }
+    .fintech-card-shadow {
+      box-shadow: 0 12px 40px -8px rgba(15, 28, 44, 0.08), 0 2px 10px -2px rgba(15, 28, 44, 0.04);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Desktop Top Navigation Bar (Shared Component Anchor) -->
+<header class="w-full border-b border-outline-variant bg-surface-container-lowest sticky top-0 z-50 px-8 py-3.5 flex items-center justify-between shadow-sm">
+<!-- Brand Anchor -->
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="bolt">bolt</span>
+</div>
+<span class="text-headline-sm font-headline-sm font-bold text-primary tracking-tight">Pix Bank</span>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant font-body-md hover:text-on-surface pb-1 hover:text-primary transition-colors duration-150" href="#">Início</a>
+<a class="text-on-surface-variant font-body-md hover:text-on-surface pb-1 hover:text-primary transition-colors duration-150" href="#">Extrato</a>
+<a class="text-primary font-body-lg-bold border-b-2 border-primary pb-1" href="#">Transferências</a>
+<a class="text-on-surface-variant font-body-md hover:text-on-surface pb-1 hover:text-primary transition-colors duration-150" href="#">Cartões</a>
+</nav>
+</div>
+<!-- Right Cluster: Security & User Profile -->
+<div class="flex items-center gap-5">
+<!-- Institutional Security Badge -->
+<div class="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-on-primary-fixed-variant text-label-md font-label-md">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span>Conexão Criptografada SSL</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors" title="Ajuda">
+<span class="material-symbols-outlined text-[20px]" data-icon="help_outline">help_outline</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container text-on-surface-variant relative transition-colors" title="Notificações">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary-fixed-dim"></span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant hidden sm:block"></div>
+<!-- Profile Identifier -->
+<div class="flex items-center gap-3 pl-1">
+<div class="w-9 h-9 rounded-full bg-surface-container-high text-primary-container font-headline-sm flex items-center justify-center font-bold text-sm ring-2 ring-primary-fixed">
+          ES
+        </div>
+<div class="hidden sm:flex flex-col text-left">
+<span class="text-label-lg font-label-lg text-on-surface leading-tight">Erick S.</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant leading-tight">Conta Corrente</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Atmospheric Background Canvas & Confirmation Hub -->
+<main class="flex-1 flex flex-col justify-center items-center px-4 py-8 md:py-12 relative overflow-hidden bg-gradient-to-b from-background via-surface-container-low to-surface">
+<!-- Subtle Ambient High-Tech Orbs -->
+<div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[760px] h-[340px] bg-secondary-container/15 blur-[120px] pointer-events-none rounded-full"></div>
+<div class="absolute bottom-0 right-10 w-[420px] h-[300px] bg-surface-variant/40 blur-[100px] pointer-events-none rounded-full"></div>
+<!-- Center Voucher Card -->
+<div class="w-full max-w-[580px] bg-surface-container-lowest border border-outline-variant/50 rounded-3xl p-6 sm:p-10 fintech-card-shadow relative z-10 transition-all">
+<!-- Success Checkmark Header -->
+<div class="flex flex-col items-center text-center">
+<!-- Radiant Neo-Mint Check Indicator -->
+<div class="relative mb-4">
+<div class="w-16 h-16 rounded-full bg-secondary-container/20 flex items-center justify-center mint-glow border border-secondary-container/50">
+<div class="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-on-secondary shadow-sm">
+<span class="material-symbols-outlined text-[26px] font-bold" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</div>
+<!-- Affirmative Headline -->
+<h1 class="text-headline-md font-headline-md text-on-surface tracking-tight">
+          Transferência realizada com sucesso!
+        </h1>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">
+          O valor já foi creditado na conta de destino via Pix.
+        </p>
+<!-- Metric Highlight: Monetary Value & Pix Badge -->
+<div class="mt-7 flex flex-col items-center">
+<span class="text-label-md font-label-md text-on-primary-container tracking-wider uppercase">Valor transferido</span>
+<div class="flex items-center justify-center gap-3 mt-1">
+<span class="text-display-lg font-display-lg text-primary tracking-tight">
+              R$ 150,00
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container text-label-md font-label-md border border-secondary-container/40">
+<span class="material-symbols-outlined text-[14px]" data-icon="bolt">bolt</span>
+              Pix Instantâneo
+            </span>
+</div>
+</div>
+</div>
+<!-- Hairline Divider -->
+<div class="h-px bg-outline-variant/60 my-7"></div>
+<!-- Transaction Structured Detail Grid -->
+<div class="space-y-4">
+<h2 class="text-label-sm font-label-sm text-outline tracking-wider uppercase mb-2">Dados da transação</h2>
+<!-- Destinatário -->
+<div class="flex items-center justify-between py-1">
+<span class="text-body-md font-body-md text-on-surface-variant">Destinatário</span>
+<div class="text-right">
+<span class="text-body-lg-bold font-body-lg-bold text-on-surface block">Erick S.</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Conta Corrente</span>
+</div>
+</div>
+<!-- CPF Mascarado -->
+<div class="flex items-center justify-between py-1">
+<span class="text-body-md font-body-md text-on-surface-variant">CPF do recebedor</span>
+<span class="text-body-md-medium font-body-md-medium text-on-surface font-mono">***.456.789-**</span>
+</div>
+<!-- Instituição -->
+<div class="flex items-center justify-between py-1">
+<span class="text-body-md font-body-md text-on-surface-variant">Instituição de destino</span>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-body-md-medium font-body-md-medium text-on-surface">Banco Inter S.A.</span>
+</div>
+</div>
+<!-- Chave Pix -->
+<div class="flex items-center justify-between py-1">
+<span class="text-body-md font-body-md text-on-surface-variant">Tipo de chave Pix</span>
+<span class="text-body-md-medium font-body-md-medium text-on-surface">Chave Aleatória (EVP)</span>
+</div>
+<!-- Data e Hora -->
+<div class="flex items-center justify-between py-1">
+<span class="text-body-md font-body-md text-on-surface-variant">Data e horário</span>
+<span class="text-body-md-medium font-body-md-medium text-on-surface">24 de Outubro de 2024 às 14:32:10</span>
+</div>
+<!-- Tarifa -->
+<div class="flex items-center justify-between py-1">
+<span class="text-body-md font-body-md text-on-surface-variant">Tarifa bancária</span>
+<span class="text-body-md-medium font-body-md-medium text-secondary">Gratuito (R$ 0,00)</span>
+</div>
+<!-- ID da Transação (E2E) with Copy Action -->
+<div class="pt-3 pb-1 border-t border-dashed border-outline-variant/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex flex-col">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Identificador (ID E2E)</span>
+<span class="text-body-sm font-body-sm font-mono text-on-surface tracking-tight select-all" id="e2e-code">
+              E18236120202410241432A98014B739
+            </span>
+</div>
+<button class="inline-flex items-center gap-1 text-label-md font-label-md text-primary-container hover:text-secondary-fixed-dim bg-surface-container px-2.5 py-1.5 rounded-lg border border-outline-variant/40 transition-colors self-start sm:self-center" id="copy-btn" onclick="copyId()" title="Copiar código ID">
+<span class="material-symbols-outlined text-[16px]" data-icon="content_copy" id="copy-icon">content_copy</span>
+<span id="copy-text">Copiar</span>
+</button>
+</div>
+</div>
+<!-- Quick Action Secondary Buttons -->
+<div class="grid grid-cols-2 gap-3 mt-8">
+<button class="h-12 flex items-center justify-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low text-on-surface text-label-lg font-label-lg transition-all active:scale-[0.99] shadow-sm">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant" data-icon="share">share</span>
+<span>Compartilhar</span>
+</button>
+<button class="h-12 flex items-center justify-center gap-2 rounded-xl border border-secondary-container/40 bg-secondary-container/10 hover:bg-secondary-container/20 text-on-secondary-container text-label-lg font-label-lg transition-all active:scale-[0.99]">
+<span class="material-symbols-outlined text-[20px] text-secondary" data-icon="download">download</span>
+<span>Baixar PDF</span>
+</button>
+</div>
+<!-- Primary Action Footer: Return to Home -->
+<div class="mt-4">
+<a class="w-full h-[52px] bg-primary-container text-on-primary rounded-xl flex items-center justify-center gap-2 font-body-lg-bold text-body-lg-bold hover:bg-tertiary transition-all duration-200 active:opacity-90 shadow-md" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="home">home</span>
+<span>Voltar ao início</span>
+</a>
+</div>
+<!-- Trust Assurance Note -->
+<div class="mt-6 flex items-center justify-center gap-2 text-center text-outline text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="verified_user">verified_user</span>
+<span>Autenticação Bancária Registrada no Banco Central do Brasil</span>
+</div>
+</div>
+</main>
+<!-- Interactive script for copy micro-interaction -->
+<script>
+    function copyId() {
+      const code = document.getElementById('e2e-code').innerText.trim();
+      navigator.clipboard.writeText(code).then(() => {
+        const copyIcon = document.getElementById('copy-icon');
+        const copyText = document.getElementById('copy-text');
+        
+        copyIcon.innerText = 'check';
+        copyText.innerText = 'Copiado!';
+        copyIcon.classList.add('text-secondary');
+        copyText.classList.add('text-secondary');
+
+        setTimeout(() => {
+          copyIcon.innerText = 'content_copy';
+          copyText.innerText = 'Copiar';
+          copyIcon.classList.remove('text-secondary');
+          copyText.classList.remove('text-secondary');
+        }, 2200);
+      });
+    }
+  </script>
+</body></html>
