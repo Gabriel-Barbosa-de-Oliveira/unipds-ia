@@ -1,0 +1,42 @@
+<article class="card" aria-labelledby="history-title">
+  <header class="hero">
+    <div class="hero__toolbar">
+      <button type="button" class="icon-button" aria-label="Voltar" (click)="voltar()">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back_ios_new</span>
+      </button>
+      <button type="button" class="icon-button" aria-label="Mais opções" (click)="maisOpcoes.emit()">
+        <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+      </button>
+    </div>
+
+    <h1 id="history-title">Extrato Pix</h1>
+    <p>Confira suas últimas movimentações</p>
+  </header>
+
+  <section class="content" aria-labelledby="recent-title">
+    <h2 id="recent-title" class="eyebrow">Recentes</h2>
+
+    <ul class="history-list">
+      @for (item of items(); track item.id) {
+        <li class="transaction" [class.transaction--sent]="item.type === 'sent'">
+          <div class="transaction__main">
+            <span class="transaction__icon" aria-hidden="true">
+              <span class="material-symbols-outlined">{{ item.icone }}</span>
+            </span>
+            <div class="transaction__text">
+              <span class="transaction__title">{{ item.title }}</span>
+              <time class="transaction__date" [attr.datetime]="item.dataIso">{{ item.dataFormatada }}</time>
+            </div>
+          </div>
+          <span class="transaction__amount">
+            <span class="visually-hidden">{{ item.rotulo }}: </span>{{ item.valorFormatado }}
+          </span>
+        </li>
+      } @empty {
+        <li class="transaction">Nenhuma movimentação recente.</li>
+      }
+    </ul>
+
+    <button type="button" class="primary" (click)="gerarRelatorio.emit()">Gerar Novo Relatório</button>
+  </section>
+</article>
