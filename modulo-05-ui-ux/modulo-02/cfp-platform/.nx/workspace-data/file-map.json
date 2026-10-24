@@ -40,36 +40,24 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": "package-lock.json",
-        "hash": "2161266007015525564"
-      },
-      {
-        "file": ".claude/commands/opsx/apply.md",
-        "hash": "11638283287398599808"
-      },
-      {
-        "file": ".claude/skills/openspec-apply-change/SKILL.md",
-        "hash": "11535354846729162475"
-      },
-      {
-        "file": ".claude/commands/opsx/archive.md",
-        "hash": "8456543471923298363"
-      },
-      {
-        "file": ".claude/skills/openspec-update-change/SKILL.md",
-        "hash": "1848598471837111837"
+        "file": ".claude/skills/openspec-propose/SKILL.md",
+        "hash": "16762831718712419575"
       },
       {
         "file": "package.json",
         "hash": "4863652818843927312"
       },
       {
-        "file": ".claude/commands/opsx/update.md",
-        "hash": "5819696601791622803"
+        "file": ".claude/commands/opsx/apply.md",
+        "hash": "11638283287398599808"
       },
       {
         "file": ".gitignore",
         "hash": "2587622107816473060"
+      },
+      {
+        "file": ".claude/commands/opsx/propose.md",
+        "hash": "1605830464872083009"
       },
       {
         "file": ".claude/skills/openspec-sync-specs/SKILL.md",
@@ -80,60 +68,88 @@
         "hash": "9840821164800370710"
       },
       {
-        "file": "openspec/config.yaml",
-        "hash": "3824138819829171359"
+        "file": ".claude/commands/opsx/sync.md",
+        "hash": "5770142423048370817"
+      },
+      {
+        "file": ".claude/commands/opsx/archive.md",
+        "hash": "8456543471923298363"
       },
       {
         "file": "tsconfig.base.json",
         "hash": "15672426423892019207"
       },
       {
-        "file": ".claude/skills/openspec-propose/SKILL.md",
-        "hash": "16762831718712419575"
+        "file": "openspec/changes/add-cfp-feature/tasks.md",
+        "hash": "9675360834263594480"
       },
       {
-        "file": ".claude/commands/opsx/propose.md",
-        "hash": "1605830464872083009"
-      },
-      {
-        "file": "jest.preset.js",
-        "hash": "13737983450217408137"
-      },
-      {
-        "file": "openspec/changes/archive/.gitkeep",
+        "file": "openspec/specs/.gitkeep",
         "hash": "3244421341483603138"
-      },
-      {
-        "file": ".claude/skills/openspec-explore/SKILL.md",
-        "hash": "18316009530293600476"
-      },
-      {
-        "file": "jest.config.ts",
-        "hash": "14236175072743533737"
-      },
-      {
-        "file": "eslint.config.mjs",
-        "hash": "9002143704707986394"
-      },
-      {
-        "file": ".claude/commands/opsx/explore.md",
-        "hash": "5443850152384879233"
-      },
-      {
-        "file": ".claude/commands/opsx/sync.md",
-        "hash": "5770142423048370817"
-      },
-      {
-        "file": ".mcp.json",
-        "hash": "10017896268110199194"
       },
       {
         "file": "nx.json",
         "hash": "15846869734396097217"
       },
       {
-        "file": "openspec/specs/.gitkeep",
+        "file": "jest.config.ts",
+        "hash": "14236175072743533737"
+      },
+      {
+        "file": ".claude/skills/openspec-apply-change/SKILL.md",
+        "hash": "11535354846729162475"
+      },
+      {
+        "file": "openspec/changes/add-cfp-feature/proposal.md",
+        "hash": "530703179550371776"
+      },
+      {
+        "file": "openspec/changes/add-cfp-feature/.openspec.yaml",
+        "hash": "13406866330394161294"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "13737983450217408137"
+      },
+      {
+        "file": ".claude/commands/opsx/update.md",
+        "hash": "5819696601791622803"
+      },
+      {
+        "file": "openspec/changes/archive/.gitkeep",
         "hash": "3244421341483603138"
+      },
+      {
+        "file": ".claude/skills/openspec-update-change/SKILL.md",
+        "hash": "1848598471837111837"
+      },
+      {
+        "file": "eslint.config.mjs",
+        "hash": "9002143704707986394"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "2161266007015525564"
+      },
+      {
+        "file": ".claude/skills/openspec-explore/SKILL.md",
+        "hash": "18316009530293600476"
+      },
+      {
+        "file": "openspec/config.yaml",
+        "hash": "3824138819829171359"
+      },
+      {
+        "file": "openspec/changes/add-cfp-feature/design.md",
+        "hash": "13723515230790474440"
+      },
+      {
+        "file": ".mcp.json",
+        "hash": "10017896268110199194"
+      },
+      {
+        "file": ".claude/commands/opsx/explore.md",
+        "hash": "5443850152384879233"
       }
     ],
     "projectFileMap": {
