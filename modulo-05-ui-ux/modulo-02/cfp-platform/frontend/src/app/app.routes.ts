@@ -10,4 +10,12 @@ export const appRoutes: Route[] = [
         (m) => m.SubmissionFormComponent
       ),
   },
+  {
+    path: 'dashboard',
+    title: 'Propostas enviadas',
+    loadComponent: () =>
+      import('./submissions/cfp-dashboard.component').then(
+        (m) => m.CfpDashboardComponent
+      ),
+  },
 ];

@@ -1,45 +1,63 @@
 {
-  "hash": "8604d0f8",
-  "configHash": "123ff1cc",
+  "hash": "fe6983fb",
+  "configHash": "efc5bf04",
   "lockfileHash": "e09e88a5",
-  "browserHash": "f64e9319",
+  "browserHash": "1d9ba1e7",
   "optimized": {
     "@angular/common/http": {
       "src": "../../../../../../node_modules/@angular/common/fesm2022/http.mjs",
       "file": "@angular_common_http.js",
-      "fileHash": "0d501948",
+      "fileHash": "515e62ef",
       "needsInterop": false
     },
     "@angular/core": {
       "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
       "file": "@angular_core.js",
-      "fileHash": "fbb3d6ca",
+      "fileHash": "d6b7b0a2",
+      "needsInterop": false
+    },
+    "@angular/core/rxjs-interop": {
+      "src": "../../../../../../node_modules/@angular/core/fesm2022/rxjs-interop.mjs",
+      "file": "@angular_core_rxjs-interop.js",
+      "fileHash": "96d79c1f",
       "needsInterop": false
     },
     "@angular/platform-browser": {
       "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
       "file": "@angular_platform-browser.js",
-      "fileHash": "47e80e54",
+      "fileHash": "b09435ae",
       "needsInterop": false
     },
     "@angular/router": {
       "src": "../../../../../../node_modules/@angular/router/fesm2022/router.mjs",
       "file": "@angular_router.js",
-      "fileHash": "42ed3d6a",
+      "fileHash": "39aca95c",
       "needsInterop": false
     }
   },
   "chunks": {
-    "core-BpnGlcMQ": {
-      "file": "core-BpnGlcMQ.js",
+    "_resource-chunk-DoytnuEk": {
+      "file": "_resource-chunk-DoytnuEk.js",
       "isDynamicEntry": false
     },
-    "http-hOpJcagk": {
-      "file": "http-hOpJcagk.js",
+    "core-BoLXEHF5": {
+      "file": "core-BoLXEHF5.js",
       "isDynamicEntry": false
     },
-    "platform-browser-BwhSmFZs": {
-      "file": "platform-browser-BwhSmFZs.js",
+    "http-Dl3bVQ8Z": {
+      "file": "http-Dl3bVQ8Z.js",
+      "isDynamicEntry": false
+    },
+    "innerFrom-D-Owpwei": {
+      "file": "innerFrom-D-Owpwei.js",
+      "isDynamicEntry": false
+    },
+    "platform-browser-CxIcso_l": {
+      "file": "platform-browser-CxIcso_l.js",
+      "isDynamicEntry": false
+    },
+    "takeUntil-B0vnhj_V": {
+      "file": "takeUntil-B0vnhj_V.js",
       "isDynamicEntry": false
     }
   }

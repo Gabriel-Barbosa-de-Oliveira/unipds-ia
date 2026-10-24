@@ -4,6 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { CreateSpeakerSubmission } from 'shared-types';
 import { SubmissionFormComponent } from './submission-form.component';
 
@@ -55,7 +56,11 @@ describe('SubmissionFormComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SubmissionFormComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SubmissionFormComponent);
@@ -176,6 +181,14 @@ describe('SubmissionFormComponent', () => {
       expect(component.status()).toBe('error');
       expect(liveRegion().textContent).toContain('email must be an email');
       expect(submitButton().disabled).toBe(false);
+    });
+  });
+
+  describe('navigation', () => {
+    it('should link to the dashboard', () => {
+      expect(
+        query<HTMLAnchorElement>('a.button-link').getAttribute('href')
+      ).toBe('/dashboard');
     });
   });
 });

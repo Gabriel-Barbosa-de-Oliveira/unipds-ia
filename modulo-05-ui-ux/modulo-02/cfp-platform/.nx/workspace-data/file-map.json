@@ -40,116 +40,136 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": ".gitignore",
-        "hash": "2587622107816473060"
-      },
-      {
-        "file": ".claude/commands/opsx/archive.md",
-        "hash": "8456543471923298363"
-      },
-      {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/proposal.md",
-        "hash": "530703179550371776"
-      },
-      {
-        "file": "package-lock.json",
-        "hash": "7172322894825591632"
-      },
-      {
-        "file": ".claude/commands/opsx/propose.md",
-        "hash": "1605830464872083009"
-      },
-      {
-        "file": ".mcp.json",
-        "hash": "10017896268110199194"
-      },
-      {
-        "file": ".claude/commands/opsx/sync.md",
-        "hash": "5770142423048370817"
-      },
-      {
-        "file": "eslint.config.mjs",
-        "hash": "9002143704707986394"
-      },
-      {
-        "file": ".claude/skills/openspec-explore/SKILL.md",
-        "hash": "18316009530293600476"
-      },
-      {
-        "file": "jest.config.ts",
-        "hash": "14236175072743533737"
+        "file": ".claude/skills/openspec-apply-change/SKILL.md",
+        "hash": "11535354846729162475"
       },
       {
         "file": ".claude/skills/openspec-sync-specs/SKILL.md",
         "hash": "11385563220199725647"
       },
       {
-        "file": "openspec/changes/archive/.gitkeep",
-        "hash": "3244421341483603138"
+        "file": "nx.json",
+        "hash": "15846869734396097217"
       },
       {
-        "file": "jest.preset.js",
-        "hash": "13737983450217408137"
+        "file": "eslint.config.mjs",
+        "hash": "9002143704707986394"
       },
       {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/tasks.md",
-        "hash": "15965573603347191049"
-      },
-      {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/.openspec.yaml",
+        "file": "openspec/changes/add-cfp-dashboard/.openspec.yaml",
         "hash": "13406866330394161294"
-      },
-      {
-        "file": ".claude/commands/opsx/apply.md",
-        "hash": "11638283287398599808"
       },
       {
         "file": "openspec/specs/.gitkeep",
         "hash": "3244421341483603138"
       },
       {
-        "file": ".claude/commands/opsx/explore.md",
-        "hash": "5443850152384879233"
+        "file": ".mcp.json",
+        "hash": "10017896268110199194"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/tasks.md",
+        "hash": "15965573603347191049"
       },
       {
         "file": "tsconfig.base.json",
         "hash": "15672426423892019207"
       },
       {
-        "file": ".claude/skills/openspec-archive-change/SKILL.md",
-        "hash": "9840821164800370710"
+        "file": "openspec/changes/add-cfp-dashboard/tasks.md",
+        "hash": "12811031022293752010"
       },
       {
-        "file": "nx.json",
-        "hash": "15846869734396097217"
+        "file": ".claude/commands/opsx/explore.md",
+        "hash": "5443850152384879233"
       },
       {
-        "file": "openspec/config.yaml",
-        "hash": "3824138819829171359"
-      },
-      {
-        "file": ".claude/skills/openspec-update-change/SKILL.md",
-        "hash": "1848598471837111837"
-      },
-      {
-        "file": ".claude/skills/openspec-apply-change/SKILL.md",
-        "hash": "11535354846729162475"
+        "file": "package-lock.json",
+        "hash": "7172322894825591632"
       },
       {
         "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/design.md",
         "hash": "13723515230790474440"
       },
       {
+        "file": ".claude/commands/opsx/apply.md",
+        "hash": "11638283287398599808"
+      },
+      {
+        "file": ".claude/commands/opsx/archive.md",
+        "hash": "8456543471923298363"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/design.md",
+        "hash": "14090965624823375169"
+      },
+      {
+        "file": ".claude/skills/openspec-explore/SKILL.md",
+        "hash": "18316009530293600476"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "13737983450217408137"
+      },
+      {
+        "file": ".claude/skills/openspec-archive-change/SKILL.md",
+        "hash": "9840821164800370710"
+      },
+      {
+        "file": ".claude/commands/opsx/sync.md",
+        "hash": "5770142423048370817"
+      },
+      {
+        "file": ".claude/skills/openspec-update-change/SKILL.md",
+        "hash": "1848598471837111837"
+      },
+      {
+        "file": ".gitignore",
+        "hash": "2587622107816473060"
+      },
+      {
         "file": ".claude/commands/opsx/update.md",
         "hash": "5819696601791622803"
+      },
+      {
+        "file": "openspec/config.yaml",
+        "hash": "3824138819829171359"
       },
       {
         "file": "package.json",
         "hash": "8107781242630294961"
       },
       {
+        "file": "openspec/changes/add-cfp-dashboard/proposal.md",
+        "hash": "9879556987908435004"
+      },
+      {
+        "file": ".claude/commands/opsx/propose.md",
+        "hash": "1605830464872083009"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/.openspec.yaml",
+        "hash": "13406866330394161294"
+      },
+      {
+        "file": "openspec/changes/archive/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/specs/cfp-submission-listing/spec.md",
+        "hash": "6379474506284305154"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "14236175072743533737"
+      },
+      {
         "file": ".claude/skills/openspec-propose/SKILL.md",
         "hash": "16762831718712419575"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/proposal.md",
+        "hash": "530703179550371776"
       }
     ],
     "projectFileMap": {
@@ -212,7 +232,7 @@
         },
         {
           "file": "api/src/app/submissions/submissions.controller.spec.ts",
-          "hash": "16990360609511004066",
+          "hash": "514590002885937868",
           "deps": [
             "npm:@nestjs/common",
             "npm:@nestjs/testing",
@@ -222,7 +242,7 @@
         },
         {
           "file": "api/src/app/submissions/submissions.controller.ts",
-          "hash": "2388783679364346450",
+          "hash": "11789237739272817110",
           "deps": [
             "npm:@nestjs/common",
             "shared-types"
@@ -237,14 +257,14 @@
         },
         {
           "file": "api/src/app/submissions/submissions.service.spec.ts",
-          "hash": "17808326125889951428",
+          "hash": "11477378540035058021",
           "deps": [
             "shared-types"
           ]
         },
         {
           "file": "api/src/app/submissions/submissions.service.ts",
-          "hash": "766098880744365186",
+          "hash": "6354479452221200145",
           "deps": [
             "npm:@nestjs/common",
             "shared-types"
@@ -403,7 +423,7 @@
         },
         {
           "file": "frontend/src/app/app.routes.ts",
-          "hash": "220405975459420915",
+          "hash": "2763792541775704039",
           "deps": [
             "npm:@angular/router"
           ]
@@ -430,28 +450,58 @@
           ]
         },
         {
-          "file": "frontend/src/app/submissions/submission-form.component.html",
-          "hash": "15117406301741190251"
+          "file": "frontend/src/app/submissions/cfp-dashboard.component.html",
+          "hash": "15180373500411045007"
         },
         {
-          "file": "frontend/src/app/submissions/submission-form.component.scss",
-          "hash": "1957209072847438868"
+          "file": "frontend/src/app/submissions/cfp-dashboard.component.scss",
+          "hash": "4437710194944333561"
         },
         {
-          "file": "frontend/src/app/submissions/submission-form.component.spec.ts",
-          "hash": "3427602484248207192",
+          "file": "frontend/src/app/submissions/cfp-dashboard.component.spec.ts",
+          "hash": "8276512118301822483",
           "deps": [
             "npm:@angular/common",
             "npm:@angular/core",
+            "npm:@angular/router",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "frontend/src/app/submissions/cfp-dashboard.component.ts",
+          "hash": "9723287582927220106",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:@angular/router",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.html",
+          "hash": "10628394100813904472"
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.scss",
+          "hash": "4324687008112039358"
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.spec.ts",
+          "hash": "14752023949083798471",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:@angular/router",
             "shared-types"
           ]
         },
         {
           "file": "frontend/src/app/submissions/submission-form.component.ts",
-          "hash": "12813404359217160314",
+          "hash": "10244327996245152695",
           "deps": [
             "npm:@angular/common",
             "npm:@angular/core",
+            "npm:@angular/router",
             "shared-types"
           ]
         },
@@ -487,7 +537,7 @@
         },
         {
           "file": "frontend/src/styles.scss",
-          "hash": "5195668842064076916"
+          "hash": "9930166122640341653"
         },
         {
           "file": "frontend/src/test-setup.ts",

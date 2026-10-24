@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { CreateSpeakerSubmission } from 'shared-types';
 import { SubmissionService } from './submission.service';
 
@@ -18,6 +19,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
   selector: 'app-submission-form',
+  imports: [RouterLink],
   templateUrl: './submission-form.component.html',
   styleUrl: './submission-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

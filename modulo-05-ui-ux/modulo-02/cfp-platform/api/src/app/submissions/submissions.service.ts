@@ -18,4 +18,8 @@ export class SubmissionsService {
     this.submissions.push(submission);
     return submission;
   }
+
+  findAll(): SpeakerDTO[] {
+    return [...this.submissions];
+  }
 }

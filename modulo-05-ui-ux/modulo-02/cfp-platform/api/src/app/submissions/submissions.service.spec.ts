@@ -32,4 +32,22 @@ describe('SubmissionsService', () => {
     expect(id).toBeDefined();
     expect(rest).toEqual(input);
   });
+
+  describe('findAll', () => {
+    it('returns an empty list before any submission', () => {
+      expect(service.findAll()).toEqual([]);
+    });
+
+    it('returns submissions in insertion order', () => {
+      const first = service.create(input);
+      const second = service.create({ ...input, talkTitle: 'Zoneless Angular' });
+      expect(service.findAll()).toEqual([first, second]);
+    });
+
+    it('returns a copy that does not affect the store', () => {
+      service.create(input);
+      service.findAll().pop();
+      expect(service.findAll()).toHaveLength(1);
+    });
+  });
 });

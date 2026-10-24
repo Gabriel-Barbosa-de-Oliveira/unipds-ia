@@ -85,3 +85,57 @@ describe('SubmissionsController (POST /submissions)', () => {
       post({ ...valid, name: 'a'.repeat(120), talkTitle: 'a'.repeat(200) }).expect(201));
   });
 });
+
+describe('SubmissionsController (GET /submissions)', () => {
+  const ada: CreateSpeakerSubmission = {
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    talkTitle: 'Signals in Angular',
+    isGDE: true,
+  };
+  const grace: CreateSpeakerSubmission = {
+    name: 'Grace Hopper',
+    email: 'grace@example.com',
+    talkTitle: 'Zoneless change detection',
+    isGDE: false,
+  };
+
+  let app: INestApplication;
+
+  // A fresh app per test keeps the in-memory store empty between tests.
+  beforeEach(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [SubmissionsModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(createValidationPipe());
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  const post = (body: unknown) =>
+    request(app.getHttpServer()).post('/submissions').send(body as object);
+  const list = () => request(app.getHttpServer()).get('/submissions');
+
+  it('returns 200 with an empty array before any submission', () =>
+    list().expect(200).expect([]));
+
+  it('returns accepted submissions in submission order', async () => {
+    const first = await post(ada).expect(201);
+    const second = await post(grace).expect(201);
+
+    const res = await list().expect(200);
+    expect(res.body).toEqual([first.body, second.body]);
+  });
+
+  it('does not list rejected submissions', async () => {
+    await post({ ...ada, email: 'not-an-email' }).expect(400);
+
+    const res = await list().expect(200);
+    expect(res.body).toEqual([]);
+  });
+});

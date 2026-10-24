@@ -134,11 +134,20 @@ let SubmissionsController = class SubmissionsController {
     constructor(submissionsService) {
         this.submissionsService = submissionsService;
     }
+    findAll() {
+        return this.submissionsService.findAll();
+    }
     create(body) {
         return this.submissionsService.create(body);
     }
 };
 exports.SubmissionsController = SubmissionsController;
+tslib_1.__decorate([
+    (0, common_1.Get)(),
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", []),
+    tslib_1.__metadata("design:returntype", Array)
+], SubmissionsController.prototype, "findAll", null);
 tslib_1.__decorate([
     (0, common_1.Post)(),
     tslib_1.__param(0, (0, common_1.Body)()),
@@ -259,6 +268,9 @@ let SubmissionsService = class SubmissionsService {
         };
         this.submissions.push(submission);
         return submission;
+    }
+    findAll() {
+        return [...this.submissions];
     }
 };
 exports.SubmissionsService = SubmissionsService;
