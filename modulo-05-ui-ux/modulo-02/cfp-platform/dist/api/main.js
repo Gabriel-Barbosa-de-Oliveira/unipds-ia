@@ -24,12 +24,13 @@ const tslib_1 = __webpack_require__(4);
 const common_1 = __webpack_require__(1);
 const app_controller_1 = __webpack_require__(5);
 const app_service_1 = __webpack_require__(6);
+const submissions_module_1 = __webpack_require__(7);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = tslib_1.__decorate([
     (0, common_1.Module)({
-        imports: [],
+        imports: [submissions_module_1.SubmissionsModule],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })
@@ -94,6 +95,206 @@ exports.AppService = AppService = tslib_1.__decorate([
 ], AppService);
 
 
+/***/ }),
+/* 7 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SubmissionsModule = void 0;
+const tslib_1 = __webpack_require__(4);
+const common_1 = __webpack_require__(1);
+const submissions_controller_1 = __webpack_require__(8);
+const submissions_service_1 = __webpack_require__(15);
+let SubmissionsModule = class SubmissionsModule {
+};
+exports.SubmissionsModule = SubmissionsModule;
+exports.SubmissionsModule = SubmissionsModule = tslib_1.__decorate([
+    (0, common_1.Module)({
+        controllers: [submissions_controller_1.SubmissionsController],
+        providers: [submissions_service_1.SubmissionsService],
+    })
+], SubmissionsModule);
+
+
+/***/ }),
+/* 8 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SubmissionsController = void 0;
+const tslib_1 = __webpack_require__(4);
+const common_1 = __webpack_require__(1);
+const shared_types_1 = __webpack_require__(9);
+const create_submission_body_1 = __webpack_require__(12);
+const submissions_service_1 = __webpack_require__(15);
+let SubmissionsController = class SubmissionsController {
+    constructor(submissionsService) {
+        this.submissionsService = submissionsService;
+    }
+    create(body) {
+        return this.submissionsService.create(body);
+    }
+};
+exports.SubmissionsController = SubmissionsController;
+tslib_1.__decorate([
+    (0, common_1.Post)(),
+    tslib_1.__param(0, (0, common_1.Body)()),
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [typeof (_b = typeof create_submission_body_1.CreateSubmissionBody !== "undefined" && create_submission_body_1.CreateSubmissionBody) === "function" ? _b : Object]),
+    tslib_1.__metadata("design:returntype", typeof (_c = typeof shared_types_1.SpeakerDTO !== "undefined" && shared_types_1.SpeakerDTO) === "function" ? _c : Object)
+], SubmissionsController.prototype, "create", null);
+exports.SubmissionsController = SubmissionsController = tslib_1.__decorate([
+    (0, common_1.Controller)('submissions'),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof submissions_service_1.SubmissionsService !== "undefined" && submissions_service_1.SubmissionsService) === "function" ? _a : Object])
+], SubmissionsController);
+
+
+/***/ }),
+/* 9 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __webpack_require__(4);
+tslib_1.__exportStar(__webpack_require__(10), exports);
+tslib_1.__exportStar(__webpack_require__(11), exports);
+
+
+/***/ }),
+/* 10 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.sharedTypes = sharedTypes;
+function sharedTypes() {
+    return 'shared-types';
+}
+
+
+/***/ }),
+/* 11 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+
+/***/ }),
+/* 12 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateSubmissionBody = void 0;
+const tslib_1 = __webpack_require__(4);
+const class_transformer_1 = __webpack_require__(13);
+const class_validator_1 = __webpack_require__(14);
+const trim = ({ value }) => typeof value === 'string' ? value.trim() : value;
+class CreateSubmissionBody {
+}
+exports.CreateSubmissionBody = CreateSubmissionBody;
+tslib_1.__decorate([
+    (0, class_transformer_1.Transform)(trim),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(120),
+    tslib_1.__metadata("design:type", String)
+], CreateSubmissionBody.prototype, "name", void 0);
+tslib_1.__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEmail)(),
+    tslib_1.__metadata("design:type", String)
+], CreateSubmissionBody.prototype, "email", void 0);
+tslib_1.__decorate([
+    (0, class_transformer_1.Transform)(trim),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(200),
+    tslib_1.__metadata("design:type", String)
+], CreateSubmissionBody.prototype, "talkTitle", void 0);
+tslib_1.__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    tslib_1.__metadata("design:type", Boolean)
+], CreateSubmissionBody.prototype, "isGDE", void 0);
+
+
+/***/ }),
+/* 13 */
+/***/ ((module) => {
+
+module.exports = require("class-transformer");
+
+/***/ }),
+/* 14 */
+/***/ ((module) => {
+
+module.exports = require("class-validator");
+
+/***/ }),
+/* 15 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SubmissionsService = void 0;
+const tslib_1 = __webpack_require__(4);
+const common_1 = __webpack_require__(1);
+const crypto_1 = __webpack_require__(16);
+let SubmissionsService = class SubmissionsService {
+    constructor() {
+        // In-memory store: persistence is out of scope for this change.
+        this.submissions = [];
+    }
+    create(input) {
+        const submission = {
+            id: (0, crypto_1.randomUUID)(),
+            name: input.name,
+            email: input.email,
+            talkTitle: input.talkTitle,
+            isGDE: input.isGDE,
+        };
+        this.submissions.push(submission);
+        return submission;
+    }
+};
+exports.SubmissionsService = SubmissionsService;
+exports.SubmissionsService = SubmissionsService = tslib_1.__decorate([
+    (0, common_1.Injectable)()
+], SubmissionsService);
+
+
+/***/ }),
+/* 16 */
+/***/ ((module) => {
+
+module.exports = require("crypto");
+
+/***/ }),
+/* 17 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createValidationPipe = createValidationPipe;
+const common_1 = __webpack_require__(1);
+/**
+ * Global validation used by main.ts and by controller tests, so tests exercise
+ * the exact production configuration.
+ */
+function createValidationPipe() {
+    return new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: false },
+    });
+}
+
+
 /***/ })
 /******/ 	]);
 /************************************************************************/
@@ -135,10 +336,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const common_1 = __webpack_require__(1);
 const core_1 = __webpack_require__(2);
 const app_module_1 = __webpack_require__(3);
+const validation_pipe_1 = __webpack_require__(17);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const globalPrefix = 'api';
     app.setGlobalPrefix(globalPrefix);
+    app.useGlobalPipes((0, validation_pipe_1.createValidationPipe)());
     const port = process.env.PORT || 3000;
     await app.listen(port);
     common_1.Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);

@@ -40,119 +40,475 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": ".claude/skills/openspec-propose/SKILL.md",
-        "hash": "16762831718712419575"
-      },
-      {
-        "file": "package.json",
-        "hash": "4863652818843927312"
-      },
-      {
-        "file": ".claude/commands/opsx/apply.md",
-        "hash": "11638283287398599808"
-      },
-      {
         "file": ".gitignore",
         "hash": "2587622107816473060"
-      },
-      {
-        "file": ".claude/commands/opsx/propose.md",
-        "hash": "1605830464872083009"
-      },
-      {
-        "file": ".claude/skills/openspec-sync-specs/SKILL.md",
-        "hash": "11385563220199725647"
-      },
-      {
-        "file": ".claude/skills/openspec-archive-change/SKILL.md",
-        "hash": "9840821164800370710"
-      },
-      {
-        "file": ".claude/commands/opsx/sync.md",
-        "hash": "5770142423048370817"
       },
       {
         "file": ".claude/commands/opsx/archive.md",
         "hash": "8456543471923298363"
       },
       {
-        "file": "tsconfig.base.json",
-        "hash": "15672426423892019207"
-      },
-      {
-        "file": "openspec/changes/add-cfp-feature/tasks.md",
-        "hash": "9675360834263594480"
-      },
-      {
-        "file": "openspec/specs/.gitkeep",
-        "hash": "3244421341483603138"
-      },
-      {
-        "file": "nx.json",
-        "hash": "15846869734396097217"
-      },
-      {
-        "file": "jest.config.ts",
-        "hash": "14236175072743533737"
-      },
-      {
-        "file": ".claude/skills/openspec-apply-change/SKILL.md",
-        "hash": "11535354846729162475"
-      },
-      {
-        "file": "openspec/changes/add-cfp-feature/proposal.md",
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/proposal.md",
         "hash": "530703179550371776"
       },
       {
-        "file": "openspec/changes/add-cfp-feature/.openspec.yaml",
-        "hash": "13406866330394161294"
-      },
-      {
-        "file": "jest.preset.js",
-        "hash": "13737983450217408137"
-      },
-      {
-        "file": ".claude/commands/opsx/update.md",
-        "hash": "5819696601791622803"
-      },
-      {
-        "file": "openspec/changes/archive/.gitkeep",
-        "hash": "3244421341483603138"
-      },
-      {
-        "file": ".claude/skills/openspec-update-change/SKILL.md",
-        "hash": "1848598471837111837"
-      },
-      {
-        "file": "eslint.config.mjs",
-        "hash": "9002143704707986394"
-      },
-      {
         "file": "package-lock.json",
-        "hash": "2161266007015525564"
+        "hash": "7172322894825591632"
       },
       {
-        "file": ".claude/skills/openspec-explore/SKILL.md",
-        "hash": "18316009530293600476"
-      },
-      {
-        "file": "openspec/config.yaml",
-        "hash": "3824138819829171359"
-      },
-      {
-        "file": "openspec/changes/add-cfp-feature/design.md",
-        "hash": "13723515230790474440"
+        "file": ".claude/commands/opsx/propose.md",
+        "hash": "1605830464872083009"
       },
       {
         "file": ".mcp.json",
         "hash": "10017896268110199194"
       },
       {
+        "file": ".claude/commands/opsx/sync.md",
+        "hash": "5770142423048370817"
+      },
+      {
+        "file": "eslint.config.mjs",
+        "hash": "9002143704707986394"
+      },
+      {
+        "file": ".claude/skills/openspec-explore/SKILL.md",
+        "hash": "18316009530293600476"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "14236175072743533737"
+      },
+      {
+        "file": ".claude/skills/openspec-sync-specs/SKILL.md",
+        "hash": "11385563220199725647"
+      },
+      {
+        "file": "openspec/changes/archive/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "13737983450217408137"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/tasks.md",
+        "hash": "15965573603347191049"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/.openspec.yaml",
+        "hash": "13406866330394161294"
+      },
+      {
+        "file": ".claude/commands/opsx/apply.md",
+        "hash": "11638283287398599808"
+      },
+      {
+        "file": "openspec/specs/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
         "file": ".claude/commands/opsx/explore.md",
         "hash": "5443850152384879233"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "15672426423892019207"
+      },
+      {
+        "file": ".claude/skills/openspec-archive-change/SKILL.md",
+        "hash": "9840821164800370710"
+      },
+      {
+        "file": "nx.json",
+        "hash": "15846869734396097217"
+      },
+      {
+        "file": "openspec/config.yaml",
+        "hash": "3824138819829171359"
+      },
+      {
+        "file": ".claude/skills/openspec-update-change/SKILL.md",
+        "hash": "1848598471837111837"
+      },
+      {
+        "file": ".claude/skills/openspec-apply-change/SKILL.md",
+        "hash": "11535354846729162475"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/design.md",
+        "hash": "13723515230790474440"
+      },
+      {
+        "file": ".claude/commands/opsx/update.md",
+        "hash": "5819696601791622803"
+      },
+      {
+        "file": "package.json",
+        "hash": "8107781242630294961"
+      },
+      {
+        "file": ".claude/skills/openspec-propose/SKILL.md",
+        "hash": "16762831718712419575"
       }
     ],
     "projectFileMap": {
+      "api": [
+        {
+          "file": "api/eslint.config.mjs",
+          "hash": "3710693707408135750"
+        },
+        {
+          "file": "api/jest.config.cts",
+          "hash": "17129139629318892390"
+        },
+        {
+          "file": "api/project.json",
+          "hash": "5256675625808894809"
+        },
+        {
+          "file": "api/src/app/app.controller.spec.ts",
+          "hash": "16195083839539355803",
+          "deps": [
+            "npm:@nestjs/testing"
+          ]
+        },
+        {
+          "file": "api/src/app/app.controller.ts",
+          "hash": "15276891910009544695",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/app.module.ts",
+          "hash": "14702980636092786030",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/app.service.spec.ts",
+          "hash": "17298266700909662742",
+          "deps": [
+            "npm:@nestjs/testing"
+          ]
+        },
+        {
+          "file": "api/src/app/app.service.ts",
+          "hash": "1398463054208547248",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/create-submission.body.ts",
+          "hash": "5034931322338884397",
+          "deps": [
+            "npm:class-transformer",
+            "npm:class-validator",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.controller.spec.ts",
+          "hash": "16990360609511004066",
+          "deps": [
+            "npm:@nestjs/common",
+            "npm:@nestjs/testing",
+            "npm:supertest",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.controller.ts",
+          "hash": "2388783679364346450",
+          "deps": [
+            "npm:@nestjs/common",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.module.ts",
+          "hash": "6446050653559295459",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.service.spec.ts",
+          "hash": "17808326125889951428",
+          "deps": [
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.service.ts",
+          "hash": "766098880744365186",
+          "deps": [
+            "npm:@nestjs/common",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/validation.pipe.ts",
+          "hash": "14024303678256102258",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/assets/.gitkeep",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "api/src/main.ts",
+          "hash": "251608716415916594",
+          "deps": [
+            "npm:@nestjs/common",
+            "npm:@nestjs/core"
+          ]
+        },
+        {
+          "file": "api/tsconfig.app.json",
+          "hash": "9957356043912605818"
+        },
+        {
+          "file": "api/tsconfig.json",
+          "hash": "9420862676426701392"
+        },
+        {
+          "file": "api/tsconfig.spec.json",
+          "hash": "8030639829004721301"
+        },
+        {
+          "file": "api/webpack.config.js",
+          "hash": "6809973803337539335",
+          "deps": [
+            "npm:@nx/webpack"
+          ]
+        }
+      ],
+      "shared-types": [
+        {
+          "file": "shared-types/README.md",
+          "hash": "9741169815637935730"
+        },
+        {
+          "file": "shared-types/eslint.config.mjs",
+          "hash": "769165677790523341",
+          "deps": [
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
+          ]
+        },
+        {
+          "file": "shared-types/jest.config.cts",
+          "hash": "2073640654453309169"
+        },
+        {
+          "file": "shared-types/package.json",
+          "hash": "9638738279093990236"
+        },
+        {
+          "file": "shared-types/project.json",
+          "hash": "3991178185533183276"
+        },
+        {
+          "file": "shared-types/src/index.ts",
+          "hash": "6500216990418719999"
+        },
+        {
+          "file": "shared-types/src/lib/shared-types.spec.ts",
+          "hash": "4257519248946734625"
+        },
+        {
+          "file": "shared-types/src/lib/shared-types.ts",
+          "hash": "11715063447328923451"
+        },
+        {
+          "file": "shared-types/src/lib/speaker.dto.ts",
+          "hash": "17929823997165699336"
+        },
+        {
+          "file": "shared-types/tsconfig.json",
+          "hash": "10148903843036702529"
+        },
+        {
+          "file": "shared-types/tsconfig.lib.json",
+          "hash": "12017290130308040924"
+        },
+        {
+          "file": "shared-types/tsconfig.spec.json",
+          "hash": "8030639829004721301"
+        }
+      ],
+      "frontend-e2e": [
+        {
+          "file": "frontend-e2e/playwright.config.mts",
+          "hash": "1415898801629079504",
+          "deps": [
+            "npm:@playwright/test",
+            "npm:@nx/playwright",
+            "npm:@nx/devkit"
+          ]
+        },
+        {
+          "file": "frontend-e2e/project.json",
+          "hash": "9589688224954893727"
+        },
+        {
+          "file": "frontend-e2e/src/example.spec.ts",
+          "hash": "16019101014373124625",
+          "deps": [
+            "npm:@playwright/test"
+          ]
+        },
+        {
+          "file": "frontend-e2e/tsconfig.json",
+          "hash": "9139255017308808663"
+        }
+      ],
+      "frontend": [
+        {
+          "file": "frontend/jest.config.cts",
+          "hash": "12793462126782049294"
+        },
+        {
+          "file": "frontend/project.json",
+          "hash": "11887543234628948792"
+        },
+        {
+          "file": "frontend/proxy.conf.json",
+          "hash": "11371564546916186184"
+        },
+        {
+          "file": "frontend/public/favicon.ico",
+          "hash": "9303420814833116677"
+        },
+        {
+          "file": "frontend/src/app/app.config.ts",
+          "hash": "4035050679619668567",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/common",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "frontend/src/app/app.html",
+          "hash": "17681715149392321156"
+        },
+        {
+          "file": "frontend/src/app/app.routes.ts",
+          "hash": "220405975459420915",
+          "deps": [
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "frontend/src/app/app.scss",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "frontend/src/app/app.spec.ts",
+          "hash": "3127706672724519512",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "frontend/src/app/app.ts",
+          "hash": "3812534648388772557",
+          "deps": [
+            "npm:@angular/core",
+            "npm:@angular/router"
+          ]
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.html",
+          "hash": "15117406301741190251"
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.scss",
+          "hash": "1957209072847438868"
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.spec.ts",
+          "hash": "3427602484248207192",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "frontend/src/app/submissions/submission-form.component.ts",
+          "hash": "12813404359217160314",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "frontend/src/app/submissions/submission.service.spec.ts",
+          "hash": "12465390617350779041",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "frontend/src/app/submissions/submission.service.ts",
+          "hash": "1624144186521707731",
+          "deps": [
+            "npm:@angular/common",
+            "npm:@angular/core",
+            "npm:rxjs",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "frontend/src/index.html",
+          "hash": "10958459893752702268"
+        },
+        {
+          "file": "frontend/src/main.ts",
+          "hash": "3820470197416434450",
+          "deps": [
+            "npm:@angular/platform-browser"
+          ]
+        },
+        {
+          "file": "frontend/src/styles.scss",
+          "hash": "5195668842064076916"
+        },
+        {
+          "file": "frontend/src/test-setup.ts",
+          "hash": "13302304498472614622",
+          "deps": [
+            "npm:jest-preset-angular"
+          ]
+        },
+        {
+          "file": "frontend/tsconfig.app.json",
+          "hash": "11017204737447290997"
+        },
+        {
+          "file": "frontend/tsconfig.json",
+          "hash": "16799350628383229467"
+        },
+        {
+          "file": "frontend/tsconfig.spec.json",
+          "hash": "7453272105353972262"
+        }
+      ],
       "api-e2e": [
         {
           "file": "api-e2e/eslint.config.mjs",
@@ -202,257 +558,8 @@
           "file": "api-e2e/tsconfig.spec.json",
           "hash": "17514012667061082414"
         }
-      ],
-      "frontend-e2e": [
-        {
-          "file": "frontend-e2e/playwright.config.mts",
-          "hash": "1415898801629079504",
-          "deps": [
-            "npm:@playwright/test",
-            "npm:@nx/playwright",
-            "npm:@nx/devkit"
-          ]
-        },
-        {
-          "file": "frontend-e2e/project.json",
-          "hash": "9589688224954893727"
-        },
-        {
-          "file": "frontend-e2e/src/example.spec.ts",
-          "hash": "16019101014373124625",
-          "deps": [
-            "npm:@playwright/test"
-          ]
-        },
-        {
-          "file": "frontend-e2e/tsconfig.json",
-          "hash": "9139255017308808663"
-        }
-      ],
-      "api": [
-        {
-          "file": "api/eslint.config.mjs",
-          "hash": "3710693707408135750"
-        },
-        {
-          "file": "api/jest.config.cts",
-          "hash": "17129139629318892390"
-        },
-        {
-          "file": "api/project.json",
-          "hash": "5256675625808894809"
-        },
-        {
-          "file": "api/src/app/app.controller.spec.ts",
-          "hash": "16195083839539355803",
-          "deps": [
-            "npm:@nestjs/testing"
-          ]
-        },
-        {
-          "file": "api/src/app/app.controller.ts",
-          "hash": "15276891910009544695",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/app.module.ts",
-          "hash": "11673476679848632172",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/app.service.spec.ts",
-          "hash": "17298266700909662742",
-          "deps": [
-            "npm:@nestjs/testing"
-          ]
-        },
-        {
-          "file": "api/src/app/app.service.ts",
-          "hash": "1398463054208547248",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/assets/.gitkeep",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "api/src/main.ts",
-          "hash": "2001345965177334983",
-          "deps": [
-            "npm:@nestjs/common",
-            "npm:@nestjs/core"
-          ]
-        },
-        {
-          "file": "api/tsconfig.app.json",
-          "hash": "9957356043912605818"
-        },
-        {
-          "file": "api/tsconfig.json",
-          "hash": "9420862676426701392"
-        },
-        {
-          "file": "api/tsconfig.spec.json",
-          "hash": "8030639829004721301"
-        },
-        {
-          "file": "api/webpack.config.js",
-          "hash": "6809973803337539335",
-          "deps": [
-            "npm:@nx/webpack"
-          ]
-        }
-      ],
-      "frontend": [
-        {
-          "file": "frontend/project.json",
-          "hash": "15566411435164273147"
-        },
-        {
-          "file": "frontend/proxy.conf.json",
-          "hash": "11371564546916186184"
-        },
-        {
-          "file": "frontend/public/favicon.ico",
-          "hash": "9303420814833116677"
-        },
-        {
-          "file": "frontend/src/app/app.config.ts",
-          "hash": "17072567673578843235",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/router"
-          ]
-        },
-        {
-          "file": "frontend/src/app/app.html",
-          "hash": "11987652264972370457"
-        },
-        {
-          "file": "frontend/src/app/app.routes.ts",
-          "hash": "6185150965714414910",
-          "deps": [
-            "npm:@angular/router"
-          ]
-        },
-        {
-          "file": "frontend/src/app/app.scss",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "frontend/src/app/app.spec.ts",
-          "hash": "347008456060200612",
-          "deps": [
-            "npm:@angular/core"
-          ]
-        },
-        {
-          "file": "frontend/src/app/app.ts",
-          "hash": "11833690593705296219",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/router"
-          ]
-        },
-        {
-          "file": "frontend/src/app/nx-welcome.ts",
-          "hash": "10040387673734689651",
-          "deps": [
-            "npm:@angular/core",
-            "npm:@angular/common"
-          ]
-        },
-        {
-          "file": "frontend/src/index.html",
-          "hash": "10958459893752702268"
-        },
-        {
-          "file": "frontend/src/main.ts",
-          "hash": "3820470197416434450",
-          "deps": [
-            "npm:@angular/platform-browser"
-          ]
-        },
-        {
-          "file": "frontend/src/styles.scss",
-          "hash": "5195668842064076916"
-        },
-        {
-          "file": "frontend/tsconfig.app.json",
-          "hash": "11017204737447290997"
-        },
-        {
-          "file": "frontend/tsconfig.json",
-          "hash": "16799350628383229467"
-        },
-        {
-          "file": "frontend/tsconfig.spec.json",
-          "hash": "6501866911986492693"
-        }
-      ],
-      "shared-types": [
-        {
-          "file": "shared-types/README.md",
-          "hash": "9741169815637935730"
-        },
-        {
-          "file": "shared-types/eslint.config.mjs",
-          "hash": "769165677790523341",
-          "deps": [
-            [
-              "npm:jsonc-eslint-parser",
-              "dynamic"
-            ]
-          ]
-        },
-        {
-          "file": "shared-types/jest.config.cts",
-          "hash": "2073640654453309169"
-        },
-        {
-          "file": "shared-types/package.json",
-          "hash": "9638738279093990236"
-        },
-        {
-          "file": "shared-types/project.json",
-          "hash": "3991178185533183276"
-        },
-        {
-          "file": "shared-types/src/index.ts",
-          "hash": "6500216990418719999"
-        },
-        {
-          "file": "shared-types/src/lib/shared-types.spec.ts",
-          "hash": "4257519248946734625"
-        },
-        {
-          "file": "shared-types/src/lib/shared-types.ts",
-          "hash": "11715063447328923451"
-        },
-        {
-          "file": "shared-types/src/lib/speaker.dto.ts",
-          "hash": "9564003088604045033"
-        },
-        {
-          "file": "shared-types/tsconfig.json",
-          "hash": "10148903843036702529"
-        },
-        {
-          "file": "shared-types/tsconfig.lib.json",
-          "hash": "12017290130308040924"
-        },
-        {
-          "file": "shared-types/tsconfig.spec.json",
-          "hash": "8030639829004721301"
-        }
       ]
     }
   },
-  "externalNodesHash": "10262680121490438029"
+  "externalNodesHash": "16477209703884199805"
 }

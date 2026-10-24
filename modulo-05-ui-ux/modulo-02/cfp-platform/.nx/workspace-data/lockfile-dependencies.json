@@ -1,5 +1,5 @@
 {
-  "key": "9618323420224135851",
+  "key": "1593276031325696277",
   "data": [
     {
       "source": "npm:@ampproject/remapping",
@@ -6342,6 +6342,76 @@
       "type": "static"
     },
     {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:@types/jsdom",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:jsdom",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:@jest/environment",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:@jest/fake-timers",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:@jest/types",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:@types/node",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:jest-mock",
+      "type": "static"
+    },
+    {
+      "source": "npm:@jest/environment-jsdom-abstract",
+      "target": "npm:jest-util@30.5.1",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:@jest/types",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:@types/node",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:chalk",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:ci-info",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:graceful-fs",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:picomatch",
+      "type": "static"
+    },
+    {
       "source": "npm:@jest/expect",
       "target": "npm:expect",
       "type": "static"
@@ -7399,6 +7469,16 @@
     {
       "source": "npm:@napi-rs/wasm-runtime",
       "target": "npm:@tybys/wasm-util",
+      "type": "static"
+    },
+    {
+      "source": "npm:@nestjs/common",
+      "target": "npm:class-transformer",
+      "type": "static"
+    },
+    {
+      "source": "npm:@nestjs/common",
+      "target": "npm:class-validator",
       "type": "static"
     },
     {
@@ -8842,6 +8922,11 @@
       "type": "static"
     },
     {
+      "source": "npm:@paralleldrive/cuid2",
+      "target": "npm:@noble/hashes",
+      "type": "static"
+    },
+    {
       "source": "npm:@parcel/watcher",
       "target": "npm:detect-libc",
       "type": "static"
@@ -9492,6 +9577,26 @@
       "type": "static"
     },
     {
+      "source": "npm:@types/jsdom",
+      "target": "npm:@types/node",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/jsdom",
+      "target": "npm:@types/tough-cookie",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/jsdom",
+      "target": "npm:parse5",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/jsdom",
+      "target": "npm:undici-types@8.12.3",
+      "type": "static"
+    },
+    {
       "source": "npm:@types/node",
       "target": "npm:undici-types",
       "type": "static"
@@ -9534,6 +9639,36 @@
     {
       "source": "npm:@types/sockjs",
       "target": "npm:@types/node",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/superagent",
+      "target": "npm:@types/cookiejar",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/superagent",
+      "target": "npm:@types/methods",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/superagent",
+      "target": "npm:@types/node",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/superagent",
+      "target": "npm:form-data",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/supertest",
+      "target": "npm:@types/methods",
+      "type": "static"
+    },
+    {
+      "source": "npm:@types/supertest",
+      "target": "npm:@types/superagent",
       "type": "static"
     },
     {
@@ -10827,6 +10962,21 @@
       "type": "static"
     },
     {
+      "source": "npm:class-validator",
+      "target": "npm:@types/validator",
+      "type": "static"
+    },
+    {
+      "source": "npm:class-validator",
+      "target": "npm:libphonenumber-js",
+      "type": "static"
+    },
+    {
+      "source": "npm:class-validator",
+      "target": "npm:validator",
+      "type": "static"
+    },
+    {
       "source": "npm:cli-cursor",
       "target": "npm:restore-cursor",
       "type": "static"
@@ -11474,6 +11624,16 @@
     {
       "source": "npm:detect-port",
       "target": "npm:address",
+      "type": "static"
+    },
+    {
+      "source": "npm:dezalgo",
+      "target": "npm:asap",
+      "type": "static"
+    },
+    {
+      "source": "npm:dezalgo",
+      "target": "npm:wrappy",
       "type": "static"
     },
     {
@@ -12534,6 +12694,21 @@
     {
       "source": "npm:mime-types@2.1.35",
       "target": "npm:mime-db@1.52.0",
+      "type": "static"
+    },
+    {
+      "source": "npm:formidable",
+      "target": "npm:@paralleldrive/cuid2",
+      "type": "static"
+    },
+    {
+      "source": "npm:formidable",
+      "target": "npm:dezalgo",
+      "type": "static"
+    },
+    {
+      "source": "npm:formidable",
+      "target": "npm:once",
       "type": "static"
     },
     {
@@ -15514,6 +15689,231 @@
     {
       "source": "npm:jest-pnp-resolver",
       "target": "npm:jest-resolve",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:@angular/compiler-cli",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:@angular/core",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:@angular/platform-browser",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:jest",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:jsdom",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:typescript",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:@jest/environment-jsdom-abstract",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:bs-logger",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:esbuild-wasm",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:jest-util@30.5.1",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:pretty-format",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:ts-jest",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-preset-angular",
+      "target": "npm:esbuild@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/aix-ppc64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/android-arm@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/android-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/android-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/darwin-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/darwin-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/freebsd-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/freebsd-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-arm@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-ia32@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-loong64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-mips64el@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-ppc64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-riscv64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-s390x@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/linux-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/netbsd-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/netbsd-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/openbsd-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/openbsd-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/openharmony-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/sunos-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/win32-arm64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/win32-ia32@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:esbuild@0.28.2",
+      "target": "npm:@esbuild/win32-x64@0.28.2",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:@jest/types",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:@types/node",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:chalk",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:ci-info",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:graceful-fs",
+      "type": "static"
+    },
+    {
+      "source": "npm:jest-util@30.5.1",
+      "target": "npm:picomatch",
       "type": "static"
     },
     {
@@ -20264,6 +20664,66 @@
     {
       "source": "npm:stylehacks",
       "target": "npm:postcss-selector-parser",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:component-emitter",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:cookiejar",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:debug",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:fast-safe-stringify",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:form-data",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:formidable",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:methods",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:mime@2.6.0",
+      "type": "static"
+    },
+    {
+      "source": "npm:superagent",
+      "target": "npm:qs",
+      "type": "static"
+    },
+    {
+      "source": "npm:supertest",
+      "target": "npm:cookie-signature",
+      "type": "static"
+    },
+    {
+      "source": "npm:supertest",
+      "target": "npm:methods",
+      "type": "static"
+    },
+    {
+      "source": "npm:supertest",
+      "target": "npm:superagent",
       "type": "static"
     },
     {

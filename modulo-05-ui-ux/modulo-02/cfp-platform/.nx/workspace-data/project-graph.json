@@ -449,6 +449,50 @@
             "configurations": {},
             "parallelism": true
           },
+          "test": {
+            "metadata": {
+              "technologies": [
+                "jest"
+              ],
+              "description": "Run Jest Tests",
+              "help": {
+                "command": "npx jest --help",
+                "example": {
+                  "options": {
+                    "coverage": true
+                  }
+                }
+              }
+            },
+            "cache": true,
+            "inputs": [
+              "default",
+              "^production",
+              "{workspaceRoot}/jest.preset.js",
+              "{projectRoot}/src/test-setup.ts",
+              {
+                "externalDependencies": [
+                  "jest",
+                  "@nx/jest",
+                  "ts-jest",
+                  "jest-preset-angular"
+                ]
+              }
+            ],
+            "outputs": [
+              "{workspaceRoot}/coverage/frontend"
+            ],
+            "executor": "nx:run-commands",
+            "options": {
+              "cwd": "frontend",
+              "env": {
+                "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+              },
+              "command": "jest"
+            },
+            "configurations": {},
+            "parallelism": true
+          },
           "build": {
             "cache": true,
             "dependsOn": [
@@ -500,19 +544,6 @@
                 "sourceMap": true
               }
             },
-            "parallelism": true
-          },
-          "test": {
-            "cache": true,
-            "inputs": [
-              "default",
-              "^production"
-            ],
-            "executor": "@angular/build:unit-test",
-            "options": {
-              "watch": false
-            },
-            "configurations": {},
             "parallelism": true
           },
           "serve": {
@@ -5451,6 +5482,15 @@
         "hash": "sha512-u9E6A+ZDYdp7a4WnarkXPZOx8Ilz46+kby6p1yZ8zsGTz9gYa6FIS7lj2oezzNKmtdyyJNNmmXDppga5GB7kSw=="
       }
     },
+    "npm:@jest/environment-jsdom-abstract": {
+      "type": "npm",
+      "name": "npm:@jest/environment-jsdom-abstract",
+      "data": {
+        "version": "30.5.2",
+        "packageName": "@jest/environment-jsdom-abstract",
+        "hash": "sha512-8/P+8hKv7L4mhFoB6gpYLj/fuzXk8PWrde7TDHh8tJz5pE1ktlMbg0y6hDY/V8MfAnispFlPl/vPifowLy3JGQ=="
+      }
+    },
     "npm:@jest/react-is-18": {
       "type": "npm",
       "name": "npm:@jest/react-is-18",
@@ -6639,6 +6679,15 @@
         "hash": "sha512-Ny/Wv4Us1LGC/ljwNTp+Hx3r/pH15EFfeDF0p+n898gt+TtRd6C9SccHcuUhDiNTb8s5tt7jdeAMDRQZ4Vq6hg=="
       }
     },
+    "npm:@paralleldrive/cuid2": {
+      "type": "npm",
+      "name": "npm:@paralleldrive/cuid2",
+      "data": {
+        "version": "2.3.1",
+        "packageName": "@paralleldrive/cuid2",
+        "hash": "sha512-XO7cAxhnTZl0Yggq6jOgjiOHhbgcO4NqFqwSmQpjK3b6TEE6Uj/jfSk6wzYyemh3+I0sHirKSetjQwn5cZktFw=="
+      }
+    },
     "npm:@parcel/watcher": {
       "type": "npm",
       "name": "npm:@parcel/watcher",
@@ -7107,6 +7156,15 @@
         "hash": "sha512-n6Cr2xS1h4uAulPRdlw6Jl6s1oG8KrVilPN2yUITEs+K48EzMJJ3W1xy8K5eWuFvjp3R74AOIGSmp2UfBJ8HFw=="
       }
     },
+    "npm:@types/cookiejar": {
+      "type": "npm",
+      "name": "npm:@types/cookiejar",
+      "data": {
+        "version": "2.1.5",
+        "packageName": "@types/cookiejar",
+        "hash": "sha512-he+DHOWReW0nghN24E1WUqM0efK4kI9oTqDm6XmK8ZPe2djZ90BSNdGnIyCLzCPw7/pogPlGbzI2wHGGmi4O/Q=="
+      }
+    },
     "npm:@types/deep-eql": {
       "type": "npm",
       "name": "npm:@types/deep-eql",
@@ -7215,6 +7273,33 @@
         "hash": "sha512-XTYugzhuwqWjws0CVz8QpM36+T+Dz5mTEBKhNs/esGLnCIlGdRy+Dq78NRjd7ls7r8BC8ZRMOrKlkO1hU0JOwA=="
       }
     },
+    "npm:@types/jsdom": {
+      "type": "npm",
+      "name": "npm:@types/jsdom",
+      "data": {
+        "version": "30.0.0",
+        "packageName": "@types/jsdom",
+        "hash": "sha512-uAHGxujGE0cDaKGdK28zgDotFtNA7MKq5DXl8LrfdxdCI8VHcg15oJz+amHTChPNI5JpgEPQWc2xFdrw3em/nQ=="
+      }
+    },
+    "npm:undici-types@8.12.3": {
+      "type": "npm",
+      "name": "npm:undici-types@8.12.3",
+      "data": {
+        "version": "8.12.3",
+        "packageName": "undici-types",
+        "hash": "sha512-EXE4ydL3S76dFb27UFjNVZHTyv/TLdATj/KUe29ptdcg6qXL48J2tZ3126E5kICj5jn781OR+XlVH1N6Mz8jbA=="
+      }
+    },
+    "npm:undici-types": {
+      "type": "npm",
+      "name": "npm:undici-types",
+      "data": {
+        "version": "6.21.0",
+        "packageName": "undici-types",
+        "hash": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
+      }
+    },
     "npm:@types/jsesc": {
       "type": "npm",
       "name": "npm:@types/jsesc",
@@ -7231,6 +7316,15 @@
         "version": "7.0.15",
         "packageName": "@types/json-schema",
         "hash": "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="
+      }
+    },
+    "npm:@types/methods": {
+      "type": "npm",
+      "name": "npm:@types/methods",
+      "data": {
+        "version": "1.1.4",
+        "packageName": "@types/methods",
+        "hash": "sha512-ymXWVrDiCxTBE3+RIrrP533E70eA+9qu7zdWoHuOmGujkYtzf4HQF96b8nwHLqhuf4ykX61IGRIB38CC6/sImQ=="
       }
     },
     "npm:@types/mime": {
@@ -7339,6 +7433,42 @@
         "version": "2.0.3",
         "packageName": "@types/stack-utils",
         "hash": "sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw=="
+      }
+    },
+    "npm:@types/superagent": {
+      "type": "npm",
+      "name": "npm:@types/superagent",
+      "data": {
+        "version": "8.1.11",
+        "packageName": "@types/superagent",
+        "hash": "sha512-KA7srSW/HENDtOw9DOqaFLgWuMqN9WgjEw62lh9dpvRaZDkhdOkazASd7X7i2eMUYLHa1U37ZttnePsH5zTDHw=="
+      }
+    },
+    "npm:@types/supertest": {
+      "type": "npm",
+      "name": "npm:@types/supertest",
+      "data": {
+        "version": "7.2.1",
+        "packageName": "@types/supertest",
+        "hash": "sha512-4CbBvoYVLHL7+yhbYrZET0vsvuyXTC05aRe7dNQkwMzm56auceoy6Yu3K50uZmwfHna1os3CMSgM/3QVkUtPTw=="
+      }
+    },
+    "npm:@types/tough-cookie": {
+      "type": "npm",
+      "name": "npm:@types/tough-cookie",
+      "data": {
+        "version": "4.0.5",
+        "packageName": "@types/tough-cookie",
+        "hash": "sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA=="
+      }
+    },
+    "npm:@types/validator": {
+      "type": "npm",
+      "name": "npm:@types/validator",
+      "data": {
+        "version": "13.15.10",
+        "packageName": "@types/validator",
+        "hash": "sha512-T8L6i7wCuyoK8A/ZeLYt1+q0ty3Zb9+qbSSvrIVitzT3YjZqkTZ40IbRsPanlB4h1QB3JVL1SYCdR6ngtFYcuA=="
       }
     },
     "npm:@types/ws": {
@@ -8070,6 +8200,15 @@
         "hash": "sha512-/+3GRL7dDAGEfM6TseQk/U+mi18TU2Ms9I3UlLdUMhz2hbvGNTKdj9xniwXfUqgYhHxRx0+8UnKkvlNwVU+cWQ=="
       }
     },
+    "npm:asap": {
+      "type": "npm",
+      "name": "npm:asap",
+      "data": {
+        "version": "2.0.6",
+        "packageName": "asap",
+        "hash": "sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA=="
+      }
+    },
     "npm:asn1js": {
       "type": "npm",
       "name": "npm:asn1js",
@@ -8574,6 +8713,24 @@
         "hash": "sha512-lmNyBzi6iYiqyrExTctfmjd8tInx+dHu9PBomTfH5RXS53c27JMFJgzNv5TyAnm3PgGf+MLy0+Ws41/HlVxdKQ=="
       }
     },
+    "npm:class-transformer": {
+      "type": "npm",
+      "name": "npm:class-transformer",
+      "data": {
+        "version": "0.5.1",
+        "packageName": "class-transformer",
+        "hash": "sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw=="
+      }
+    },
+    "npm:class-validator": {
+      "type": "npm",
+      "name": "npm:class-validator",
+      "data": {
+        "version": "0.15.1",
+        "packageName": "class-validator",
+        "hash": "sha512-LqoS80HBBSCVhz/3KloUly0ovokxpdOLR++Al3J3+dHXWt9sTKlKd4eYtoxhxyUjoe5+UcIM+5k9MIxyBWnRTw=="
+      }
+    },
     "npm:cli-cursor": {
       "type": "npm",
       "name": "npm:cli-cursor",
@@ -8763,6 +8920,15 @@
         "hash": "sha512-QE33hToZseCH3jS0qN96O/bSh3kaw/h+Tq7ngyY9eWDUnTlTNUyqfqvCXioLe5Na5jFsL78ra/wuBU4iuEgd4w=="
       }
     },
+    "npm:component-emitter": {
+      "type": "npm",
+      "name": "npm:component-emitter",
+      "data": {
+        "version": "1.3.1",
+        "packageName": "component-emitter",
+        "hash": "sha512-T0+barUSQRTUQASh8bx02dl+DhF54GtIDY13Y3m9oWTklKbb3Wv974meRpeZ3lp1JpLVECWWNHC4vaG2XHXouQ=="
+      }
+    },
     "npm:compressible": {
       "type": "npm",
       "name": "npm:compressible",
@@ -8941,6 +9107,15 @@
         "version": "1.0.7",
         "packageName": "cookie-signature",
         "hash": "sha512-NXdYc3dLr47pBkpUCHtKSwIOQXLVn8dZEuywboCOJY/osA0wFSLlSawr3KN8qXJEyX66FcONTH8EIlVuK0yyFA=="
+      }
+    },
+    "npm:cookiejar": {
+      "type": "npm",
+      "name": "npm:cookiejar",
+      "data": {
+        "version": "2.1.4",
+        "packageName": "cookiejar",
+        "hash": "sha512-LDx6oHrK+PhzLKJU9j5S7/Y3jM/mUHvD/DeI1WQmJn652iPC5Y4TBzC9l+5OMOXlyTTA+SmVUPm0HQUwpD5Jqw=="
       }
     },
     "npm:copy-anything": {
@@ -9348,6 +9523,15 @@
         "hash": "sha512-epZuWb/6Q62L+nDHJc/hQAqf8pylsqgk3BpZXVBx1CDnr3nkrVNn73Uu1rXcFzkNcc+hkP3whuOg7JZYaQB65Q=="
       }
     },
+    "npm:dezalgo": {
+      "type": "npm",
+      "name": "npm:dezalgo",
+      "data": {
+        "version": "1.0.4",
+        "packageName": "dezalgo",
+        "hash": "sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig=="
+      }
+    },
     "npm:diff": {
       "type": "npm",
       "name": "npm:diff",
@@ -9634,6 +9818,15 @@
         "version": "2.1.0",
         "packageName": "es-set-tostringtag",
         "hash": "sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA=="
+      }
+    },
+    "npm:esbuild-wasm": {
+      "type": "npm",
+      "name": "npm:esbuild-wasm",
+      "data": {
+        "version": "0.28.2",
+        "packageName": "esbuild-wasm",
+        "hash": "sha512-GccVwhv3mmOUVQHCQm2Ox/rby8n/EqUwvZxE6Pjfikrq/lWw9g9WX/u9EykWnpot3Ko6j426DgQdea2xWKIAQA=="
       }
     },
     "npm:escalade": {
@@ -10237,6 +10430,15 @@
         "version": "3.0.2",
         "packageName": "mime-types",
         "hash": "sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A=="
+      }
+    },
+    "npm:formidable": {
+      "type": "npm",
+      "name": "npm:formidable",
+      "data": {
+        "version": "3.5.4",
+        "packageName": "formidable",
+        "hash": "sha512-YikH+7CUTOtP44ZTnUhR7Ic2UASBPOqmaRkRKxRbywPTe5VxF7RRCck4af9wutiZ/QKM5nME9Bie2fFaPz5Gug=="
       }
     },
     "npm:forwarded": {
@@ -11247,6 +11449,15 @@
         "hash": "sha512-+3NpwQEnRoIBtx4fyhblQDPgJI0H1IEIkX7ShLUjPGA7TtUTvI1oiKi3SR4oBR0hQhQR80l4WAe5RrXBwWMA8w=="
       }
     },
+    "npm:jest-preset-angular": {
+      "type": "npm",
+      "name": "npm:jest-preset-angular",
+      "data": {
+        "version": "17.0.3",
+        "packageName": "jest-preset-angular",
+        "hash": "sha512-ufDKlvNgT5eMq72OCVkac+9ibOkgL2Ee7orUhlQ1IdTLqn76eniNDz8oZ9vE3Biwh5zSitdSojZvB/Tf+KaWsQ=="
+      }
+    },
     "npm:jest-resolve-dependencies": {
       "type": "npm",
       "name": "npm:jest-resolve-dependencies",
@@ -11452,6 +11663,15 @@
         "version": "0.4.1",
         "packageName": "levn",
         "hash": "sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ=="
+      }
+    },
+    "npm:libphonenumber-js": {
+      "type": "npm",
+      "name": "npm:libphonenumber-js",
+      "data": {
+        "version": "1.13.15",
+        "packageName": "libphonenumber-js",
+        "hash": "sha512-AHdhEQeDFEJ4GKDAQ9AwxChy+v2kUILUB3TGQRpkXMkWePjXTU/WQEzWVQoIx/Gz8fE73Wr5SEuZCy2vk8jrMQ=="
       }
     },
     "npm:license-webpack-plugin": {
@@ -11866,6 +12086,15 @@
         "version": "1.6.0",
         "packageName": "mime",
         "hash": "sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg=="
+      }
+    },
+    "npm:mime@2.6.0": {
+      "type": "npm",
+      "name": "npm:mime@2.6.0",
+      "data": {
+        "version": "2.6.0",
+        "packageName": "mime",
+        "hash": "sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg=="
       }
     },
     "npm:mimic-fn": {
@@ -13875,6 +14104,24 @@
         "hash": "sha512-iODNfhXVLqc5LADs+Y6Oh5wJuK5ZcHbVng8aiK3y9pjMQdc5hLrBW0eFU6FtnpNrE6PoEg/MmFTU4waotj5WNg=="
       }
     },
+    "npm:superagent": {
+      "type": "npm",
+      "name": "npm:superagent",
+      "data": {
+        "version": "10.4.1",
+        "packageName": "superagent",
+        "hash": "sha512-PVMkMrhKrSTtFhUU8jiWuGh/gyRMKiyCTCmm0+qVzRNxlfntmRKJkDhlEXN62x3HIb33sQ4kmL8lcSdccWAchQ=="
+      }
+    },
+    "npm:supertest": {
+      "type": "npm",
+      "name": "npm:supertest",
+      "data": {
+        "version": "7.3.1",
+        "packageName": "supertest",
+        "hash": "sha512-vNaNCFoCR/edDbErQZp5KLNT8R4dSPHX7rlDLoE8hWLAm/878j6ShMbe8HK/E6RwwuhlSXVelXAIg9AxR5WWPw=="
+      }
+    },
     "npm:supports-preserve-symlinks-flag": {
       "type": "npm",
       "name": "npm:supports-preserve-symlinks-flag",
@@ -14298,15 +14545,6 @@
         "hash": "sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw=="
       }
     },
-    "npm:undici-types": {
-      "type": "npm",
-      "name": "npm:undici-types",
-      "data": {
-        "version": "6.21.0",
-        "packageName": "undici-types",
-        "hash": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
-      }
-    },
     "npm:unicode-canonical-property-names-ecmascript": {
       "type": "npm",
       "name": "npm:unicode-canonical-property-names-ecmascript",
@@ -14458,6 +14696,15 @@
         "version": "8.0.0",
         "packageName": "validate-npm-package-name",
         "hash": "sha512-SCv6OOV6Xj2/3cXy3dGmADluJTNcL3o7hZAglNPTe+WYuEuvxgJzxPrSDLZhF+CwyQOubqgecjMmTJGMVLWjYQ=="
+      }
+    },
+    "npm:validator": {
+      "type": "npm",
+      "name": "npm:validator",
+      "data": {
+        "version": "13.15.35",
+        "packageName": "validator",
+        "hash": "sha512-TQ5pAGhd5whStmqWvYF4OjQROlmv9SMFVt37qoCBdqRffuuklWYQlCNnEs2ZaIBD1kZRNnikiZOS1eqgkar0iw=="
       }
     },
     "npm:varint": {
@@ -14868,17 +15115,32 @@
       },
       {
         "source": "frontend",
-        "target": "npm:@angular/router",
-        "type": "static"
-      },
-      {
-        "source": "frontend",
         "target": "npm:@angular/common",
         "type": "static"
       },
       {
         "source": "frontend",
+        "target": "npm:@angular/router",
+        "type": "static"
+      },
+      {
+        "source": "frontend",
+        "target": "shared-types",
+        "type": "static"
+      },
+      {
+        "source": "frontend",
+        "target": "npm:rxjs",
+        "type": "static"
+      },
+      {
+        "source": "frontend",
         "target": "npm:@angular/platform-browser",
+        "type": "static"
+      },
+      {
+        "source": "frontend",
+        "target": "npm:jest-preset-angular",
         "type": "static"
       }
     ],
@@ -14908,6 +15170,26 @@
       {
         "source": "api",
         "target": "npm:@nestjs/common",
+        "type": "static"
+      },
+      {
+        "source": "api",
+        "target": "npm:class-transformer",
+        "type": "static"
+      },
+      {
+        "source": "api",
+        "target": "npm:class-validator",
+        "type": "static"
+      },
+      {
+        "source": "api",
+        "target": "shared-types",
+        "type": "static"
+      },
+      {
+        "source": "api",
+        "target": "npm:supertest",
         "type": "static"
       },
       {
@@ -21102,6 +21384,48 @@
         "type": "static"
       }
     ],
+    "npm:@jest/environment-jsdom-abstract": [
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:@types/jsdom",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:jsdom",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:@jest/environment",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:@jest/fake-timers",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:@jest/types",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:@types/node",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:jest-mock",
+        "type": "static"
+      },
+      {
+        "source": "npm:@jest/environment-jsdom-abstract",
+        "target": "npm:jest-util@30.5.1",
+        "type": "static"
+      }
+    ],
     "npm:@jest/expect": [
       {
         "source": "npm:@jest/expect",
@@ -22145,6 +22469,16 @@
       }
     ],
     "npm:@nestjs/common": [
+      {
+        "source": "npm:@nestjs/common",
+        "target": "npm:class-transformer",
+        "type": "static"
+      },
+      {
+        "source": "npm:@nestjs/common",
+        "target": "npm:class-validator",
+        "type": "static"
+      },
       {
         "source": "npm:@nestjs/common",
         "target": "npm:reflect-metadata",
@@ -23621,6 +23955,13 @@
         "type": "static"
       }
     ],
+    "npm:@paralleldrive/cuid2": [
+      {
+        "source": "npm:@paralleldrive/cuid2",
+        "target": "npm:@noble/hashes",
+        "type": "static"
+      }
+    ],
     "npm:@parcel/watcher": [
       {
         "source": "npm:@parcel/watcher",
@@ -24307,6 +24648,28 @@
         "type": "static"
       }
     ],
+    "npm:@types/jsdom": [
+      {
+        "source": "npm:@types/jsdom",
+        "target": "npm:@types/node",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/jsdom",
+        "target": "npm:@types/tough-cookie",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/jsdom",
+        "target": "npm:parse5",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/jsdom",
+        "target": "npm:undici-types@8.12.3",
+        "type": "static"
+      }
+    ],
     "npm:@types/node": [
       {
         "source": "npm:@types/node",
@@ -24361,6 +24724,40 @@
       {
         "source": "npm:@types/sockjs",
         "target": "npm:@types/node",
+        "type": "static"
+      }
+    ],
+    "npm:@types/superagent": [
+      {
+        "source": "npm:@types/superagent",
+        "target": "npm:@types/cookiejar",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/superagent",
+        "target": "npm:@types/methods",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/superagent",
+        "target": "npm:@types/node",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/superagent",
+        "target": "npm:form-data",
+        "type": "static"
+      }
+    ],
+    "npm:@types/supertest": [
+      {
+        "source": "npm:@types/supertest",
+        "target": "npm:@types/methods",
+        "type": "static"
+      },
+      {
+        "source": "npm:@types/supertest",
+        "target": "npm:@types/superagent",
         "type": "static"
       }
     ],
@@ -25773,6 +26170,23 @@
         "type": "static"
       }
     ],
+    "npm:class-validator": [
+      {
+        "source": "npm:class-validator",
+        "target": "npm:@types/validator",
+        "type": "static"
+      },
+      {
+        "source": "npm:class-validator",
+        "target": "npm:libphonenumber-js",
+        "type": "static"
+      },
+      {
+        "source": "npm:class-validator",
+        "target": "npm:validator",
+        "type": "static"
+      }
+    ],
     "npm:cli-cursor": [
       {
         "source": "npm:cli-cursor",
@@ -26423,6 +26837,18 @@
       {
         "source": "npm:detect-port",
         "target": "npm:address",
+        "type": "static"
+      }
+    ],
+    "npm:dezalgo": [
+      {
+        "source": "npm:dezalgo",
+        "target": "npm:asap",
+        "type": "static"
+      },
+      {
+        "source": "npm:dezalgo",
+        "target": "npm:wrappy",
         "type": "static"
       }
     ],
@@ -27492,6 +27918,23 @@
       {
         "source": "npm:mime-types@2.1.35",
         "target": "npm:mime-db@1.52.0",
+        "type": "static"
+      }
+    ],
+    "npm:formidable": [
+      {
+        "source": "npm:formidable",
+        "target": "npm:@paralleldrive/cuid2",
+        "type": "static"
+      },
+      {
+        "source": "npm:formidable",
+        "target": "npm:dezalgo",
+        "type": "static"
+      },
+      {
+        "source": "npm:formidable",
+        "target": "npm:once",
         "type": "static"
       }
     ],
@@ -28754,6 +29197,73 @@
       {
         "source": "npm:jest-pnp-resolver",
         "target": "npm:jest-resolve",
+        "type": "static"
+      }
+    ],
+    "npm:jest-preset-angular": [
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:@angular/compiler-cli",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:@angular/core",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:@angular/platform-browser",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:jest",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:jsdom",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:typescript",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:@jest/environment-jsdom-abstract",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:bs-logger",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:esbuild-wasm",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:jest-util@30.5.1",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:pretty-format",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:ts-jest",
+        "type": "static"
+      },
+      {
+        "source": "npm:jest-preset-angular",
+        "target": "npm:esbuild@0.28.2",
         "type": "static"
       }
     ],
@@ -32722,6 +33232,70 @@
         "type": "static"
       }
     ],
+    "npm:superagent": [
+      {
+        "source": "npm:superagent",
+        "target": "npm:component-emitter",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:cookiejar",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:debug",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:fast-safe-stringify",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:form-data",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:formidable",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:methods",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:mime@2.6.0",
+        "type": "static"
+      },
+      {
+        "source": "npm:superagent",
+        "target": "npm:qs",
+        "type": "static"
+      }
+    ],
+    "npm:supertest": [
+      {
+        "source": "npm:supertest",
+        "target": "npm:cookie-signature",
+        "type": "static"
+      },
+      {
+        "source": "npm:supertest",
+        "target": "npm:methods",
+        "type": "static"
+      },
+      {
+        "source": "npm:supertest",
+        "target": "npm:superagent",
+        "type": "static"
+      }
+    ],
     "npm:supports-color": [
       {
         "source": "npm:supports-color",
@@ -34799,5 +35373,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1792862771408
+  "computedAt": 1792864147896
 }
