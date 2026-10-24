@@ -1374,6 +1374,94 @@
       "eslint.config.mjs",
       "@nx/eslint/plugin"
     ],
+    "targets.test": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.cache": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs.0": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs.1": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs.2": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs.3": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs.4": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.inputs": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.outputs.0": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.outputs": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.executor": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options.cwd": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options.env": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options.command": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.options": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.technologies": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.technologies.0": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.description": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.help": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.help.command": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
+    "targets.test.metadata.help.example": [
+      "frontend/jest.config.cts",
+      "@nx/jest/plugin"
+    ],
     "targets.build": [
       "frontend/project.json",
       "nx/core/project-json"
@@ -1403,30 +1491,6 @@
       "nx/target-defaults"
     ],
     "targets.build.executor": [
-      "frontend/project.json",
-      "nx/core/project-json"
-    ],
-    "targets.test": [
-      "frontend/project.json",
-      "nx/core/project-json"
-    ],
-    "targets.test.cache": [
-      "nx.json#targetDefaults.@angular/build:unit-test",
-      "nx/target-defaults"
-    ],
-    "targets.test.inputs.0": [
-      "nx.json#targetDefaults.@angular/build:unit-test",
-      "nx/target-defaults"
-    ],
-    "targets.test.inputs.1": [
-      "nx.json#targetDefaults.@angular/build:unit-test",
-      "nx/target-defaults"
-    ],
-    "targets.test.inputs": [
-      "nx.json#targetDefaults.@angular/build:unit-test",
-      "nx/target-defaults"
-    ],
-    "targets.test.executor": [
       "frontend/project.json",
       "nx/core/project-json"
     ],
@@ -1591,14 +1655,6 @@
       "nx/core/project-json"
     ],
     "targets.serve.configurations": [
-      "frontend/project.json",
-      "nx/core/project-json"
-    ],
-    "targets.test.options.watch": [
-      "frontend/project.json",
-      "nx/core/project-json"
-    ],
-    "targets.test.options": [
       "frontend/project.json",
       "nx/core/project-json"
     ],

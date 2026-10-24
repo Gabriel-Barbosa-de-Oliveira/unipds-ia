@@ -1,0 +1,94 @@
+<form
+  class="submission-form"
+  novalidate
+  aria-labelledby="submission-form-title"
+  [attr.aria-busy]="status() === 'submitting'"
+  (submit)="onSubmit($event)"
+>
+  <h1 id="submission-form-title">Envie sua proposta de palestra</h1>
+
+  <div class="field">
+    <label for="submission-name">Nome</label>
+    <input
+      id="submission-name"
+      name="name"
+      type="text"
+      autocomplete="name"
+      required
+      [value]="name()"
+      [attr.aria-invalid]="showError('name') ? 'true' : null"
+      [attr.aria-describedby]="showError('name') ? 'submission-name-error' : null"
+      (input)="onTextInput('name', $event)"
+      (blur)="markTouched('name')"
+    />
+    @if (showError('name')) {
+      <p id="submission-name-error" class="field-error">{{ errors().name }}</p>
+    }
+  </div>
+
+  <div class="field">
+    <label for="submission-email">E-mail</label>
+    <input
+      id="submission-email"
+      name="email"
+      type="email"
+      autocomplete="email"
+      required
+      [value]="email()"
+      [attr.aria-invalid]="showError('email') ? 'true' : null"
+      [attr.aria-describedby]="showError('email') ? 'submission-email-error' : null"
+      (input)="onTextInput('email', $event)"
+      (blur)="markTouched('email')"
+    />
+    @if (showError('email')) {
+      <p id="submission-email-error" class="field-error">{{ errors().email }}</p>
+    }
+  </div>
+
+  <div class="field">
+    <label for="submission-talk-title">Título da palestra</label>
+    <input
+      id="submission-talk-title"
+      name="talkTitle"
+      type="text"
+      required
+      [value]="talkTitle()"
+      [attr.aria-invalid]="showError('talkTitle') ? 'true' : null"
+      [attr.aria-describedby]="
+        showError('talkTitle') ? 'submission-talk-title-error' : null
+      "
+      (input)="onTextInput('talkTitle', $event)"
+      (blur)="markTouched('talkTitle')"
+    />
+    @if (showError('talkTitle')) {
+      <p id="submission-talk-title-error" class="field-error">
+        {{ errors().talkTitle }}
+      </p>
+    }
+  </div>
+
+  <div class="field field--checkbox">
+    <input
+      id="submission-is-gde"
+      name="isGDE"
+      type="checkbox"
+      [checked]="isGDE()"
+      (change)="onGdeChange($event)"
+    />
+    <label for="submission-is-gde">Sou Google Developer Expert (GDE)</label>
+  </div>
+
+  <button type="submit" [disabled]="!canSubmit()">Enviar proposta</button>
+
+  <p
+    class="form-status"
+    role="status"
+    aria-live="polite"
+    [class.form-status--error]="status() === 'error'"
+    [class.form-status--success]="status() === 'success'"
+  >
+    {{ statusMessage() }}
+  </p>
+</form>
+
+<a class="button-link" routerLink="/dashboard">Ver propostas enviadas</a>
