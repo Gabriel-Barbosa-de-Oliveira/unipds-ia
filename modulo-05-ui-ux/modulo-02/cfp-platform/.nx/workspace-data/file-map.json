@@ -49,156 +49,156 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": "openspec/changes/archive/.gitkeep",
-        "hash": "3244421341483603138"
-      },
-      {
-        "file": "tsconfig.base.json",
-        "hash": "15672426423892019207"
-      },
-      {
-        "file": "openspec/changes/add-cfp-dashboard/design.md",
-        "hash": "14090965624823375169"
-      },
-      {
-        "file": ".claude/skills/openspec-apply-change/SKILL.md",
-        "hash": "11535354846729162475"
-      },
-      {
-        "file": "openspec/changes/create-event-tests/tasks.md",
-        "hash": "16954994704019916200"
-      },
-      {
-        "file": "nx.json",
-        "hash": "11967877142914150691"
-      },
-      {
-        "file": "eslint.config.mjs",
-        "hash": "9002143704707986394"
-      },
-      {
-        "file": "jest.config.ts",
-        "hash": "14236175072743533737"
-      },
-      {
-        "file": "package-lock.json",
-        "hash": "5468512780865517887"
-      },
-      {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/design.md",
-        "hash": "13723515230790474440"
-      },
-      {
-        "file": "openspec/changes/add-cfp-dashboard/proposal.md",
-        "hash": "9879556987908435004"
-      },
-      {
-        "file": ".claude/skills/openspec-archive-change/SKILL.md",
-        "hash": "9840821164800370710"
-      },
-      {
-        "file": "openspec/changes/create-event-tests/design.md",
-        "hash": "13577207911472558646"
-      },
-      {
-        "file": ".claude/commands/opsx/sync.md",
-        "hash": "5770142423048370817"
-      },
-      {
-        "file": ".claude/commands/opsx/archive.md",
-        "hash": "8456543471923298363"
-      },
-      {
-        "file": "openspec/changes/add-cfp-dashboard/specs/cfp-submission-listing/spec.md",
-        "hash": "6379474506284305154"
-      },
-      {
-        "file": "openspec/changes/add-cfp-dashboard/tasks.md",
-        "hash": "12811031022293752010"
-      },
-      {
-        "file": ".mcp.json",
-        "hash": "10017896268110199194"
-      },
-      {
-        "file": "jest.preset.js",
-        "hash": "13737983450217408137"
-      },
-      {
-        "file": ".claude/commands/opsx/explore.md",
-        "hash": "5443850152384879233"
-      },
-      {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/tasks.md",
-        "hash": "15965573603347191049"
-      },
-      {
-        "file": ".claude/skills/openspec-update-change/SKILL.md",
-        "hash": "1848598471837111837"
-      },
-      {
-        "file": ".claude/skills/openspec-propose/SKILL.md",
-        "hash": "16762831718712419575"
-      },
-      {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/.openspec.yaml",
-        "hash": "13406866330394161294"
-      },
-      {
-        "file": "openspec/changes/create-event-tests/specs/event-registration/spec.md",
-        "hash": "3857947451966035057"
-      },
-      {
-        "file": ".claude/skills/openspec-sync-specs/SKILL.md",
-        "hash": "11385563220199725647"
-      },
-      {
-        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/proposal.md",
-        "hash": "530703179550371776"
-      },
-      {
-        "file": "openspec/changes/add-cfp-dashboard/.openspec.yaml",
-        "hash": "13406866330394161294"
-      },
-      {
-        "file": "package.json",
-        "hash": "14001522126991966797"
-      },
-      {
-        "file": ".claude/commands/opsx/propose.md",
-        "hash": "1605830464872083009"
-      },
-      {
-        "file": "openspec/specs/.gitkeep",
-        "hash": "3244421341483603138"
-      },
-      {
-        "file": ".claude/commands/opsx/apply.md",
-        "hash": "11638283287398599808"
+        "file": ".gitignore",
+        "hash": "2587622107816473060"
       },
       {
         "file": "openspec/changes/create-event-tests/.openspec.yaml",
         "hash": "14500920782894143842"
       },
       {
-        "file": "openspec/changes/create-event-tests/proposal.md",
-        "hash": "6881724033564917036"
+        "file": ".claude/commands/opsx/propose.md",
+        "hash": "1605830464872083009"
       },
       {
-        "file": ".claude/skills/openspec-explore/SKILL.md",
-        "hash": "18316009530293600476"
+        "file": ".claude/commands/opsx/sync.md",
+        "hash": "5770142423048370817"
+      },
+      {
+        "file": "openspec/changes/create-event-tests/design.md",
+        "hash": "13577207911472558646"
+      },
+      {
+        "file": ".claude/skills/openspec-propose/SKILL.md",
+        "hash": "16762831718712419575"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/design.md",
+        "hash": "13723515230790474440"
+      },
+      {
+        "file": ".claude/skills/openspec-archive-change/SKILL.md",
+        "hash": "9840821164800370710"
+      },
+      {
+        "file": ".claude/commands/opsx/apply.md",
+        "hash": "11638283287398599808"
+      },
+      {
+        "file": "openspec/changes/create-event-tests/specs/event-registration/spec.md",
+        "hash": "3857947451966035057"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "15672426423892019207"
+      },
+      {
+        "file": "nx.json",
+        "hash": "11967877142914150691"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "14236175072743533737"
       },
       {
         "file": ".claude/commands/opsx/update.md",
         "hash": "5819696601791622803"
       },
       {
-        "file": ".gitignore",
-        "hash": "2587622107816473060"
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/.openspec.yaml",
+        "hash": "13406866330394161294"
+      },
+      {
+        "file": ".mcp.json",
+        "hash": "10017896268110199194"
+      },
+      {
+        "file": ".claude/skills/openspec-apply-change/SKILL.md",
+        "hash": "11535354846729162475"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/tasks.md",
+        "hash": "12811031022293752010"
+      },
+      {
+        "file": ".claude/skills/openspec-update-change/SKILL.md",
+        "hash": "1848598471837111837"
+      },
+      {
+        "file": "openspec/specs/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "openspec/changes/create-event-tests/tasks.md",
+        "hash": "16954994704019916200"
+      },
+      {
+        "file": "openspec/changes/archive/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/.openspec.yaml",
+        "hash": "13406866330394161294"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "13737983450217408137"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/design.md",
+        "hash": "14090965624823375169"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/specs/cfp-submission-listing/spec.md",
+        "hash": "6379474506284305154"
+      },
+      {
+        "file": "openspec/changes/add-cfp-dashboard/proposal.md",
+        "hash": "9879556987908435004"
+      },
+      {
+        "file": ".claude/commands/opsx/archive.md",
+        "hash": "8456543471923298363"
+      },
+      {
+        "file": ".claude/commands/opsx/explore.md",
+        "hash": "5443850152384879233"
       },
       {
         "file": "openspec/config.yaml",
         "hash": "3824138819829171359"
+      },
+      {
+        "file": ".claude/skills/openspec-explore/SKILL.md",
+        "hash": "18316009530293600476"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/tasks.md",
+        "hash": "15965573603347191049"
+      },
+      {
+        "file": "openspec/changes/create-event-tests/proposal.md",
+        "hash": "6881724033564917036"
+      },
+      {
+        "file": ".claude/skills/openspec-sync-specs/SKILL.md",
+        "hash": "11385563220199725647"
+      },
+      {
+        "file": "package.json",
+        "hash": "14001522126991966797"
+      },
+      {
+        "file": "eslint.config.mjs",
+        "hash": "9002143704707986394"
+      },
+      {
+        "file": "openspec/changes/archive/2026-10-24-add-cfp-feature/proposal.md",
+        "hash": "530703179550371776"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "5468512780865517887"
       }
     ],
     "projectFileMap": {
@@ -715,7 +715,7 @@
       "frontend-e2e": [
         {
           "file": "frontend-e2e/cypress.config.ts",
-          "hash": "12411664279493149842",
+          "hash": "11633329276468875736",
           "deps": [
             "npm:@nx/cypress",
             "npm:cypress"
@@ -733,6 +733,10 @@
         {
           "file": "frontend-e2e/project.json",
           "hash": "9589688224954893727"
+        },
+        {
+          "file": "frontend-e2e/src/e2e/event-registration-ai.cy.ts",
+          "hash": "14091370017199183674"
         },
         {
           "file": "frontend-e2e/src/e2e/event-registration.cy.ts",
