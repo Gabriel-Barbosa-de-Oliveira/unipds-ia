@@ -31,6 +31,10 @@
     }
   </p>
 
+  @if (bragService.error(); as error) {
+    <p class="mt-2 text-sm text-brand-lime" role="alert">{{ error }}</p>
+  }
+
   <div class="mt-2 flex justify-end">
     <button
       type="submit"
@@ -63,7 +67,7 @@
           <h3 class="font-heading text-2xl leading-snug font-bold">{{ brag.title }}</h3>
           <p class="mt-2 line-clamp-2">{{ brag.prompt }}</p>
           <ul class="mt-4 flex flex-wrap gap-2" aria-label="Tecnologias">
-            @for (technology of brag.technologies; track technology) {
+            @for (technology of brag.technologiesUsed; track technology) {
               <li class="rounded bg-black px-2 py-1 text-sm font-medium text-brand-cyan">
                 {{ technology }}
               </li>

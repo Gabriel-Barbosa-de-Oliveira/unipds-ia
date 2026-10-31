@@ -10,7 +10,7 @@
 
       <section class="mt-4 rounded-xl border border-brand-lime/60 bg-brand-surface p-5 sm:p-6">
         <h2 class="mb-2 font-heading text-2xl font-bold text-brand-lime">Impacto</h2>
-        <p class="text-lg leading-relaxed">{{ brag.impact }}</p>
+        <p class="text-lg leading-relaxed">{{ brag.businessImpact }}</p>
       </section>
 
       <section class="mt-4 rounded-xl border border-brand-cyan bg-brand-panel p-5 sm:p-6">
@@ -25,7 +25,7 @@
       <section class="mt-4 rounded-xl border border-brand-cyan bg-brand-panel p-5 sm:p-6">
         <h2 class="mb-3 font-heading text-2xl font-bold text-brand-cyan">Tecnologias</h2>
         <ul class="flex flex-wrap gap-2">
-          @for (technology of brag.technologies; track technology) {
+          @for (technology of brag.technologiesUsed; track technology) {
             <li class="rounded bg-brand-cyan px-3 py-1 font-medium text-black">{{ technology }}</li>
           }
         </ul>

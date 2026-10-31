@@ -18,9 +18,10 @@ describe('DetailComponent', () => {
         prompt: 'Melhorei o deploy',
         title: 'Deploy mais rápido',
         context: 'Pipeline lento',
-        impact: 'Time mais ágil',
+        actionTaken: 'Paralelizei os testes',
+        businessImpact: 'Time mais ágil',
         metrics: ['19 minutos por deploy'],
-        technologies: ['Docker'],
+        technologiesUsed: ['Docker'],
       },
     ]);
 

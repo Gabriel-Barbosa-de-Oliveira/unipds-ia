@@ -19,7 +19,7 @@ export class DashboardComponent {
     }),
   });
 
-  protected submit(): void {
+  protected async submit(): Promise<void> {
     if (this.bragService.loading()) {
       return;
     }
@@ -29,7 +29,9 @@ export class DashboardComponent {
       return;
     }
 
-    this.bragService.generateMockBrag(this.form.getRawValue().prompt.trim());
-    this.form.reset();
+    // On failure the draft stays in the form so the user can retry without retyping it.
+    if (await this.bragService.generateBrag(this.form.getRawValue().prompt.trim())) {
+      this.form.reset();
+    }
   }
 }

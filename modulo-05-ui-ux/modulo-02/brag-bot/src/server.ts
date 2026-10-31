@@ -6,23 +6,26 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import { bragGeneratorFlow } from './flows';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
+app.use(express.json());
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Generate a brag document from the user's informal draft.
  */
+app.post('/api/brag', async (req, res) => {
+  try {
+    const brag = await bragGeneratorFlow({ definition: req.body.definition });
+    res.json(brag);
+  } catch (error) {
+    console.error('Failed to generate brag', error);
+    res.status(500).json({ error: 'Failed to generate brag' });
+  }
+});
 
 /**
  * Serve static files from /browser
