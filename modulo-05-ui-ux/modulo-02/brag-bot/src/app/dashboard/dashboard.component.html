@@ -1,0 +1,80 @@
+<section class="mb-8 max-w-3xl">
+  <h1 class="font-display text-4xl leading-tight uppercase sm:text-5xl">
+    Transforme seu trabalho em
+    <span class="text-brand-lime">conquistas que impressionam</span>
+  </h1>
+  <p class="mt-4 text-lg text-white/80">
+    Conte o que você fez, do jeito que vier. O Brag-Bot destila em um registro claro de contexto,
+    impacto e tecnologias.
+  </p>
+</section>
+
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  class="rounded-xl border border-brand-cyan/20 bg-brand-surface p-5 shadow-glow sm:p-6"
+>
+  <label for="prompt" class="mb-2 block font-medium">Sua conquista bruta</label>
+  <textarea
+    id="prompt"
+    formControlName="prompt"
+    rows="5"
+    placeholder="Ex.: Reescrevi o pipeline de CI e o deploy ficou bem mais rápido..."
+    [attr.aria-invalid]="form.controls.prompt.touched && form.controls.prompt.invalid"
+    aria-describedby="prompt-error"
+    class="w-full resize-y rounded-lg border border-brand-cyan/40 bg-black p-3 leading-relaxed text-white placeholder:text-white/60 focus-visible:border-brand-lime focus-visible:outline-2 focus-visible:outline-brand-lime"
+  ></textarea>
+
+  <p id="prompt-error" class="mt-2 min-h-6 text-sm text-brand-lime" aria-live="polite">
+    @if (form.controls.prompt.touched && form.controls.prompt.invalid) {
+      Descreva sua conquista antes de destilar.
+    }
+  </p>
+
+  <div class="mt-2 flex justify-end">
+    <button
+      type="submit"
+      [disabled]="bragService.loading()"
+      class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-lime px-10 py-3 font-bold text-black transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime disabled:cursor-wait disabled:opacity-75 sm:w-auto"
+    >
+      @if (bragService.loading()) {
+        <span
+          class="size-4 animate-spin rounded-full border-2 border-black border-t-transparent motion-reduce:animate-none"
+          aria-hidden="true"
+        ></span>
+        Destilando...
+      } @else {
+        Destilar Conquista
+      }
+    </button>
+  </div>
+</form>
+
+<section class="mt-12" aria-labelledby="brags-title">
+  <h2 id="brags-title" class="mb-5 font-display text-3xl uppercase">Suas conquistas</h2>
+
+  <ul class="grid gap-4 md:grid-cols-2">
+    @for (brag of bragService.brags(); track brag.id) {
+      <li>
+        <a
+          [routerLink]="['/detail', brag.id]"
+          class="flex h-full flex-col rounded-xl bg-brand-cyan p-5 text-black transition hover:bg-brand-lime focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+        >
+          <h3 class="font-heading text-2xl leading-snug font-bold">{{ brag.title }}</h3>
+          <p class="mt-2 line-clamp-2">{{ brag.prompt }}</p>
+          <ul class="mt-4 flex flex-wrap gap-2" aria-label="Tecnologias">
+            @for (technology of brag.technologies; track technology) {
+              <li class="rounded bg-black px-2 py-1 text-sm font-medium text-brand-cyan">
+                {{ technology }}
+              </li>
+            }
+          </ul>
+        </a>
+      </li>
+    } @empty {
+      <li class="rounded-xl border border-dashed border-brand-cyan/40 p-8 text-center md:col-span-2">
+        Nenhuma conquista destilada ainda. Comece pelo formulário acima.
+      </li>
+    }
+  </ul>
+</section>

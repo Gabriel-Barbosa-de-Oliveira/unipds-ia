@@ -1,3 +1,26 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+/* Identidade visual extraída de https://unipds.com.br/org-pos-ia/ */
+@theme {
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-heading: 'Antonio', 'Arial Narrow', sans-serif;
+
+  --color-brand-surface: #04090a;
+  --color-brand-panel: #040028;
+  --color-brand-teal: #005b6d;
+  --color-brand-lime: #d6ff00;
+  --color-brand-cyan: #00fffe;
+
+  --shadow-glow: 0 0 40px rgb(0 255 255 / 0.08), 0 0 15px rgb(0 255 255 / 0.03);
+}
+
+@layer base {
+  body {
+    @apply min-h-dvh bg-black font-sans text-white antialiased;
+    background-image: radial-gradient(at 100% 0%, var(--color-brand-teal) 0, #000 56%);
+    background-attachment: fixed;
+  }
+}

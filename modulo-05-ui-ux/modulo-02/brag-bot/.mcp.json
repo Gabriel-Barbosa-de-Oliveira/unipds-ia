@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "genkit": {
+      "command": "npx",
+      "args": ["-y", "genkit-cli", "--non-interactive", "mcp"]
+    }
+  }
+}
