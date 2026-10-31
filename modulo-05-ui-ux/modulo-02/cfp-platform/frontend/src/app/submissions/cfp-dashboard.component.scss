@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  max-width: 48rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: var(--cfp-font-family);
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.dashboard-status,
+.dashboard-empty {
+  margin: 0;
+}
+
+.dashboard-status {
+  min-height: 1.5rem;
+}
+
+.dashboard-status--error {
+  color: var(--cfp-color-danger);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+caption {
+  text-align: left;
+  padding-bottom: 0.5rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--cfp-color-border);
+}
+
+th {
+  font-weight: 600;
+}

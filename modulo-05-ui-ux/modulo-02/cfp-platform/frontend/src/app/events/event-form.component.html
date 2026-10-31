@@ -1,0 +1,98 @@
+<form
+  class="event-form"
+  novalidate
+  aria-labelledby="event-form-title"
+  [attr.aria-busy]="status() === 'submitting'"
+  (submit)="onSubmit($event)"
+>
+  <h1 id="event-form-title">Cadastre um evento</h1>
+
+  <div class="field">
+    <label for="event-name">Nome</label>
+    <input
+      id="event-name"
+      name="name"
+      type="text"
+      required
+      [value]="name()"
+      [attr.aria-invalid]="showError('name') ? 'true' : null"
+      [attr.aria-describedby]="showError('name') ? 'event-name-error' : null"
+      (input)="onInput('name', $event)"
+      (blur)="markTouched('name')"
+    />
+    @if (showError('name')) {
+      <p id="event-name-error" class="field-error">{{ errors().name }}</p>
+    }
+  </div>
+
+  <div class="field">
+    <label for="event-address">Endereço</label>
+    <input
+      id="event-address"
+      name="address"
+      type="text"
+      autocomplete="street-address"
+      required
+      [value]="address()"
+      [attr.aria-invalid]="showError('address') ? 'true' : null"
+      [attr.aria-describedby]="showError('address') ? 'event-address-error' : null"
+      (input)="onInput('address', $event)"
+      (blur)="markTouched('address')"
+    />
+    @if (showError('address')) {
+      <p id="event-address-error" class="field-error">{{ errors().address }}</p>
+    }
+  </div>
+
+  <div class="field">
+    <label for="event-capacity">Capacidade</label>
+    <input
+      id="event-capacity"
+      name="capacity"
+      type="number"
+      min="1"
+      step="1"
+      required
+      [value]="capacity()"
+      [attr.aria-invalid]="showError('capacity') ? 'true' : null"
+      [attr.aria-describedby]="showError('capacity') ? 'event-capacity-error' : null"
+      (input)="onInput('capacity', $event)"
+      (blur)="markTouched('capacity')"
+    />
+    @if (showError('capacity')) {
+      <p id="event-capacity-error" class="field-error">{{ errors().capacity }}</p>
+    }
+  </div>
+
+  <div class="field">
+    <label for="event-date">Data</label>
+    <input
+      id="event-date"
+      name="date"
+      type="date"
+      required
+      [value]="date()"
+      [attr.aria-invalid]="showError('date') ? 'true' : null"
+      [attr.aria-describedby]="showError('date') ? 'event-date-error' : null"
+      (input)="onInput('date', $event)"
+      (blur)="markTouched('date')"
+    />
+    @if (showError('date')) {
+      <p id="event-date-error" class="field-error">{{ errors().date }}</p>
+    }
+  </div>
+
+  <button type="submit" [disabled]="status() === 'submitting'">
+    Cadastrar evento
+  </button>
+
+  <p
+    class="form-status"
+    role="status"
+    aria-live="polite"
+    [class.form-status--error]="status() === 'error'"
+    [class.form-status--success]="status() === 'success'"
+  >
+    {{ statusMessage() }}
+  </p>
+</form>

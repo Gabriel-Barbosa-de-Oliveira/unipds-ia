@@ -1,0 +1,52 @@
+<section
+  class="dashboard"
+  aria-labelledby="dashboard-title"
+  [attr.aria-busy]="status() === 'loading'"
+>
+  <h1 id="dashboard-title">Propostas enviadas</h1>
+
+  <p
+    class="dashboard-status"
+    role="status"
+    aria-live="polite"
+    [class.dashboard-status--error]="status() === 'error'"
+  >
+    {{ statusMessage() }}
+  </p>
+
+  @if (status() === 'loaded' && !isEmpty()) {
+    <div class="table-wrapper">
+      <table>
+        <caption>
+          Propostas de palestra recebidas pelo Call for Papers
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Nome</th>
+            <th scope="col">E-mail</th>
+            <th scope="col">Título da palestra</th>
+            <th scope="col">GDE</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (speaker of speakers(); track speaker.id) {
+            <tr>
+              <td>{{ speaker.name }}</td>
+              <td>{{ speaker.email }}</td>
+              <td>{{ speaker.talkTitle }}</td>
+              <td>{{ speaker.isGDE ? 'Sim' : 'Não' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (isEmpty()) {
+    <p class="dashboard-empty">
+      Ainda não há propostas enviadas. Que tal enviar a primeira?
+    </p>
+  }
+
+  <a class="button-link" routerLink="/">Enviar nova proposta</a>
+</section>
