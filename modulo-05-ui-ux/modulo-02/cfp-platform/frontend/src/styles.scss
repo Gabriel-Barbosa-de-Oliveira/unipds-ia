@@ -1,1 +1,31 @@
-/* You can add global styles to this file, and also import other style files */
+/* Design Tokens shared by every CFP screen. */
+:root {
+  --cfp-font-family: system-ui, sans-serif;
+  --cfp-color-primary: #1d4ed8;
+  --cfp-color-on-primary: #fff;
+  --cfp-color-disabled: #9ca3af;
+  --cfp-color-border: #6b7280;
+  --cfp-color-danger: #b91c1c;
+  --cfp-color-success: #15803d;
+  --cfp-color-focus: #2563eb;
+  --cfp-radius: 0.375rem;
+  --cfp-focus-ring: 3px solid var(--cfp-color-focus);
+}
+
+/* Navigation link styled as the primary button. */
+.button-link {
+  display: inline-block;
+  align-self: flex-start;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--cfp-radius);
+  background: var(--cfp-color-primary);
+  color: var(--cfp-color-on-primary);
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: var(--cfp-focus-ring);
+    outline-offset: 2px;
+  }
+}

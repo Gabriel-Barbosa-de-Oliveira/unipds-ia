@@ -5,3 +5,5 @@ export interface SpeakerDTO {
   talkTitle: string;
   isGDE: boolean;
 }
+
+export type CreateSpeakerSubmission = Omit<SpeakerDTO, 'id'>;
