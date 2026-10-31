@@ -18,4 +18,10 @@ export const appRoutes: Route[] = [
         (m) => m.CfpDashboardComponent
       ),
   },
+  {
+    path: 'event/new',
+    title: 'Cadastrar evento',
+    loadComponent: () =>
+      import('./events/event-form.component').then((m) => m.EventFormComponent),
+  },
 ];
