@@ -202,251 +202,6 @@
       }
     ],
     "projectFileMap": {
-      "api": [
-        {
-          "file": "api/eslint.config.mjs",
-          "hash": "3710693707408135750"
-        },
-        {
-          "file": "api/jest.config.cts",
-          "hash": "17129139629318892390"
-        },
-        {
-          "file": "api/project.json",
-          "hash": "5256675625808894809"
-        },
-        {
-          "file": "api/src/app/app.controller.spec.ts",
-          "hash": "16195083839539355803",
-          "deps": [
-            "npm:@nestjs/testing"
-          ]
-        },
-        {
-          "file": "api/src/app/app.controller.ts",
-          "hash": "15276891910009544695",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/app.module.ts",
-          "hash": "12253740149220802221",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/app.service.spec.ts",
-          "hash": "17298266700909662742",
-          "deps": [
-            "npm:@nestjs/testing"
-          ]
-        },
-        {
-          "file": "api/src/app/app.service.ts",
-          "hash": "1398463054208547248",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/events/create-event.body.ts",
-          "hash": "14578861062181675297",
-          "deps": [
-            "npm:class-transformer",
-            "npm:class-validator",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/events/events.controller.spec.ts",
-          "hash": "15356396255469945065",
-          "deps": [
-            "npm:@nestjs/common",
-            "npm:@nestjs/testing",
-            "npm:supertest",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/events/events.controller.ts",
-          "hash": "429818119855255519",
-          "deps": [
-            "npm:@nestjs/common",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/events/events.module.ts",
-          "hash": "1647445440834874665",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/events/events.service.spec.ts",
-          "hash": "10969373529256215613",
-          "deps": [
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/events/events.service.ts",
-          "hash": "13976696214149820705",
-          "deps": [
-            "npm:@nestjs/common",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/submissions/create-submission.body.ts",
-          "hash": "5034931322338884397",
-          "deps": [
-            "npm:class-transformer",
-            "npm:class-validator",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/submissions/submissions.controller.spec.ts",
-          "hash": "514590002885937868",
-          "deps": [
-            "npm:@nestjs/common",
-            "npm:@nestjs/testing",
-            "npm:supertest",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/submissions/submissions.controller.ts",
-          "hash": "11789237739272817110",
-          "deps": [
-            "npm:@nestjs/common",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/submissions/submissions.module.ts",
-          "hash": "6446050653559295459",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/app/submissions/submissions.service.spec.ts",
-          "hash": "11477378540035058021",
-          "deps": [
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/submissions/submissions.service.ts",
-          "hash": "6354479452221200145",
-          "deps": [
-            "npm:@nestjs/common",
-            "shared-types"
-          ]
-        },
-        {
-          "file": "api/src/app/validation.pipe.ts",
-          "hash": "14024303678256102258",
-          "deps": [
-            "npm:@nestjs/common"
-          ]
-        },
-        {
-          "file": "api/src/assets/.gitkeep",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "api/src/main.ts",
-          "hash": "251608716415916594",
-          "deps": [
-            "npm:@nestjs/common",
-            "npm:@nestjs/core"
-          ]
-        },
-        {
-          "file": "api/tsconfig.app.json",
-          "hash": "9957356043912605818"
-        },
-        {
-          "file": "api/tsconfig.json",
-          "hash": "9420862676426701392"
-        },
-        {
-          "file": "api/tsconfig.spec.json",
-          "hash": "8030639829004721301"
-        },
-        {
-          "file": "api/webpack.config.js",
-          "hash": "6809973803337539335",
-          "deps": [
-            "npm:@nx/webpack"
-          ]
-        }
-      ],
-      "shared-types": [
-        {
-          "file": "shared-types/README.md",
-          "hash": "9741169815637935730"
-        },
-        {
-          "file": "shared-types/eslint.config.mjs",
-          "hash": "769165677790523341",
-          "deps": [
-            [
-              "npm:jsonc-eslint-parser",
-              "dynamic"
-            ]
-          ]
-        },
-        {
-          "file": "shared-types/jest.config.cts",
-          "hash": "2073640654453309169"
-        },
-        {
-          "file": "shared-types/package.json",
-          "hash": "9638738279093990236"
-        },
-        {
-          "file": "shared-types/project.json",
-          "hash": "3991178185533183276"
-        },
-        {
-          "file": "shared-types/src/index.ts",
-          "hash": "7707877658771605541"
-        },
-        {
-          "file": "shared-types/src/lib/event.dto.ts",
-          "hash": "3963447745331654505"
-        },
-        {
-          "file": "shared-types/src/lib/shared-types.spec.ts",
-          "hash": "4257519248946734625"
-        },
-        {
-          "file": "shared-types/src/lib/shared-types.ts",
-          "hash": "11715063447328923451"
-        },
-        {
-          "file": "shared-types/src/lib/speaker.dto.ts",
-          "hash": "17929823997165699336"
-        },
-        {
-          "file": "shared-types/tsconfig.json",
-          "hash": "10148903843036702529"
-        },
-        {
-          "file": "shared-types/tsconfig.lib.json",
-          "hash": "12017290130308040924"
-        },
-        {
-          "file": "shared-types/tsconfig.spec.json",
-          "hash": "8030639829004721301"
-        }
-      ],
       "frontend": [
         {
           "file": "frontend/jest.config.cts",
@@ -708,6 +463,191 @@
           "hash": "194356566866003897"
         }
       ],
+      "api": [
+        {
+          "file": "api/eslint.config.mjs",
+          "hash": "3710693707408135750"
+        },
+        {
+          "file": "api/jest.config.cts",
+          "hash": "17129139629318892390"
+        },
+        {
+          "file": "api/project.json",
+          "hash": "5256675625808894809"
+        },
+        {
+          "file": "api/src/app/app.controller.spec.ts",
+          "hash": "16195083839539355803",
+          "deps": [
+            "npm:@nestjs/testing"
+          ]
+        },
+        {
+          "file": "api/src/app/app.controller.ts",
+          "hash": "15276891910009544695",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/app.module.ts",
+          "hash": "12253740149220802221",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/app.service.spec.ts",
+          "hash": "17298266700909662742",
+          "deps": [
+            "npm:@nestjs/testing"
+          ]
+        },
+        {
+          "file": "api/src/app/app.service.ts",
+          "hash": "1398463054208547248",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/events/create-event.body.ts",
+          "hash": "14578861062181675297",
+          "deps": [
+            "npm:class-transformer",
+            "npm:class-validator",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/events/events.controller.spec.ts",
+          "hash": "15356396255469945065",
+          "deps": [
+            "npm:@nestjs/common",
+            "npm:@nestjs/testing",
+            "npm:supertest",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/events/events.controller.ts",
+          "hash": "429818119855255519",
+          "deps": [
+            "npm:@nestjs/common",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/events/events.module.ts",
+          "hash": "1647445440834874665",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/events/events.service.spec.ts",
+          "hash": "10969373529256215613",
+          "deps": [
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/events/events.service.ts",
+          "hash": "13976696214149820705",
+          "deps": [
+            "npm:@nestjs/common",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/create-submission.body.ts",
+          "hash": "5034931322338884397",
+          "deps": [
+            "npm:class-transformer",
+            "npm:class-validator",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.controller.spec.ts",
+          "hash": "514590002885937868",
+          "deps": [
+            "npm:@nestjs/common",
+            "npm:@nestjs/testing",
+            "npm:supertest",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.controller.ts",
+          "hash": "11789237739272817110",
+          "deps": [
+            "npm:@nestjs/common",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.module.ts",
+          "hash": "6446050653559295459",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.service.spec.ts",
+          "hash": "11477378540035058021",
+          "deps": [
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/submissions/submissions.service.ts",
+          "hash": "6354479452221200145",
+          "deps": [
+            "npm:@nestjs/common",
+            "shared-types"
+          ]
+        },
+        {
+          "file": "api/src/app/validation.pipe.ts",
+          "hash": "14024303678256102258",
+          "deps": [
+            "npm:@nestjs/common"
+          ]
+        },
+        {
+          "file": "api/src/assets/.gitkeep",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "api/src/main.ts",
+          "hash": "251608716415916594",
+          "deps": [
+            "npm:@nestjs/common",
+            "npm:@nestjs/core"
+          ]
+        },
+        {
+          "file": "api/tsconfig.app.json",
+          "hash": "9957356043912605818"
+        },
+        {
+          "file": "api/tsconfig.json",
+          "hash": "9420862676426701392"
+        },
+        {
+          "file": "api/tsconfig.spec.json",
+          "hash": "8030639829004721301"
+        },
+        {
+          "file": "api/webpack.config.js",
+          "hash": "6809973803337539335",
+          "deps": [
+            "npm:@nx/webpack"
+          ]
+        }
+      ],
       "api-e2e": [
         {
           "file": "api-e2e/eslint.config.mjs",
@@ -756,6 +696,66 @@
         {
           "file": "api-e2e/tsconfig.spec.json",
           "hash": "17514012667061082414"
+        }
+      ],
+      "shared-types": [
+        {
+          "file": "shared-types/README.md",
+          "hash": "9741169815637935730"
+        },
+        {
+          "file": "shared-types/eslint.config.mjs",
+          "hash": "769165677790523341",
+          "deps": [
+            [
+              "npm:jsonc-eslint-parser",
+              "dynamic"
+            ]
+          ]
+        },
+        {
+          "file": "shared-types/jest.config.cts",
+          "hash": "2073640654453309169"
+        },
+        {
+          "file": "shared-types/package.json",
+          "hash": "9638738279093990236"
+        },
+        {
+          "file": "shared-types/project.json",
+          "hash": "3991178185533183276"
+        },
+        {
+          "file": "shared-types/src/index.ts",
+          "hash": "7707877658771605541"
+        },
+        {
+          "file": "shared-types/src/lib/event.dto.ts",
+          "hash": "3963447745331654505"
+        },
+        {
+          "file": "shared-types/src/lib/shared-types.spec.ts",
+          "hash": "4257519248946734625"
+        },
+        {
+          "file": "shared-types/src/lib/shared-types.ts",
+          "hash": "11715063447328923451"
+        },
+        {
+          "file": "shared-types/src/lib/speaker.dto.ts",
+          "hash": "17929823997165699336"
+        },
+        {
+          "file": "shared-types/tsconfig.json",
+          "hash": "10148903843036702529"
+        },
+        {
+          "file": "shared-types/tsconfig.lib.json",
+          "hash": "12017290130308040924"
+        },
+        {
+          "file": "shared-types/tsconfig.spec.json",
+          "hash": "8030639829004721301"
         }
       ]
     }
